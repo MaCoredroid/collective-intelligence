@@ -1,0 +1,7 @@
+s1|Can one model learn to work as a team? When to split up, what to share, and when to stop. Before training any team, we asked a simpler question.
+s2|Does an untrained model do better with teammates? Across six task families, working solo, built-in team modes, and our own collective harness all landed within noise. Collaboration only appeared where the work split cleanly. And the harness's stopping rules changed behavior more than any teammate did.
+s3|Then we trained. Single-call G-R-P-O on a nine-billion-parameter model nearly doubled its Frontier C-S score, from about six to about twelve, before it flattened.
+s4|But the same model, trained as an agent inside a general coding harness, showed no sign of learning by step ten. On its own, it thought for tens of thousands of tokens. As an agent, a median of twenty-seven per call.
+s5|Agentic RL also used about eight times the GPU-hours per step. Most of that was idle or underfilled GPUs, not extra work. Admission control, feeding the model its own tokens, and speculative decoding were the biggest levers.
+s6|And the most dangerous failures were silent: a judge that returned wrong scores without raising an error. A canary, a known answer checked every few minutes, caught it.
+s7|So far, the lesson is simple. The harness is part of the model.
