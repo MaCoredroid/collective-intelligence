@@ -167,7 +167,7 @@
   <div class="wrap">
     <p class="eyebrow">Collective intelligence &nbsp;·&nbsp; Part 1 &nbsp;·&nbsp; Lessons from the groundwork</p>
     <h1>The Harness Is Part of the Model</h1>
-    <p class="dek">Before training agents to work as a team, I ran the groundwork, and the agent harness kept turning out to matter more than the agents. Untrained, a 27B model did no better with teammates than alone, and a visible clock changed its behaviour more than any collaboration tool. Single-call GRPO nearly doubled a 9B model on FrontierCS, but the same recipe inside a general coding harness learned nothing, and inside that harness the model thought for only 27 tokens per call. Agentic RL cost 8× more per step, mostly for infrastructure reasons that could be fixed. And the failures that mattered most were silent.</p>
+    <p class="dek">Before training agents to work as a team, I ran the groundwork, and the agent harness kept turning out to matter more than the agents. Untrained, a 27B model did no better with teammates than alone, and the harness's stopping rules changed its behaviour more than any collaboration tool. Single-call GRPO nearly doubled a 9B model on FrontierCS, but trained as an agent inside a general coding harness, the same model showed no gain by step 10, thinking only a few dozen tokens per call. Agentic RL used 8× the GPU-hours per step, mostly idle GPUs rather than extra work. And the failures that mattered most were silent.</p>
     <div class="meta-row">
       <span>Models · Qwen3.8-27B (baselines) · Qwen3.5-9B (RL)</span>
       <span>Tasks · FrontierSmith → FrontierCS · NL2Repo · KernelBench · Toolathlon · EnterpriseOps-Gym</span>
@@ -176,10 +176,10 @@
     <div class="findings">
       <span class="lbl">Findings so far</span>
       <ol>
-        <li><a href="#r1"><strong>Untrained, the harness mode doesn't matter.</strong></a> Solo, built-in subagents, team mode and three versions of my collective harness are all within noise on 96 tasks (one attempt each). Collaboration appears only where the work splits by module, and the best "collective" number came from a single agent using a visible clock.</li>
-        <li><a href="#r2"><strong>Single-call GRPO nearly doubled FrontierCS.</strong></a> Qwen3.5-9B went from <span class="num">6.22 → 12.22</span> on 172 problems by step 70, paired <span class="num">+6.00 [+4.00, +8.33]</span>. Most of the gain came by step 40, and it flattened as the policy fit a 200-problem training pool.</li>
-        <li><a href="#r3"><strong>The same recipe inside a general coding harness learned nothing.</strong></a> At step 10 the change was <span class="num">−0.02 [−1.01, +0.90]</span>. The harness cut the model's thinking to 27 tokens per call.</li>
-        <li><a href="#infra"><strong>Agentic RL costs about 8× more per step, and most of that gap is fixable infrastructure.</strong></a> The big levers were admission control (about 10×), feeding the model its own token ids (2.7× faster updates), multi-token-prediction speculative decoding (1.9×), and a judge farm sized so scores don't silently degrade.</li>
+        <li><a href="#r1"><strong>Untrained, the harness mode doesn't matter.</strong></a> Solo, built-in subagents, team mode and three versions of my collective harness are all within noise on up to 96 tasks (one attempt each). Collaboration appears only where the work splits by module, and the best "collective" number came from a single agent working longer under new stopping rules.</li>
+        <li><a href="#r2"><strong>Single-call GRPO nearly doubled FrontierCS.</strong></a> Qwen3.5-9B went from <span class="num">6.22 → 12.22</span> on 172 problems by step 70, paired <span class="num">+6.00 [+4.00, +8.33]</span>. Most of the gain came by step 40, and it then flattened, consistent with fitting a 200-problem training pool.</li>
+        <li><a href="#r3"><strong>Trained as an agent in a general coding harness, it showed no sign of learning by step 10.</strong></a> The eval change was <span class="num">−0.02 [−1.01, +0.90]</span>, and reward on revisited training tasks didn't rise. In the harness it thought a median of 27 tokens per call. My minimal loop raised that only to 41, so short per-call thinking is largely the model's own multi-turn habit.</li>
+        <li><a href="#infra"><strong>Agentic RL used about 8× the GPU-hours per step for the same number of tokens; only ~1.4× of that is extra work.</strong></a> The rest is idle or underfilled GPUs. Feeding the model its own token ids (2.7× faster updates) and speculative decoding (1.9×) are already in. The biggest remaining fix, overlapping rollout and training, would change the algorithm. When serving many long-context agents, admission control alone was worth about 10×.</li>
         <li><a href="#traps"><strong>The dangerous failures are silent.</strong></a> These include judges that return wrong scores without erroring, advantage scaling that amplifies noise, gradients that diverge under parallelism, and graders a policy could game.</li>
       </ol>
     </div>
@@ -196,18 +196,19 @@
 <!-- ================= 01 — 27B BASELINES ================= -->
 <div class="sec-head" id="r1"><p class="eyebrow">01 · Result 1 · Untrained 27B</p><h2>Solo, subagents, a team, or a collective: on single attempts, nothing wins</h2></div>
 <div class="wrap">
-  <p>Before training anything, I wanted to know what an off-the-shelf model does with teammates. I ran Qwen3.8-27B inside the Qwen Code agent harness on a 96-task eval set in six arms. Three are the harness's own modes: <strong>solo</strong>, built-in <strong>subagents</strong> (a lead delegates pieces to helpers with fresh contexts), and <strong>agent-team</strong> mode (a leader plus up to three teammates and a shared task list). The other three are versions of a <strong>collective harness</strong> I built, in which any agent can fork a copy of itself and agents talk peer to peer (§7 describes it briefly). Every arm used the same model, sampling, 262K context window, compaction rule and native time or step caps, with one attempt per task.</p>
-  <p>The eval set was chosen to be hard for a single agent. I picked tasks only from <em>published</em> per-task difficulty, never from my own runs: low but nonzero scores for comparable models, and often failed by frontier agents. I dropped anything that overlaps the training pools, for example ten FrontierCS problems that are near-copies of training problems.</p>
+  <p>Before training anything, I wanted to know what an off-the-shelf model does with teammates. I ran Qwen3.8-27B inside the Qwen Code agent harness on a 96-task eval set in six arms. Three are the harness's own modes: <strong>solo</strong>, built-in <strong>subagents</strong> (a lead delegates pieces to helpers with fresh contexts), and <strong>agent-team</strong> mode (a leader plus up to three teammates and a shared task list). The other three are versions of a <strong>collective harness</strong> I built, in which any agent can fork a copy of itself and agents talk peer to peer (§7 describes it briefly). Every arm used the same model, sampling, 262K context window and compaction rule, the same caps (1 h for FrontierCS, NL2Repo and KernelBench; native step caps for the tool and enterprise tasks), and one attempt per task.</p>
+  <p>The three versions of my harness: <strong>v1</strong> has a shared workspace, fork with full context, messages and a whiteboard. <strong>v1 + submit</strong> adds a team-wide submit that ends the task. <strong>v2</strong> gives each agent its own git worktree (a fork copies its parent's tree), grades the submitting agent's tree, and stamps the time left on every tool result.</p>
+  <p>The eval set was chosen to be hard for a single agent. I picked tasks only from <em>published</em> per-task difficulty, never from my own runs: low but nonzero scores for comparable models, and often failed by frontier agents. I dropped anything that overlaps the training pools, for example ten FrontierCS problems that are copies of FrontierSmith training problems. None of them is in the 172-problem set used for the 9B results.</p>
 </div>
 
 <div class="wide">
   <figure>
     <div class="fig-title">Figure 1 · Qwen3.8-27B: mean score by harness arm, one panel per task family</div>
-    <div style="margin:-.3rem 0 .6rem"><span class="key"><i style="background:var(--s1)"></i>solo (vertical line = solo score)</span><span class="key"><i style="background:var(--s2)"></i>my collective harness, v2</span><span class="key"><i style="background:var(--muted)"></i>other arms</span></div>
+    <div style="margin:-.3rem 0 .6rem"><span class="key"><i style="background:var(--s1)"></i>solo (vertical line = solo score)</span><span class="key"><i style="background:var(--s2)"></i>my collective harness, v2</span><span class="key"><i style="background:var(--muted)"></i>built-in modes and earlier versions of my harness</span></div>
     <div class="scroll">
-      <svg viewBox="0 0 900 480" role="img" aria-label="Six small panels, one per task family, each with one bar per harness arm and a line at the solo score. In every family the arms are close to solo.">
+      <svg viewBox="0 0 900 430" role="img" aria-label="Six small panels, one per task family, each with one bar per harness arm and a line at the solo score. In every family the arms are close to solo.">
       <text x="15" y="24" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">Toolathlon</text>
-      <text x="285" y="24" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">8 tasks</text>
+      <text x="285" y="24" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">8 tasks · 0–1</text>
       <line x1="115" y1="34" x2="115" y2="188" stroke="var(--rule)"/>
       <text x="107" y="49" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
       <path d="M115.0,38.0 h80.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-80.4 z" fill="var(--s1)"/>
@@ -235,7 +236,7 @@
       <rect x="115" y="164" width="180" height="24" fill="transparent" tabindex="0" data-tip="Toolathlon · Collective v2: 0.500"/>
       <line x1="199.4" y1="32" x2="199.4" y2="190" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
       <text x="310" y="24" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">EnterpriseOps-Gym</text>
-      <text x="580" y="24" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">16 tasks</text>
+      <text x="580" y="24" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">16 tasks · 0–1</text>
       <line x1="410" y1="34" x2="410" y2="188" stroke="var(--rule)"/>
       <text x="402" y="49" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
       <path d="M410.0,38.0 h48.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-48.6 z" fill="var(--s1)"/>
@@ -263,7 +264,7 @@
       <rect x="410" y="164" width="180" height="24" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Collective v2: 0.312"/>
       <line x1="462.6" y1="32" x2="462.6" y2="190" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
       <text x="605" y="24" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">FrontierCS · 1 h</text>
-      <text x="875" y="24" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">40 tasks</text>
+      <text x="875" y="24" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">40 tasks · 0–1</text>
       <line x1="705" y1="34" x2="705" y2="188" stroke="var(--rule)"/>
       <text x="697" y="49" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
       <path d="M705.0,38.0 h32.3 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-32.3 z" fill="var(--s1)"/>
@@ -290,83 +291,83 @@
       <text x="749.3" y="179" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.233</text>
       <rect x="705" y="164" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 1 h · Collective v2: 0.233"/>
       <line x1="741.3" y1="32" x2="741.3" y2="190" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
-      <text x="15" y="264" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">FrontierCS · 3 h</text>
-      <text x="285" y="264" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">20 tasks</text>
-      <line x1="115" y1="274" x2="115" y2="428" stroke="var(--rule)"/>
-      <text x="107" y="289" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
-      <path d="M115.0,278.0 h38.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-38.4 z" fill="var(--s1)"/>
-      <text x="162.4" y="289" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.251</text>
-      <rect x="115" y="274" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · Solo: 0.251"/>
-      <text x="107" y="315" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
-      <text x="121" y="315" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
-      <text x="107" y="341" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
-      <path d="M115.0,330.0 h34.0 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-34.0 z" fill="var(--muted)"/>
-      <text x="158.0" y="341" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.225</text>
-      <rect x="115" y="326" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · Team: 0.225"/>
-      <text x="107" y="367" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
-      <text x="121" y="367" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
-      <text x="107" y="393" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
-      <path d="M115.0,382.0 h36.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-36.2 z" fill="var(--muted)"/>
-      <text x="160.2" y="393" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.238</text>
-      <rect x="115" y="378" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · v1 + submit: 0.238"/>
-      <text x="107" y="419" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
-      <path d="M115.0,408.0 h48.1 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-48.1 z" fill="var(--s2)"/>
-      <text x="172.1" y="419" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.309</text>
-      <rect x="115" y="404" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · Collective v2: 0.309"/>
-      <line x1="157.4" y1="272" x2="157.4" y2="430" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
-      <text x="310" y="264" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">NL2Repo</text>
-      <text x="580" y="264" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">22 tasks</text>
-      <line x1="410" y1="274" x2="410" y2="428" stroke="var(--rule)"/>
-      <text x="402" y="289" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
-      <path d="M410.0,278.0 h72.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-72.6 z" fill="var(--s1)"/>
-      <text x="491.6" y="289" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.454</text>
-      <rect x="410" y="274" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Solo: 0.454"/>
-      <text x="402" y="315" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
-      <path d="M410.0,304.0 h69.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-69.4 z" fill="var(--muted)"/>
-      <text x="488.4" y="315" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.435</text>
-      <rect x="410" y="300" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Subagents: 0.435"/>
-      <text x="402" y="341" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
-      <path d="M410.0,330.0 h67.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-67.4 z" fill="var(--muted)"/>
-      <text x="486.4" y="341" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.423</text>
-      <rect x="410" y="326" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Team: 0.423"/>
-      <text x="402" y="367" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
-      <text x="416" y="367" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
-      <text x="402" y="393" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
-      <path d="M410.0,382.0 h74.3 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-74.3 z" fill="var(--muted)"/>
-      <text x="493.3" y="393" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.464</text>
-      <rect x="410" y="378" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · v1 + submit: 0.464"/>
-      <text x="402" y="419" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
-      <path d="M410.0,408.0 h74.5 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-74.5 z" fill="var(--s2)"/>
-      <text x="493.5" y="419" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.465</text>
-      <rect x="410" y="404" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Collective v2: 0.465"/>
-      <line x1="486.6" y1="272" x2="486.6" y2="430" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
-      <text x="605" y="264" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">KernelBench · fast_1</text>
-      <text x="875" y="264" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">10 tasks</text>
-      <line x1="705" y1="274" x2="705" y2="428" stroke="var(--rule)"/>
-      <text x="697" y="289" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
-      <path d="M705.0,278.0 h97.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-97.2 z" fill="var(--s1)"/>
-      <text x="811.2" y="289" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.6</text>
-      <rect x="705" y="274" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Solo: 0.600"/>
-      <text x="697" y="315" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
-      <path d="M705.0,304.0 h46.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-46.6 z" fill="var(--muted)"/>
-      <text x="760.6" y="315" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.3</text>
-      <rect x="705" y="300" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Subagents: 0.300"/>
-      <text x="697" y="341" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
-      <path d="M705.0,330.0 h114.1 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-114.1 z" fill="var(--muted)"/>
-      <text x="828.1" y="341" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.7</text>
-      <rect x="705" y="326" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Team: 0.700"/>
-      <text x="697" y="367" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
-      <text x="711" y="367" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
-      <text x="697" y="393" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
-      <text x="711" y="393" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
-      <text x="697" y="419" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
-      <path d="M705.0,408.0 h97.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-97.2 z" fill="var(--s2)"/>
-      <text x="811.2" y="419" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.6</text>
-      <rect x="705" y="404" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Collective v2: 0.600"/>
-      <line x1="806.2" y1="272" x2="806.2" y2="430" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
+      <text x="15" y="236" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">FrontierCS · 3 h</text>
+      <text x="285" y="236" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">20 of the 40</text>
+      <line x1="115" y1="246" x2="115" y2="400" stroke="var(--rule)"/>
+      <text x="107" y="261" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
+      <path d="M115.0,250.0 h38.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-38.4 z" fill="var(--s1)"/>
+      <text x="162.4" y="261" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.251</text>
+      <rect x="115" y="246" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · Solo: 0.251"/>
+      <text x="107" y="287" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
+      <text x="121" y="287" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
+      <text x="107" y="313" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
+      <path d="M115.0,302.0 h34.0 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-34.0 z" fill="var(--muted)"/>
+      <text x="158.0" y="313" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.225</text>
+      <rect x="115" y="298" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · Team: 0.225"/>
+      <text x="107" y="339" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
+      <text x="121" y="339" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
+      <text x="107" y="365" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
+      <path d="M115.0,354.0 h36.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-36.2 z" fill="var(--muted)"/>
+      <text x="160.2" y="365" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.238</text>
+      <rect x="115" y="350" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · v1 + submit: 0.238"/>
+      <text x="107" y="391" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
+      <path d="M115.0,380.0 h48.1 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-48.1 z" fill="var(--s2)"/>
+      <text x="172.1" y="391" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.309</text>
+      <rect x="115" y="376" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · Collective v2: 0.309"/>
+      <line x1="157.4" y1="244" x2="157.4" y2="402" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
+      <text x="310" y="236" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">NL2Repo</text>
+      <text x="580" y="236" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">22 tasks · 0–1</text>
+      <line x1="410" y1="246" x2="410" y2="400" stroke="var(--rule)"/>
+      <text x="402" y="261" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
+      <path d="M410.0,250.0 h72.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-72.6 z" fill="var(--s1)"/>
+      <text x="491.6" y="261" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.454</text>
+      <rect x="410" y="246" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Solo: 0.454"/>
+      <text x="402" y="287" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
+      <path d="M410.0,276.0 h69.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-69.4 z" fill="var(--muted)"/>
+      <text x="488.4" y="287" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.435</text>
+      <rect x="410" y="272" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Subagents: 0.435"/>
+      <text x="402" y="313" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
+      <path d="M410.0,302.0 h67.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-67.4 z" fill="var(--muted)"/>
+      <text x="486.4" y="313" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.423</text>
+      <rect x="410" y="298" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Team: 0.423"/>
+      <text x="402" y="339" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
+      <text x="416" y="339" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
+      <text x="402" y="365" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
+      <path d="M410.0,354.0 h74.3 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-74.3 z" fill="var(--muted)"/>
+      <text x="493.3" y="365" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.464</text>
+      <rect x="410" y="350" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · v1 + submit: 0.464"/>
+      <text x="402" y="391" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
+      <path d="M410.0,380.0 h74.5 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-74.5 z" fill="var(--s2)"/>
+      <text x="493.5" y="391" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.465</text>
+      <rect x="410" y="376" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Collective v2: 0.465"/>
+      <line x1="486.6" y1="244" x2="486.6" y2="402" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
+      <text x="605" y="236" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">KernelBench · fast_1</text>
+      <text x="875" y="236" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">10 tasks</text>
+      <line x1="705" y1="246" x2="705" y2="400" stroke="var(--rule)"/>
+      <text x="697" y="261" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
+      <path d="M705.0,250.0 h97.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-97.2 z" fill="var(--s1)"/>
+      <text x="811.2" y="261" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.6</text>
+      <rect x="705" y="246" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Solo: 0.6"/>
+      <text x="697" y="287" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
+      <path d="M705.0,276.0 h46.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-46.6 z" fill="var(--muted)"/>
+      <text x="760.6" y="287" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.3</text>
+      <rect x="705" y="272" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Subagents: 0.3"/>
+      <text x="697" y="313" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
+      <path d="M705.0,302.0 h114.1 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-114.1 z" fill="var(--muted)"/>
+      <text x="828.1" y="313" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.7</text>
+      <rect x="705" y="298" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Team: 0.7"/>
+      <text x="697" y="339" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
+      <text x="711" y="339" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
+      <text x="697" y="365" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
+      <text x="711" y="365" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
+      <text x="697" y="391" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
+      <path d="M705.0,380.0 h97.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-97.2 z" fill="var(--s2)"/>
+      <text x="811.2" y="391" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.6</text>
+      <rect x="705" y="376" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Collective v2: 0.6"/>
+      <line x1="806.2" y1="244" x2="806.2" y2="402" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
       </svg>
     </div>
-    <figcaption><b>No arm reliably beats solo.</b> Bars to the right of the blue line beat solo on that family, but none of these differences is statistically significant (paired sign tests, p 0.10–0.82). Three repeat runs of the same single-agent setup moved by up to 0.25 on Toolathlon and EnterpriseOps-Gym. "Not run" means that arm wasn't evaluated on that family.</figcaption>
+    <figcaption><b>No arm reliably beats solo.</b> Bars right of the blue line beat solo on that family, but no difference is statistically significant (paired sign tests, p ≥ 0.11 for every pair, most above 0.2). On Toolathlon and EnterpriseOps-Gym my three harness versions all ran single-agent, so they are near-repeats, and they moved by up to 0.25. Scores are each benchmark's own 0–1 metric; KernelBench's fast_1 is the share of tasks with a correct kernel faster than the PyTorch reference. "Not run" means that arm wasn't evaluated on that family.</figcaption>
   </figure>
 </div>
 
@@ -380,23 +381,24 @@
         <tr><td>Toolathlon (8, step cap)</td><td class="r">0.500</td><td class="r">0.500</td><td class="r">0.625</td><td class="r">0.750</td><td class="r">0.625</td><td class="r">0.500</td></tr>
         <tr><td>EnterpriseOps-Gym (16, 50 turns)</td><td class="r">0.312</td><td class="r">0.500</td><td class="r">0.500</td><td class="r">0.500</td><td class="r">0.438</td><td class="r">0.312</td></tr>
         <tr><td>FrontierCS (40, 1 h)</td><td class="r">0.215</td><td class="r">0.262</td><td class="r">0.189</td><td class="r">0.192</td><td class="r">0.238</td><td class="r">0.233</td></tr>
-        <tr><td>FrontierCS (20, 3 h)</td><td class="r">0.251</td><td class="r">–</td><td class="r">0.225</td><td class="r">–</td><td class="r">0.238</td><td class="r">0.309</td></tr>
+        <tr><td>FrontierCS (20 of the 40, 3 h)</td><td class="r">0.251</td><td class="r">–</td><td class="r">0.225</td><td class="r">–</td><td class="r">0.238</td><td class="r">0.309</td></tr>
         <tr><td>NL2Repo (22, 1 h)</td><td class="r">0.454</td><td class="r">0.435</td><td class="r">0.423</td><td class="r">–</td><td class="r">0.464</td><td class="r">0.465</td></tr>
         <tr><td>KernelBench L2/L3 (10, 1 h), fast_1</td><td class="r">0.6</td><td class="r">0.3</td><td class="r">0.7</td><td class="r">–</td><td class="r">–</td><td class="r">0.6</td></tr>
       </tbody>
     </table>
     </div>
-    <figcaption><b>No difference here is statistically significant.</b> Paired sign tests between arms give p between 0.10 and 0.82. Three near-identical single-agent runs on the tool and enterprise families moved by up to 0.25 (3 of 8 and 6 of 16 tasks flipped), so with one attempt per task the arms can't be separated; that takes at least 4 attempts per task. A dash means the arm wasn't run on that family. KernelBench is scored with the benchmark's own verified evaluator.</figcaption>
+    <figcaption><b>No difference here is statistically significant.</b> Paired sign tests between arms give p ≥ 0.11 for every pair, most above 0.2. Three near-identical single-agent runs on the tool and enterprise families moved by up to 0.25 (3 of 8 and 6 of 16 tasks flipped), so with one attempt per task the arms can't be separated; that takes at least 4 attempts per task. A dash means the arm wasn't run on that family. KernelBench is scored with the benchmark's own verified evaluator.</figcaption>
   </figure>
 </div>
 
 <div class="wrap">
   <p>So the honest headline is a null: <strong>on these tasks, an untrained 27B model doesn't get better by being given teammates</strong>, in either the harness's built-in team modes or mine. Three behaviours behind the numbers are more informative than the means.</p>
   <h3>Collaboration only appears where the work splits</h3>
-  <p>In the collective harness the model never forked on tool workflows, enterprise tasks or GPU kernels. It forked about once in ten trials on FrontierCS, where the deliverable is a single optimised program. On NL2Repo, which means building a multi-module package from a spec, it forked in 15 of 22 trials, made 44 forks, and ran up to six agents at once. The work divides by module, so the model divides it.</p>
-  <p>The structure it built was always the same, and nobody told it to: <strong>all 47 forks came from the first agent</strong>, one level deep. That agent made itself the lead, wrote a brief for each worker into the workspace, forked workers in waves, ran the full test suite and sent failures back to whoever owned the module. Workers did talk to each other: they warned about broken imports, and once a worker noticed it had the same assignment as another, picked up an unowned test harness instead, and told both. In that trial the team scored 0.486 against 0.176 solo. But the lead also spent a lot of time idle, waiting on messages, and across NL2Repo the forking trials beat solo by only <span class="num">+0.03</span>.</p>
-  <h3>The best collective result came from one agent and a clock</h3>
-  <p>The second version of the harness gave every agent its own git worktree and showed time remaining in every tool result. Its best number, <span class="num">0.309</span> vs 0.251 solo on 3-hour FrontierCS, came from trials where the first agent <em>worked alone</em> and simply used the time: its median submission moved from about 43 to about 75 minutes. At 1 hour, the visible clock flipped behaviour the other way. Submissions rose from 17 to 37 of 40 trials, and runs that hit the time cap fell from 16 to 2. A visible timer changes more than any collaboration primitive did.</p>
+  <p>In the collective harness the model never forked on tool workflows, enterprise tasks or GPU kernels. On FrontierCS, where the deliverable is a single optimised program, it rarely forked (v1: 2 of 80 trials; v2: 4 of 40). On NL2Repo, which means building a multi-module package from a spec, it forked often (v1 + submit: 15 of 22 trials, 44 forks, up to six agents at once; v2: 9 of 22 trials, 27 forks). The work divides by module, so the model divides it.</p>
+  <p>The structure it built was always the same, and nobody told it to: in v1 and v1 + submit, <strong>all 47 forks came from the first agent</strong>, one level deep. That agent made itself the lead, wrote a brief for each worker into the workspace, forked workers in waves, ran the full test suite and sent failures back to whoever owned the module. Workers did talk to each other, warning about broken imports. But the lead also spent a lot of time idle, waiting on messages, and the payoff was small (v1 + submit: forking trials <span class="num">+0.03</span> over solo; v2: <span class="num">−0.04</span>).</p>
+  <p>The clearest collaboration was on one hard FrontierCS problem (v1 + submit). The lead forked two helpers to build a brute-force checker. One saw that its assignment duplicated the other's, took the orphaned test harness instead and told both, and later reported two compile errors back to the lead. That trial scored 0.486 against 0.176 solo, and it didn't recur in v2.</p>
+  <h3>The best collective number came from one agent and new stopping rules</h3>
+  <p>The second version of the harness gave every agent its own git worktree and showed time remaining in every tool result. Its best number, <span class="num">0.309</span> vs 0.251 solo on 3-hour FrontierCS (10 tasks better, 8 worse, not significant), came from trials where the first agent <em>worked alone</em> and used the time: its median submission moved from about 43 to about 75 minutes. At 1 hour the behaviour flipped the other way: submissions rose from 17 to 37 of 40 trials, and runs that hit the time cap fell from 16 to 2. v2 changed worktrees, submit semantics and the clock all at once, and I haven't ablated the clock alone. Even so, its stopping rules changed when agents stopped more than any collaboration primitive changed what they did.</p>
   <p>The submit action was adopted immediately, as a "done" button. That cost points: two FrontierCS submissions at minutes 4 and 27 scored 0, and four trials submitted while workers were still running.</p>
   <h3>Long tasks are compaction tasks</h3>
   <p>Between 77% and 90% of 1-hour trials compacted their context at least once, in every arm, some up to five times, and the median peak prompt was about 225K tokens. At this length "solo vs team" is partly "one lossy memory vs several". That's the regime where a team should help, and one more reason a single-attempt null is a starting point, not a verdict.</p>
@@ -406,7 +408,7 @@
       <ul>
         <li><strong>Lighter load, not delegation, explained a gain.</strong> The subagents arm on FrontierCS decoded at 167 tokens/s against solo's 148, because it ran with less load. Trials that never called a subagent gained as much as trials that did.</li>
         <li><strong>Forking slows decoding.</strong> NL2Repo collective trials ran at 114 tokens/s against 149 solo, which costs real work under a time cap.</li>
-        <li><strong>A 32K per-call output cap cut solo FrontierCS in half.</strong> 51% of output tokens were in truncated calls; with the cap fixed, the score went from 0.108 to 0.215.</li>
+        <li><strong>A 32K per-call output cap halved solo FrontierCS</strong> (Table 5).</li>
         <li><strong>Team mode stranded work.</strong> In two NL2Repo tasks, teammates' packages were left in worktrees the grader never saw, and the tasks scored 0.</li>
         <li><strong>One collective trial scored 0.551 where every other arm scored 0.</strong> On a 3-hour FrontierCS problem, the lead built test tools, forked an "integrator" and an "optimiser", and checked every merge with sanitizers and brute force. It didn't recur in the next version.</li>
       </ul>
@@ -420,7 +422,7 @@
 <!-- ================= 02 — 9B POST-TRAINING ================= -->
 <div class="sec-head" id="r2"><p class="eyebrow">02 · Result 2 · 9B post-training</p><h2>GRPO on FrontierSmith nearly doubled FrontierCS, then flattened</h2></div>
 <div class="wrap">
-  <p>A team-RL result would mean nothing if the RL stack couldn't improve a single model, so the first training run was solo and as simple as possible. I trained Qwen3.5-9B with single-turn GRPO on the 200 FrontierSmith training problems and evaluated it on all 172 algorithmic FrontierCS problems with the benchmark's own partial-credit judge (0–100), 5 samples per problem.</p>
+  <p>A team-RL result would mean nothing if the RL stack couldn't improve a single model, so the first training run was solo and as simple as possible. I trained Qwen3.5-9B with single-turn GRPO on the 200 FrontierSmith training problems and evaluated it on all 172 algorithmic FrontierCS problems with the benchmark's own partial-credit judge, 5 samples per problem. Scores here are on a 0–100 scale; §1 reported the same judge on 0–1. Avg@5 is the mean over the 5 samples, and Best@5 the mean of each problem's best sample.</p>
 </div>
 
 <div class="wide">
@@ -439,6 +441,7 @@
         <text x="58" y="159" text-anchor="end">8</text>
         <text x="58" y="96.5" text-anchor="end">12</text>
         <text x="58" y="34" text-anchor="end">16</text>
+        <text x="58" y="16" text-anchor="end">Avg@5</text>
         <text x="70" y="302" text-anchor="middle">base</text>
         <text x="168.75" y="302" text-anchor="middle">10</text>
         <text x="267.5" y="302" text-anchor="middle">20</text>
@@ -460,7 +463,7 @@
       <g font-family="var(--mono)" font-size="11.5" fill="var(--ink)">
         <text x="82" y="198">6.22</text>
         <text x="761.25" y="76" text-anchor="middle" font-weight="700">12.22</text>
-        <text x="600" y="60" text-anchor="end" fill="var(--ink-soft)" font-size="10.5">step 70: +6.00 [+4.00, +8.33] vs base</text>
+        <text x="790" y="56" text-anchor="end" fill="var(--ink-soft)" font-size="10.5">step 70: +6.00 [+4.00, +8.33] vs base</text>
       </g>
       <g fill="transparent">
         <circle cx="70" cy="182.8" r="16" tabindex="0" data-tip="Base · Avg@5 6.22 [4.14, 8.66] · Best@5 12.27 · 42% of samples truncated"/>
@@ -479,16 +482,16 @@
 <div class="wrap">
   <p>For reference, the published FrontierSmith recipe reports <span class="num">1.80 → 10.62</span> for this model after 100 steps at a 16K-token budget. In that setting my base model scores 1.19; at my 64K budget it starts at 6.22. So the comparable number is the gain, not the endpoint.</p>
   <h3>A 16K budget starves GRPO</h3>
-  <p>At the published 16K-token cap, <strong>98% of my responses were truncated and every reward was 0</strong>. When every sample in a group scores the same, the group-relative advantage is zero and there is nothing to learn. At 64K, step-1 reward was about 0.15, with signal in 6 of 8 groups.</p>
+  <p>At the published 16K-token cap with my 8-group batches, <strong>98% of responses were truncated and every step-1 group scored 0</strong>. When every sample in a group scores the same, the group-relative advantage is zero and there is nothing to learn. The paper still learned at 16K, from the handful of problems that do earn reward; I didn't want to rely on that. At 64K, step-1 reward was about 0.15, with signal in 6 of 8 groups.</p>
   <h3>Teaching it to stop thinking</h3>
-  <p>Even at 64K, more than half of the responses ran out of budget mid-thought. Forcing a <code>&lt;/think&gt;</code> at a budget didn't work: the model kept reasoning in the answer channel (median about 22K more tokens) and often wrote a second <code>&lt;/think&gt;</code>. What worked was closing the way the model itself does. At a 56K thinking budget, the loop injects the model's own early-exit sentence plus an opening code fence, masks both from the loss, and caps the answer at 8K tokens. A second <code>&lt;/think&gt;</code> dropped from 40 to 9 of 64 samples at step 1. The new cap did not make the <em>base</em> model better (<span class="num">−0.50 [−1.54, +0.51]</span>), so the later gain is training, and much of it is the model learning to finish. In the base model, samples whose thinking closed naturally scored 11.1 on average against 1.75 for force-closed ones.</p>
+  <p>Even at 64K, more than half of the responses ran out of budget mid-thought. Injecting the model's own early-exit sentence at a 32K thinking budget wasn't enough. It kept reasoning in the answer (a median of about 22K more tokens), and 40 of 64 step-1 samples wrote a second <code>&lt;/think&gt;</code>. What worked was a 56K budget followed by the early-exit sentence <em>plus an opening code fence</em>, both masked from the loss, and an 8K answer cap. That brought it to 9 of 64. The new cap did not make the <em>base</em> model better (<span class="num">−0.50 [−1.54, +0.51]</span>), so the later gain is training, consistent with the model learning to finish. In the base model, samples whose thinking closed naturally scored 11.1 on average against 1.75 for force-closed ones.</p>
   <h3>Keep loops and failures in the batch</h3>
-  <p>About 14% of base-model responses loop, typically detectable only around 50K tokens in. Dropping them would hide looping from the gradient and bias the group baseline upward, so loops are stopped early and <strong>kept as failures</strong>. Retries are only for infrastructure failures, and those are masked, never scored as 0. I also dropped an overlong-response penalty that would have dominated the signal: mean step-1 reward was −0.62 with the penalty, while task scores were around 0.1.</p>
+  <p>About 14% of base-model responses loop, typically detectable only around 50K tokens in. Dropping them would hide looping from the gradient and bias the group baseline upward, so loops run to the budget and <strong>stay in the batch as failures</strong>. An early-stop detector slowed generation 20–35% to save about 3–4% of tokens, so I turned it off. Retries are only for infrastructure failures, and those are masked, never scored as 0. I also dropped an overlong-response penalty that would have dominated the signal: mean step-1 reward was −0.62 with the penalty, while task scores were around 0.1.</p>
   <h3>Why it flattened</h3>
-  <p>With 200 training problems and 8 problems per step, each problem had been drawn about 5.5 times by step 70. On repeat draws, training reward roughly doubled (0.136 → 0.303), and groups where all eight samples scored the same rose from 1% to 10%. Those groups carry no gradient. Held-out gains stopped while training reward kept rising: the policy was fitting a small pool. I stopped the run at step 77 and kept the step-40 and step-70 checkpoints.</p>
+  <p>Dynamic sampling draws 12–16 problems per step to fill 8 groups, so by step 70 each of the 200 training problems had been drawn about 5.5 times and trained on about 3. On repeat draws, training reward roughly doubled (0.136 → 0.303). Groups where all eight samples got the same partial-credit score rose from 1% to 10%, while all-zero groups fell from 24% to 5%; identical groups carry no gradient. Held-out gains stopped while training reward kept rising, consistent with fitting a small pool. I stopped the run at step 77 and kept the step-40 and step-70 checkpoints.</p>
   <p>One detail matters for anyone reaching for an entropy-preserving fix. With one optimizer update per step, the importance ratio is exactly 1. The PPO clip never fires (clip fraction 0.0 at every step), so <strong>clip-higher and KL-Cov are no-ops</strong>: KL-Cov produced bit-identical updates. Fixes that act on the gradient directly, such as Clip-Cov's token masking, or more problems, are the levers that are left.</p>
-  <h3>The plateau that wasn't, earlier</h3>
-  <p>For quick checks I also kept a 40-problem subset. On it, step 20 looked no better than step 10 (<span class="num">−0.16 [−1.35, +1.06]</span>), while on all 172 problems it was clearly better (<span class="num">+1.40 [+0.05, +2.87]</span>). The subset has only 11–16 problems the model can partly solve, too few to resolve a trend. It's useful as a smoke test, not for deciding whether training is working.</p>
+  <h3 id="subset">Why the 40-problem subset can mislead</h3>
+  <p>For quick checks I also kept a 40-problem subset: §1's hard FrontierCS set, on which the base model scores only 0.47. On it, step 20 looked no better than step 10 (<span class="num">−0.16 [−1.35, +1.06]</span>), while on all 172 problems it was clearly better (<span class="num">+1.40 [+0.05, +2.87]</span>). The subset has only 10–16 problems the model can partly solve, too few to resolve a trend. It's useful as a smoke test, not for deciding whether training is working.</p>
   <details>
     <summary>The single-call recipe</summary>
     <div class="body">
@@ -506,9 +509,9 @@
 <hr class="sec">
 
 <!-- ================= 03 — AGENTIC ARM ================= -->
-<div class="sec-head" id="r3"><p class="eyebrow">03 · Result 3 · The agentic arm</p><h2>Inside a general-purpose coding harness, the same recipe learned nothing</h2></div>
+<div class="sec-head" id="r3"><p class="eyebrow">03 · Result 3 · The agentic arm</p><h2>Inside a general-purpose coding harness, the same model showed no sign of learning by step 10</h2></div>
 <div class="wrap">
-  <p>A team has to run inside an agent harness, so the next step was the same model, problems and judge, trained as a <strong>solo agent in a coding harness</strong> (Qwen Code). That meant a 262K context window, many short model calls per trial, and deadlines of 15–30 minutes. The recipe was token-level GRPO with a standard-deviation floor on the advantage, KL 0.01 to the base model, one update per batch, and parallel dynamic sampling (launch 12 groups × 8 trials, keep the first 8 groups with a reward spread). Only the model's own sampled tokens were trained.</p>
+  <p>A team has to run inside an agent harness, so the next step was the same model, problems and judge, trained as a <strong>solo agent in a coding harness</strong> (Qwen Code). That meant a 262K context window, many short model calls per trial, and deadlines of 15–30 minutes. The recipe was token-level GRPO with a standard-deviation floor on the advantage, KL 0.01 to the base model, one update per batch, and parallel dynamic sampling (launch 12 groups × 8 trials, keep the first 8 groups with a reward spread). Only the model's own sampled tokens were trained. It isn't identical to the single-call recipe: it uses a token-mean loss, a standard-deviation floor, KL 0.01, a wider clip, a warmup, and an 8K per-call thinking guard (which fired on only 0.03% of calls).</p>
   <p>Training looked healthy: rewards 0.18–0.33, gradient norm about 0.15, no dropped trajectories. The eval disagreed.</p>
 </div>
 <div class="wide">
@@ -516,7 +519,7 @@
     <div class="fig-title">Figure 3 · Paired gain over each arm's own base, same 40 problems, same judge</div>
     <div style="margin:-.3rem 0 .6rem"><span class="key"><i style="background:var(--s1)"></i>single call</span><span class="key"><i style="background:var(--s2)"></i>agentic harness</span></div>
     <div class="scroll">
-    <svg viewBox="0 0 900 230" role="img" aria-label="Paired difference versus base on 40 problems. Single call step 10: plus 1.83, interval 0.62 to 3.32. Single call step 20: plus 1.67, interval 0.39 to 3.43. Agentic harness step 10: minus 0.02, interval minus 1.01 to 0.90.">
+    <svg viewBox="0 0 900 250" role="img" aria-label="Paired difference versus base on 40 problems. Single call step 10: plus 1.83, interval 0.62 to 3.32. Single call step 20: plus 1.67, interval 0.39 to 3.43. Agentic harness step 10: minus 0.02, interval minus 1.01 to 0.90.">
       <g font-family="var(--mono)" font-size="11" fill="var(--muted)">
         <line x1="250" y1="30" x2="250" y2="195" stroke="var(--rule)"/>
         <line x1="351.7" y1="30" x2="351.7" y2="195" stroke="var(--rule)"/>
@@ -532,6 +535,7 @@
         <text x="656.7" y="214" text-anchor="middle">+2</text>
         <text x="758.3" y="214" text-anchor="middle">+3</text>
         <text x="860" y="214" text-anchor="middle">+4</text>
+        <text x="555" y="242" text-anchor="middle">paired change vs own base (points, 0–100)</text>
       </g>
       <g font-family="var(--mono)" font-size="11.5" fill="var(--ink-soft)">
         <text x="20" y="64">Single call · step 10</text>
@@ -547,7 +551,7 @@
       <g font-family="var(--mono)" font-size="11" fill="var(--ink)">
         <text x="639.4" y="46" text-anchor="middle">+1.83</text>
         <text x="623.2" y="91" text-anchor="middle">+1.67</text>
-        <text x="451.3" y="151" text-anchor="middle">−0.02</text>
+        <text x="472" y="150" text-anchor="start">−0.02</text>
       </g>
       <g fill="transparent">
         <rect x="500" y="45" width="300" height="30" tabindex="0" data-tip="Single call · step 10 vs base · +1.83 [+0.62, +3.32] · 15 better / 5 worse · k = 5"/>
@@ -556,29 +560,29 @@
       </g>
     </svg>
     </div>
-    <figcaption><b>Same problems, same judge, same number of steps; one arm moves and the other doesn't.</b> Each arm is compared with its own base model in its own mode, because the mode alone changes the base score (about 2 in the harness vs 0.47 single-call). Whiskers are 95% paired bootstrap intervals over the 40 problems. On training tasks it revisited, the agentic arm's reward changed by −0.014 [−0.034, +0.007].</figcaption>
+    <figcaption><b>Same problems, same judge, same number of steps; one arm moves and the other doesn't.</b> Each arm is compared with its own base model in its own mode, because the mode alone changes the base score (about 2 in the harness vs 0.47 single-call). Whiskers are 95% paired bootstrap intervals over the 40 problems. On training tasks it revisited, the agentic arm's reward changed by −0.014 [−0.034, +0.007]. The subset's paired interval is about ±1.3 points, so this rules out only large gains (<a href="#subset">why the subset is coarse</a>).</figcaption>
   </figure>
 </div>
 <div class="wrap">
-  <p>KL to the base model stayed flat at about 0.0003, while the single-call arm's kept rising (0.0015 at step 20, 0.0026 at step 30). Changing the KL coefficient would have been the reflexive fix, but at that drift the KL term's pull is about a thousand times weaker than the reward's, so it was the wrong lever. Reading trajectories found the problem. On the same packing puzzle:</p>
+  <p>At step 10 both arms' KL to the base model was about 0.0003; the single-call arm's then kept rising (0.0015 at step 20, 0.0026 at step 30), and the agentic arm's barely moved. Changing the KL coefficient would have been the reflexive fix, but at that drift the KL term's pull is about a thousand times weaker than the reward's, so it was the wrong lever. Reading trajectories found the problem. On the same packing puzzle:</p>
   <ul>
     <li><strong>The single-call model at step 40</strong> thought for about 30K tokens, worked out that the problem is NP-hard, designed a best-fit greedy over all eight rotations and reflections, wrote one program, and scored 16.9.</li>
     <li><strong>The agentic model at step 10</strong> made 178 calls and scored 0. Each call carried one sentence of narration as its "thinking". It rewrote its solution from scratch about ten times, once writing JavaScript into a <code>.cpp</code> file, called tools that don't exist, and "verified" an output that placed nothing.</li>
   </ul>
-  <p>Across agentic evals, thinking was a median of <strong>27 tokens per call</strong>, and in 3.5% of trials the agent deleted its own solution during cleanup. The likely causes are all harness design:</p>
+  <p>Across agentic evals, thinking was a median of <strong>27 tokens per call</strong>. 3.5% of eval trials ended with no solution file; in the one I traced, the agent deleted it during cleanup. There are three likely contributors:</p>
   <ul>
     <li>The problem arrived as a file to read rather than as the question, so the model treated it as a quick tool result.</li>
     <li>The roughly 13K-token system prompt is written for software engineering ("briefly state what you're about to do").</li>
-    <li>The agent had no local scorer, although the benchmark's own agent mode provides one.</li>
+    <li>The model's own habit of one sentence of reasoning per tool call. My minimal loop below still thinks a median of only 41 tokens per call.</li>
   </ul>
+  <p>The harness also gave the agent no local scorer, although the benchmark's own agent mode provides one.</p>
   <p>I stopped the run and replaced the general-purpose harness with a <strong>minimal loop of my own</strong>:</p>
   <ul>
     <li>the statement goes in the first message;</li>
     <li>a handful of tools, plus a <code>submit</code> that runs the benchmark's feedback script;</li>
-    <li>exact token ids captured on every call;</li>
-    <li>the deliverable is protected from deletion.</li>
+    <li>exact token ids captured on every call.</li>
   </ul>
-  <p>In a first smoke test, the base model in that loop still thinks briefly per call (median 41 tokens), but its planning call now runs to a few thousand tokens, and it submits 16–39 times per trial against real feedback. Whether that trains is the next result.</p>
+  <p>It follows the benchmark's official agent mode: unlimited submits, credited with the best of the final and best submission, which is a different metric from the evals above. In a first smoke test, the base model in that loop still thinks briefly per call (median 41 tokens), but its planning call runs to a few thousand tokens, and it submits 16–39 times per trial against real feedback. Whether that trains is the next result.</p>
   <p class="take">A healthy training dashboard can sit on top of a policy that isn't learning anything useful. Read what the model actually does, and treat the harness as part of the model.</p>
 </div>
 
@@ -589,7 +593,7 @@
 <div class="wrap">
   <p>Agentic RL is expensive in a way single-call RL isn't. Per training step, the agentic arm used about <strong>8× the GPU-hours</strong> of the single-call arm while generating about the same number of tokens. Most of this project's engineering went into closing that gap without touching what the model learns. Two rules made that safe:</p>
   <ul>
-    <li><strong>Push speed until the next lever is worth less than 5%, then launch.</strong> Don't optimise during a long run.</li>
+    <li><strong>Push speed until the next lever is worth less than 5%, then launch.</strong> Don't optimise during a long run. The one exception here, the surplus-group early stop, went in mid-run only after a replay showed the kept set unchanged.</li>
     <li><strong>An infrastructure-only change must leave the gradient unchanged</strong>, and that has to be shown by replay: the same kept groups, gradient cosine at the noise floor, byte-identical batches. Speed changes are also measured off the live run, because faster serving changes how many turns fit before a deadline.</li>
   </ul>
 </div>
@@ -601,15 +605,15 @@
     <table class="ledger" aria-label="Cost per step for the single-call and agentic arms">
       <thead><tr><th></th><th class="r">Single call</th><th class="r">Agentic harness</th></tr></thead>
       <tbody>
-        <tr><td>Step time</td><td class="r">≈ 14–18 min</td><td class="r">≈ 43 min (35 with early stop)</td></tr>
+        <tr><td>Step time</td><td class="r">≈ 18 min</td><td class="r">≈ 43 min (35 with early stop)</td></tr>
         <tr><td>GPU-hours per step</td><td class="r">≈ 1.2</td><td class="r">≈ 9.3</td></tr>
         <tr><td>Tokens generated per step</td><td class="r">≈ 5.6M</td><td class="r">≈ 5.0M</td></tr>
         <tr><td>Share of trainer tokens that are the model's own output</td><td class="r">≈ 96%</td><td class="r">≈ 42%</td></tr>
-        <tr><td>Generation throughput per GPU</td><td class="r">≈ 2,200 tok/s</td><td class="r">≈ 400 tok/s</td></tr>
+        <tr><td>Generation throughput per GPU, averaged over the whole step including idle time</td><td class="r">≈ 2,200 tok/s</td><td class="r">≈ 400 tok/s</td></tr>
       </tbody>
     </table>
     </div>
-    <figcaption><b>Why the agentic arm costs ~8×.</b> Rollout and training GPUs wait on each other in turn, which accounts for about half of it. Agents also generate serially with tool calls in between, so few requests are in flight per server. And each trajectory drags its prompt, file reads and compiler output into the trainer, so training sequences are 2.3× longer for the same amount of model output.</figcaption>
+    <figcaption><b>Why the agentic arm costs ~8×: only ~1.4× is extra work.</b> The rest is idle or underfilled GPUs. Rollout and training GPUs wait on each other in turn, which accounts for about half of it; overlapping them would change the algorithm, which I chose not to do. Agents also generate serially with tool calls in between, so few requests are in flight per server. And each trajectory drags its prompt, file reads and compiler output into the trainer, so training sequences are 2.3× longer for the same amount of model output.</figcaption>
   </figure>
 </div>
 
@@ -623,17 +627,17 @@
     <div class="fig-title">Table 3 · Serving: problem → fix → measured effect</div>
     <div class="scroll">
     <table class="ledger" aria-label="Serving optimizations">
-      <thead><tr><th>Problem</th><th>Fix</th><th>Measured effect</th></tr></thead>
+      <thead><tr><th>Problem</th><th>Model</th><th>Fix</th><th>Measured effect</th></tr></thead>
       <tbody>
-        <tr><td>KV-cache thrash. 22 agents × ~192K tokens need ~4.2M tokens of KV against 3.5M available. Agents take turns cyclically, so LRU always evicts the prefix needed next: hit rate fell 97% → 1–4%, and every turn re-prefilled ~190K tokens.</td><td><strong>Admission control.</strong> Never run more concurrent trials than the cache can hold (12–14 per replica on the 27B).</td><td><strong>≈10× throughput.</strong> Before, 70 of 73 pilot trials hit the time cap after ~130 tool calls. Healthy runs make 367–893 calls in 4 h.</td></tr>
-        <tr><td>Want more agents per replica.</td><td>Offload KV to CPU memory.</td><td>Thrash gone: evicted prefixes reload at ~118K tok/s. But replica throughput stayed flat (38–44 turns/min) while per-agent speed fell 4.4 → 2.2 turns/min. <strong>Kept as a safety margin, not a speedup.</strong></td></tr>
-        <tr><td>Want more KV capacity.</td><td>FP8 KV cache.</td><td>Capacity 3.1M → 6.0M tokens. Quality held: top-1 agreement 99.1%, NLL +0.2% at 81K and +1.2% at 164K. But it was <strong>13% slower</strong> at equal load, and doubling agents halved per-agent speed. <strong>Rejected</strong>; stayed on BF16.</td></tr>
-        <tr><td>Slow per-call decode.</td><td>Speculative decoding with the model's own multi-token-prediction head.</td><td>27B: <strong>1.9× agent turns/min</strong> (2 draft tokens). 9B: calls without it are ~1.9× slower. Single-call rollout generation −26%. Lossless: the trainer-vs-rollout log-prob gap is unchanged. Locked at 3 draft tokens.</td></tr>
-        <tr><td>How many agents per GPU?</td><td>Measured the knee on the 9B.</td><td>12 → 18 agents per GPU: GPU output +5% (850 → 896 tok/s), every trial 32–44% slower. <strong>Knee ≈ 12.</strong> Prefix hits stay ~97% up to 16 agents per replica, 63–67% at 32.</td></tr>
-        <tr><td>Which tensor-parallel layout?</td><td>Measured both workloads.</td><td>48 agents on 4 GPUs: four 1-GPU replicas beat one 4-GPU replica by 29% (976 vs 754 tok/s/GPU). Single-call RL rollout, the opposite: one 4-GPU engine is ~20% faster. 27B at 262K: 4-GPU replicas, for KV per agent.</td></tr>
-        <tr><td>Hybrid (linear-attention) model reused only 10.6% of a resubmitted prompt.</td><td>Keep recurrent state at every cache block, not just prompt boundaries.</td><td><strong>10.6% → 90.3% reuse</strong>, same decode speed, identical greedy output. Costs ~4× cache blocks per kept prefix.</td></tr>
-        <tr><td>Decode micro-optimisations.</td><td>Checked CUDA graphs and async scheduling.</td><td>Already on for 90.8% of steps; a denser capture list gave +1–2%. <strong>Below the 5% bar; stopped.</strong></td></tr>
-        <tr><td>Which inference engine?</td><td>Head-to-head on one GPU.</td><td>One engine decoded 8–22% faster and held 2.7× more KV. The other ignored the thinking budget with speculative decoding on. Stayed with vLLM.</td></tr>
+        <tr><td>KV-cache thrash. 22 agents × ~192K tokens need ~4.2M tokens of KV against 3.5M available. Agents take turns cyclically, so LRU always evicts the prefix needed next: hit rate fell 97% → 1–4%, and every turn re-prefilled ~190K tokens.</td><td class="num" style="white-space:nowrap">27B</td><td><strong>Admission control.</strong> Never run more concurrent trials than the cache can hold (12–14 per replica on the 27B).</td><td><strong>≈10× throughput</strong>, the rate lost to thrashing. Before, 70 of 73 pilot trials hit a 2 h cap after a median of ~130 tool calls. Healthy 4 h runs made 367–893 calls.</td></tr>
+        <tr><td>Want more agents per replica.</td><td class="num" style="white-space:nowrap">27B</td><td>Offload KV to CPU memory.</td><td>Thrash gone: evicted prefixes reload at ~118K tok/s. But replica throughput stayed flat (38–44 turns/min): adding agents (12 → 20 per replica) only divided it, with per-agent speed falling 4.4 → 2.2 turns/min. <strong>Kept as a safety margin, not a speedup.</strong></td></tr>
+        <tr><td>Want more KV capacity.</td><td class="num" style="white-space:nowrap">27B</td><td>FP8 KV cache.</td><td>Capacity 3.1M → 6.0M tokens. Quality held: top-1 agreement 99.1%, NLL −0.2% at 81K and +1.2% at 164K. But it was <strong>13% slower</strong> at equal load, and doubling agents halved per-agent speed. <strong>Rejected</strong>; stayed on BF16.</td></tr>
+        <tr><td>Slow per-call decode.</td><td class="num" style="white-space:nowrap">27B, 9B</td><td>Speculative decoding with the model's own multi-token-prediction head.</td><td>27B: <strong>1.9× agent turns/min</strong> (2 draft tokens). 9B: calls without it are ~1.9× slower. Single-call rollout generation −26%. Lossless: the trainer-vs-rollout log-prob gap is unchanged. Locked at 3 draft tokens.</td></tr>
+        <tr><td>How many agents per GPU?</td><td class="num" style="white-space:nowrap">9B</td><td>Measured the knee on the 9B.</td><td>12 → 18 agents per GPU: GPU output +5% (850 → 896 tok/s), and trials ran 32–44% slower. <strong>Knee ≈ 12.</strong> Prefix hits stay ~97% up to 16 agents per replica, 63–67% at 32.</td></tr>
+        <tr><td>Which tensor-parallel layout?</td><td class="num" style="white-space:nowrap">9B, 27B</td><td>Measured both workloads.</td><td>48 agents on 4 GPUs: four 1-GPU replicas beat one 4-GPU replica by 29% (976 vs 754 tok/s/GPU). Single-call RL rollout, the opposite: one 4-GPU engine is ~20% faster. 27B at 262K: 4-GPU replicas, for KV per agent.</td></tr>
+        <tr><td>Hybrid (linear-attention) model reused only 10.6% of a resubmitted prompt.</td><td class="num" style="white-space:nowrap">9B</td><td>Keep recurrent state at every cache block, not just prompt boundaries.</td><td><strong>10.6% → 90.3% reuse</strong>, same decode speed, identical greedy output. Costs ~4× cache blocks per kept prefix.</td></tr>
+        <tr><td>Decode micro-optimisations.</td><td class="num" style="white-space:nowrap">9B</td><td>Checked CUDA graphs and async scheduling.</td><td>Already on for 90.8% of steps; a denser capture list gave +1–2%. <strong>Below the 5% bar; stopped.</strong></td></tr>
+        <tr><td>Which inference engine?</td><td class="num" style="white-space:nowrap">9B</td><td>Head-to-head on one GPU (single, untuned runs).</td><td>vLLM decoded 8–22% faster and held 2.7× more KV than SGLang, which also ignored the thinking budget with speculative decoding on. Stayed with vLLM.</td></tr>
       </tbody>
     </table>
     </div>
@@ -642,7 +646,7 @@
 
 <div class="wrap">
   <h3>Between rollout and trainer</h3>
-  <p>The agentic arm's step was ~89 minutes at first. The fixes below roughly halved it, and every one was checked to leave the update unchanged.</p>
+  <p>The agentic arm's step was ~89 minutes at first. Token-in/token-out alone brought it to ~47. The other fixes below are smaller, two are built but not yet in a completed run, and every one was checked to leave the update unchanged.</p>
 </div>
 
 <div class="wide">
@@ -652,14 +656,14 @@
     <table class="ledger" aria-label="Rollout and trainer optimizations">
       <thead><tr><th>Problem</th><th>Fix</th><th>Measured effect</th></tr></thead>
       <tbody>
-        <tr><td>Re-tokenisation drift. The harness sends text, and the server re-tokenises it. In 3.3% of calls the model had sampled a non-canonical split, so ids no longer matched and the training sequence broke: <strong>2.71×</strong> the unique tokens were trained.</td><td><strong>Token-in/token-out.</strong> Store the sampled ids and splice them into the next request.</td><td>Overhead 2.71× → <strong>1.05×</strong>. Update 3,184 → 1,171 s. Step ~89 → ~47 min. +73 ms per call. Training is now exactly on-policy for context; the base model was re-evaluated under the new path.</td></tr>
-        <tr><td>Dynamic sampling launches more groups than it keeps, and the step waits for the slowest.</td><td>Cancel surplus groups once enough groups with a reward spread finish. Regrade the kept ones after load settles.</td><td>Step 2,598 → 2,085 s (<strong>−20%</strong>). Kept set identical on 14 replayed steps. Regrading matters: under rollout load the judge lowered 3 of 96 scores.</td></tr>
-        <tr><td>Trainer idle until the last group finishes.</td><td>Streaming per-group gradient accumulation. Exact, so it replaces the one-step-stale async design, which would have changed the algorithm.</td><td>Wait after the last group 871 → 460 s. Matches the batch update to rel. L2 2.5e-8 (with power-of-two loss prescaling). Deterministic kernels would cost +14%, so the faster kernels were kept: cosine is at the noise floor.</td></tr>
+        <tr><td>Re-tokenisation drift. The harness sends text, and the server re-tokenises it. In 3.3% of calls the model had sampled a non-canonical split, so ids no longer matched and the training sequence broke: <strong>2.71×</strong> the unique tokens were trained.</td><td><strong>Token-in/token-out.</strong> Store the sampled ids and splice them into the next request.</td><td>Overhead 2.71× → <strong>1.05×</strong>. Update 3,184 → 1,171 s. Step ~89 → ~47 min. +73 ms per call. Stored ids are reused on ~98% of calls, so training sees exactly what the model generated. The base model was re-evaluated under the new path.</td></tr>
+        <tr><td>Dynamic sampling launches more groups than it keeps, and the step waits for the slowest.</td><td>Cancel surplus groups once enough groups with a reward spread finish. Regrade the kept ones after load settles.</td><td>One step: 2,598 → 2,085 s (<strong>−20%</strong>), about 100 s of it from faster reload and packing done at the same time. The kept set was identical on 13 replayed steps. Regrading matters: under rollout load the judge lowered 3 of 96 scores.</td></tr>
+        <tr><td>Trainer idle until the last group finishes.</td><td>Streaming per-group gradient accumulation. Exact, so it replaces the one-step-stale async design, which would have changed the algorithm.</td><td>Built and verified: matches the batch update to rel. L2 2.5e-8 with power-of-two loss prescaling. Projected wait after the last group: 871 → 460 s; not yet in a completed run. Deterministic kernels would cost +14%, so the faster kernels were kept: cosine is at the noise floor.</td></tr>
         <tr><td>Checkpoint save on the critical path.</td><td>Background, per-rank writes.</td><td>43.5 s → 8–11 s, bit-identical weights.</td></tr>
-        <tr><td>Weight sync to rollout servers.</td><td>Parallel per-shard copies.</td><td>31–37 s → 10–13 s; reload and probe 83 → 22 s.</td></tr>
-        <tr><td>Out of memory at step 2, not step 1. Adam's moments only exist after the first <code>optimizer.step()</code>.</td><td>Load optimizer state only around the step; re-offload after each update.</td><td>Peak 70.5 GiB (+4.2 GiB sleeping inference engine) → 51.0 GiB. Step 2 matches step 1.</td></tr>
-        <tr><td>Long agent chains (up to 202K tokens) lost 5.9% of trainable tokens at a 131K max length.</td><td>Sequence parallelism with a head-parallel implementation of the linear-attention layers, after a gradient check against data parallelism (§5).</td><td>0 tokens dropped. A 262K chain takes 38–62 s forward + backward. Re-training one step: 666–688 s vs 1,137 s on the default context-parallel path.</td></tr>
-        <tr><td>Loop detection during generation.</td><td>Chunked loop-stop.</td><td>Cost 20–35% of generation for a 0.4% hit rate. <strong>Turned off</strong>; loops end at the budget and stay in the batch as failures.</td></tr>
+        <tr><td>Weight sync to rollout servers.</td><td>Parallel per-shard copies.</td><td>Checkpoint copy to three rollout hosts 31–37 s → 10–13 s; reload and probe 83 → 22 s.</td></tr>
+        <tr><td>Out of memory at step 2, not step 1. Adam's moments only exist after the first <code>optimizer.step()</code>.</td><td>Load optimizer state only around the step; re-offload after each update.</td><td>Peak 70.5 GiB (+4.2 GiB sleeping inference engine) → 51.0 GiB in a two-update check, 60.2 GiB in the live run. Step 2 matches step 1 (§5).</td></tr>
+        <tr><td>Long agent chains (up to 202K tokens) lost 5.9% of trainable tokens at a 131K max length.</td><td>Sequence parallelism with a head-parallel implementation of the linear-attention layers, after a gradient check against data parallelism (§5).</td><td>0 tokens dropped. A 262K chain takes 38–62 s forward + backward. Re-training one step: 666–688 s, vs 875 s on the default context-parallel path (different recipes, so indicative).</td></tr>
+        <tr><td>Loop detection during generation.</td><td>Chunked loop-stop.</td><td>Slowed generation 20–35% to save about 3–4% of tokens, and once killed a near-perfect answer. <strong>Turned off</strong>; loops end at the budget and stay in the batch as failures.</td></tr>
         <tr><td>Grading latency in single-call RL.</td><td>Grade inside the generation loop.</td><td>Exposed judge time ≈ 0: the last grade lands 3–5 s before generation ends.</td></tr>
         <tr><td>More GPUs per job?</td><td>Measured scaling.</td><td>Trainer 4 → 8 GPUs: 1.88–1.90× (≈95% efficient). A small single-call job used <strong>31% fewer GPU-hours on 4 GPUs than on 8</strong>, because generation dominated.</td></tr>
         <tr><td>Redundant work with one update per step.</td><td>Identified: the "old log-prob" forward recomputes what the rollout already has.</td><td>85–125 s per step available. Not applied mid-run; it's queued for the restart.</td></tr>
@@ -681,12 +685,12 @@
     <table class="ledger" aria-label="Evaluation and grading optimizations">
       <thead><tr><th>Problem</th><th>Fix</th><th>Measured effect</th></tr></thead>
       <tbody>
-        <tr><td>Oversubscribed judges silently lower scores on time-limited problems.</td><td>Test-case slots ≤ 0.75 × cores; slots + judge workers ≤ cores − 2.</td><td>16 slots on 16 cores lowered 7 of 144 scores; 12 lowered none. ~90 submissions/min per judge host with correct scores; 145/min released wrong ones. Real-feedback agentic training needs 190–240/min, the next bottleneck.</td></tr>
+        <tr><td>Oversubscribed judges silently lower scores on time-limited problems.</td><td>Test-case slots ≤ 0.75 × cores; slots + judge workers ≤ cores − 2.</td><td>16 slots on 16 cores lowered 7 of 144 scores; 12 lowered none. ~90 submissions/min per judge host with correct scores; 145/min released wrong ones. Real-feedback agentic training is projected to need 190–240/min, the next bottleneck.</td></tr>
         <tr><td>"Timeouts" that were really queueing; one judge stalled at ~144 concurrent submissions.</td><td>One eval per judge, ≤16 workers, a long wait, and stalls logged separately from failures.</td><td>26 "timeouts" re-judged in 5 s total. 256 of 860 graded in 127 s on split judges.</td></tr>
-        <tr><td>After a sandbox crash, a judge graded known-correct code "Wrong Answer" with no error.</td><td>Known-solution canary every few minutes; any deviation pauses training. Infra failures are masked, never scored 0.</td><td>Caught a silently broken judge before it fed rewards.</td></tr>
-        <tr><td>Eval cost per checkpoint.</td><td>Read the 40-problem subset off the full run. Pack 20 requests per eval job instead of 10.</td><td>Full 172 × 5 ≈ 9 GPU-h; subset ≈ 2 GPU-h, now free. Packing halves GPU-hours at the same wall time.</td></tr>
-        <tr><td>How long should an agentic eval run?</td><td>Set the cap from data.</td><td>0 of 320 trials ran past 55 minutes at a 1 h cap. A 3 h cap would triple the worst-case cost per checkpoint.</td></tr>
-        <tr><td>27B baselines: a 32K per-call output cap.</td><td>Raise it to the window.</td><td>It had truncated 37% of responses and wasted ~90% of output tokens; solo FrontierCS went 0.108 → 0.215.</td></tr>
+        <tr><td>After a sandbox crash, a judge graded known-correct code "Wrong Answer" with no error.</td><td>Known-solution canary every few minutes; any deviation pauses training. Infra failures are masked, never scored 0.</td><td>It had already zeroed one training step of an earlier attempt; the canary now pauses training first (§5).</td></tr>
+        <tr><td>Eval cost per checkpoint.</td><td>Read the 40-problem subset off the full run. Pack 20 requests per eval job instead of 10.</td><td>Full 172 × 5 ≈ 9 GPU-h; subset ≈ 2 GPU-h, now free. Packing is projected to halve GPU-hours at the same wall time.</td></tr>
+        <tr><td>How long should an agentic eval run?</td><td>Set the cap from data.</td><td>0 of 320 trials ran past 55 minutes at a 1 h cap, and a 3 h cap would triple the worst-case cost per checkpoint. That was for the general harness; the official-agent-mode eval now uses the benchmark's native 3 h.</td></tr>
+        <tr><td>27B baselines: a 32K per-call output cap.</td><td>Raise it to the window.</td><td>6% of responses hit the cap but held 51% of output tokens. Raising it, and lifting a 15-minute stream limit, took solo FrontierCS from 0.108 to 0.215.</td></tr>
         <tr><td>Container start-up and isolation cost for agent trials.</td><td>A lighter container-free sandbox, checked for parity.</td><td>~9% faster per trial; paired Avg@4 difference −0.0014 (parity).</td></tr>
         <tr><td>Wall-clock deadlines make reward depend on server load.</td><td>Measured first: deadlines bound only 3.2% of solo training trials.</td><td>A per-agent virtual clock was deferred to the team arm. Its exact message ordering costs +10% wall time.</td></tr>
       </tbody>
@@ -695,84 +699,20 @@
   </figure>
 </div>
 
-<div class="wrap">
-  <h3>Team RL: freezing a running team</h3>
-  <p>A team-outcome reward can't say which fork or message helped. The tool I built for that freezes the whole team just before one decision, samples alternatives from the same state, runs each to the end, and credits the decision with the difference (a leave-one-out baseline, as in counterfactual credit-assignment work). On a spec-to-repo task, one fork decision led to 2, 1 or 151 passing tests out of 211, depending only on what was sampled at that point. One decision carries a large, learnable signal.</p>
-</div>
-<div class="wide">
-  <figure class="rise">
-    <div class="fig-title">Figure 4 · Freeze, branch, credit: one fork decision on a spec-to-repo task</div>
-    <div class="scroll">
-    <svg viewBox="0 0 900 290" role="img" aria-label="A running team reaches a fork decision. A barrier holds every agent's next model call and pauses the clock. A snapshot of contexts, worktrees, and harness state is taken. Three alternatives restart from the snapshot: the original decision scored 0.009, resample one scored 0.005, resample two scored 0.716. Leave-one-out credits are minus 0.35, minus 0.36 and plus 0.71.">
-      <defs>
-        <marker id="m3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--muted)"/></marker>
-      </defs>
-      <g font-family="var(--mono)" font-size="10.5" fill="var(--muted)">
-        <text x="30" y="40">team running</text>
-        <line x1="30" y1="60" x2="230" y2="60" stroke="var(--s1)" stroke-width="2"/>
-        <line x1="30" y1="80" x2="230" y2="80" stroke="var(--s1)" stroke-width="2" opacity="0.6"/>
-        <text x="30" y="108">agents a1, a2 …</text>
-      </g>
-      <rect x="235" y="40" width="10" height="60" fill="var(--gold)"/>
-      <text x="240" y="125" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">barrier</text>
-      <text x="240" y="140" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">hold next calls,</text>
-      <text x="240" y="153" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">pause clock</text>
-      <rect x="280" y="45" width="140" height="50" rx="8" fill="var(--surface-2)" stroke="var(--rule)"/>
-      <text x="350" y="66" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-soft)">snapshot</text>
-      <text x="350" y="83" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">contexts · files · harness</text>
-      <path d="M420 70 L455 70" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m3)"/>
-      <path d="M460 70 C480 70 480 190 500 190" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
-      <path d="M460 70 C480 70 480 130 500 130" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
-      <path d="M460 70 L500 70" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
-      <g font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">
-        <text x="505" y="62">a₀ original fork</text>
-        <text x="505" y="122">resample 1</text>
-        <text x="505" y="182">resample 2</text>
-      </g>
-      <line x1="505" y1="72" x2="700" y2="72" stroke="var(--grey)" stroke-width="2"/>
-      <line x1="505" y1="132" x2="700" y2="132" stroke="var(--grey)" stroke-width="2"/>
-      <line x1="505" y1="192" x2="700" y2="192" stroke="var(--s1)" stroke-width="2"/>
-      <g font-family="var(--mono)" font-size="11" fill="var(--ink)">
-        <text x="712" y="76">R = 0.009</text>
-        <text x="712" y="136">R = 0.005</text>
-        <text x="712" y="196" font-weight="700">R = 0.716</text>
-      </g>
-      <g font-family="var(--mono)" font-size="11">
-        <text x="820" y="76" fill="var(--neg)">Â −0.35</text>
-        <text x="820" y="136" fill="var(--neg)">Â −0.36</text>
-        <text x="820" y="196" fill="var(--pos)" font-weight="700">Â +0.71</text>
-      </g>
-      <text x="450" y="250" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">Âⱼ = Rⱼ − mean of the other alternatives · applied only to the decision's own tokens</text>
-      <text x="450" y="270" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">every branch resends a byte-identical decision request; the other agents re-roll stochastically</text>
-    </svg>
-    </div>
-    <figcaption><b>One decision, three futures.</b> On a spec-to-repo task (211 tests), the same fork decision led to 2, 1 or 151 passing tests depending on what was sampled at that one point. The leave-one-out advantage lands on the decision's own tokens; everything else in the trajectory keeps the team-outcome advantage. A second fork decision gave 0.227 / 0.114 / 0.536, so credits of −0.10 / −0.27 / +0.37.</figcaption>
-  </figure>
-</div>
-<div class="wrap">
-  <p>Freezing a team means capturing more than text. It includes every agent's context and pending request, each working tree and the container filesystem, the message queues (undelivered messages too), the whiteboard and the timers. The costs that matter:</p>
-  <ul>
-    <li><strong>Freezing is cheap.</strong> The snapshot takes about a second and restoring an agent to its first model call about five. Alternatives start as soon as the snapshot is committed, not when the original trial ends, which in one case was 550 s later.</li>
-    <li><strong>Run alternatives in parallel, each on its own server.</strong> A decision then costs its slowest branch (374 s), not the sum (1,020 s), and a dedicated server per branch raised throughput 52%.</li>
-    <li><strong>Route a whole team to one server.</strong> Branches share almost their entire prompt, so prefix-cache hits are 97–98% and computed prefill is 2–3% of prompt tokens. Random routing would have cost 57% more prefill.</li>
-    <li><strong>Pick decisions carefully.</strong> Each branch still generated 130–145K tokens, and a late <code>submit</code> decision on an algorithm task gave three identical zeros: no signal for the cost.</li>
-  </ul>
-  <p>Getting the measurement right took an audit. The first version sampled the original decision from the request built <em>before</em> the freeze and the alternatives from the one rebuilt <em>after</em> restoring, which had one extra resume message. Now every alternative, including the original, restarts from the snapshot and resends a byte-identical request.</p>
-</div>
 
 <hr class="sec">
 
 <!-- ================= 05 — CORRECTNESS ================= -->
-<div class="sec-head" id="traps"><p class="eyebrow">05 · Learnings</p><h2>Silent failures: what corrupts RL without crashing it</h2></div>
+<div class="sec-head" id="traps"><p class="eyebrow">05 · Silent failures</p><h2>Silent failures: what corrupts RL without crashing it</h2></div>
 <div class="wrap">
   <p>None of these crashed a run. Each one either fed the optimizer a wrong signal or would have turned a real result into noise.</p>
 
   <h3>1 · Normalising by a tiny standard deviation amplifies noise</h3>
-  <p>GRPO divides each group's reward differences by their standard deviation. With partial-credit rewards, a group of nearly identical scores, <span class="num">0.549 / 0.549 / 0.550 / 0.553</span>, becomes advantages of <span class="num">−0.74 / −0.74 / −0.22 / +1.69</span>: a full-strength gradient on what is basically timing noise. Dropping the division (A = R − mean, which works for 0/1 rewards) went too far the other way: the gradient norm was <span class="num">0.022</span>, 10–20× too small for 0–1 partial credit. The fix is a floor: <code>A = (R − mean) / max(std, 0.05)</code>.</p>
+  <p>GRPO divides each group's reward differences by their standard deviation. With partial-credit rewards, a group of nearly identical scores, <span class="num">0.549 / 0.549 / 0.550 / 0.553</span>, becomes advantages of <span class="num">−0.74 / −0.74 / −0.22 / +1.69</span>: a full-strength gradient on what is basically timing noise. Dropping the division (A = R − mean, which works for 0/1 rewards) went too far the other way: the gradient norm was <span class="num">0.022</span>, 10–20× too small for 0–1 partial credit. The fix is a floor: <code>A = (R − mean) / max(std, 0.05)</code>. The agentic arm used it; the single-call arm, which learned, used plain normalisation. So this is about noisy partial-credit groups, not why the agentic arm stalled.</p>
 
   <h3>2 · Sequence-parallel gradients on a hybrid model</h3>
   <p>Qwen3.5 mixes full attention with Gated DeltaNet linear-attention layers. In my full training stack with Ulysses sequence parallelism, the <strong>forward pass matched plain data parallelism but the backward pass did not</strong>. On a 47K-token sequence, the gradient's cosine similarity with data-parallel training was <span class="num">0.851</span> (0.787 in the linear-attention layers, 0.666 in the embeddings), against a run-to-run noise floor of 0.9999. A second check on a 67K-token rollout, through a different trainer code path, found the lm_head gradient off as well: cosine <span class="num">0.682</span> at 1.39× the expected norm. A head-parallel implementation of the linear-attention layers brought the first check back to <span class="num">0.99991</span>. For the single-call arm I simply turned sequence parallelism off and offloaded optimizer state instead.</p>
-  <p>I haven't pinned down the cause. On my own hardware, a different GPU architecture from the original runs, I ran the linear-attention layers alone at 2 and 4 sequence-parallel ranks, on multi-chunk and packed sequences, with and without activation checkpointing. The parameter gradients matched a full-sequence reference to cosine 0.99998 or better, and a control that cut the cross-rank state moved the outputs at least 10× more than sequence parallelism did. So the problem is either in how the pieces are put together in the full stack or specific to the original hardware. Two lessons hold either way:</p>
+  <p>I haven't pinned down the cause. On a second machine with a different GPU architecture, I ran the linear-attention layers alone at 2 and 4 sequence-parallel ranks, on multi-chunk and packed sequences, with and without activation checkpointing. The parameter gradients matched a full-sequence reference to cosine 0.99998 or better, and a control that cut the cross-rank state moved the outputs at least 10× more than sequence parallelism did. So the problem is either in how the pieces are put together in the full stack or specific to the original hardware. Two lessons hold either way:</p>
   <ul>
     <li><strong>Log-prob parity checks only test the forward pass.</strong> Before trusting any parallelism scheme on a new architecture, compare its gradient with plain data parallelism on one real sequence, in the exact stack you train with.</li>
     <li><strong>Random initialisation hides this class of bug.</strong> With default initialisation these gates forget their state within a few tokens, so almost nothing crosses the rank boundary and a gradient test on random layers passes no matter what. Set the decay to trained-model-like values first.</li>
@@ -790,10 +730,11 @@
   </ul>
 
   <h3>5 · One token over</h3>
-  <p>A trial died three times with "maximum context length is 262144 tokens; you requested … for a total of at least 262145". In every case the request was exactly one token over. The harness estimated prompt size at about four characters per token, but one tool result was 22K characters of numbers, and this tokenizer emits <strong>one token per digit</strong>. The 13K-token underestimate exceeded the harness's safety margin. The server then clamped the output budget to the space left but counted one more prompt token in a later check, so the request failed by exactly one token, and failed again the same way on every resume.</p>
+  <p>A trial died three times with "maximum context length is 262144 tokens; you requested … for a total of at least 262145". In every case the request was exactly one token over. The harness estimated prompt size at about four characters per token, but one tool result was a 22K-character output, mostly digits, and this tokenizer emits <strong>one token per digit</strong>. The 13K-token underestimate exceeded the harness's safety margin. The server then clamped the output budget to the space left but counted one more prompt token in a later check, so the request failed by exactly one token, and failed again the same way on every resume.</p>
 
   <h3>6 · Red-team the grader before the policy does</h3>
   <p>Every grader I built or adopted got an adversarial audit before it was allowed to produce reward. Every audit found something. No policy found these first, but an RL policy optimising against the grader eventually would.</p>
+  <div class="fig-title" style="margin-top:1.4rem">Table 6 · Grader exploits found by red-teaming</div>
   <table class="ledger" aria-label="Grader vulnerabilities found by red-teaming">
     <thead><tr><th>Grader</th><th>Exploit</th><th>Payoff</th></tr></thead>
     <tbody>
@@ -802,7 +743,7 @@
       <tr><td>Same grader</td><td>Add a test file of trivially passing tests where the test command collects a whole directory</td><td>inflated pass counts on three tasks</td></tr>
       <tr><td>My first kernel grader</td><td>Write the result file from inside the submission's own process, which the privileged grader then trusted, including the path of "the output" to compare and the measured time</td><td>"correct" plus any speedup without a working kernel</td></tr>
       <tr><td>Sandbox network policy</td><td>Allowlist filtered by host, not port</td><td>unintended services reachable</td></tr>
-      <tr><td>Result aggregation</td><td>Verifier errors were not distinguished from model zeros</td><td>grader failures would have counted against the model</td></tr>
+      <tr><td>Result aggregation</td><td>Verifier errors were not distinguished from model zeros</td><td>one launch scored 186 of 192 rollouts as false zeros before errors were separated from scores</td></tr>
     </tbody>
   </table>
   <p>The fixes are boring: score from a channel the submission can't write to; have the privileged grader pick every path itself; time code outside the submission's interpreter; add tamper checks (a reported pass count larger than the number of collected tests zeroes the trial); and grade final numbers by the benchmark's own published rules.</p>
@@ -818,9 +759,9 @@
     <li><strong>A validity table on every check-in.</strong> KL, entropy, gradient norm, the trainer-vs-inference log-prob gap, truncation rate, the fraction of groups with any learning signal, speculative-decoding acceptance, prefix-cache hit rate, degenerate outputs, and the judge canary. A green dashboard has to be green on all of them.</li>
     <li><strong>Pre-flight from artifacts, not summaries.</strong> The checklist is checked against the actual files and logs, not against an agent's description of them. That is how the all-zero 16K run was caught in pre-flight, before it burned real compute.</li>
     <li><strong>Speed first, then go.</strong> Push serving and training speed until the next improvement is under about 5%, without changing the recipe, then launch.</li>
-    <li><strong>No pointless ablations.</strong> Use one best-known recipe per arm. The first steps of the real run are the pre-flight.</li>
+    <li><strong>No ablations without a hypothesis.</strong> Use one best-known recipe per arm. The first steps of the real run are the pre-flight.</li>
     <li><strong>Red-team every build, then read the diff.</strong> Every audit found a real blocker, and the grader exploits in §5 were all caught this way.</li>
-    <li><strong>Recount every claim.</strong> The coordinator withdrew or corrected about fifteen of its own claims over four days after recounting against data, including a KL diagnosis, an overstated drop rate, and the expected benefit of a design change. That's the system working, not failing.</li>
+    <li><strong>Recount every claim.</strong> The coordinator withdrew or corrected more than two dozen of its own claims over four days after recounting against data, including a KL diagnosis, an overstated drop rate, and the expected benefit of a design change. That's the system working, not failing.</li>
     <li><strong>Read trajectories.</strong> The 27-token thinking and the self-deleted solutions in §3 came from reading, not from metrics.</li>
     <li><strong>Agents stall quietly.</strong> Background agents can sit for hours on a prompt waiting for approval. Give them scripts instead of long inline commands, and watch when their output files last changed.</li>
   </ul>
@@ -834,13 +775,13 @@
 <div class="wrap">
   <div class="status" style="border-left-color:var(--gold)">
     <span class="lbl" style="color:var(--gold)">Plan, not a result</span>
-    <p>Nothing in this section has been trained or measured yet. It explains why the baselines above were run and what the next experiments test.</p>
+    <p>No team has been trained yet. This section explains the idea and the credit tool built for it; the only measurements here are of that tool.</p>
   </div>
   <p>The question is whether post-training can teach <strong>one shared policy</strong> to work as a team: when to fork a copy of itself, what to share and with whom, whose result to trust, and when the team is done. Three things set this apart from simply sampling more:</p>
 </div>
 <div class="wide">
   <figure class="rise">
-    <div class="fig-title">Figure 5 · The idea: independent sampling vs online collective computation</div>
+    <div class="fig-title">Figure 4 · The idea: independent sampling vs online collective computation</div>
     <div class="scroll">
     <svg viewBox="0 0 900 300" role="img" aria-label="Left: three independent agents run to completion and a selector picks one at the end. Right: agents fork from a root, a discovery from one agent is sent to the others mid-run, one verifies it, one changes direction, and any agent may submit.">
       <defs>
@@ -888,11 +829,73 @@
 </div>
 <div class="wrap">
   <ul>
-    <li><strong>The harness has no organisation chart.</strong> Any agent can fork a child that inherits its full context and an exact copy of its working tree. Agents message each other directly, share an append-only whiteboard, can read each other's recent actions, and any agent can submit. These are the primitives behind the "collective" columns in Table 1.</li>
+    <li><strong>The harness has no organisation chart.</strong> Any agent can fork a child that inherits its full context and an exact copy of its working tree. Agents message each other directly, share an append-only whiteboard, can read each other's recent actions, and any agent can submit. These are the v2 primitives behind the "collective v2" column in Table 1.</li>
     <li><strong>One reward for the whole team:</strong> the task's own verifier score. Forking, messaging and agreeing are never rewarded directly, because that would teach ceremonial communication and let plausible errors spread.</li>
     <li><strong>The control decides the claim.</strong> The same starting checkpoint is trained two ways, as a solo agent and as a team, with matched training tokens. Both are then evaluated solo, as independent parallel samples with a selector at the end, and as an online team. A team-specific gain only counts if team training improves the online team <em>more than</em> solo training does, beyond what extra parallel samples give.</li>
   </ul>
-  <p>Credit assignment is the hard part: one team reward says little about which fork or message helped. The freeze-and-branch machinery in §4 exists for that, and so far it is a measured tool, not a learning result.</p>
+  <p>Credit assignment is the hard part: one team reward says little about which fork or message helped. The tool below exists for that. So far it is a measured tool, not a learning result.</p>
+  <h3>The credit tool: freezing a running team</h3>
+  <p>A team-outcome reward can't say which fork or message helped. The tool I built for that freezes the whole team just before one decision, samples alternatives from the same state, runs each to the end, and credits the decision with the difference (a leave-one-out baseline, as in counterfactual credit-assignment work). With the 9B model on a spec-to-repo task, the same fork decision led to 2, 1 or 151 of 211 passing tests across three branches. The rest of the team was re-sampled in each branch, so the spread includes downstream noise; an earlier run of the same decision gave 48, 24 and 113. Even so, one decision showed a spread large enough to be worth crediting.</p>
+</div>
+<div class="wide">
+  <figure class="rise">
+    <div class="fig-title">Figure 5 · Freeze, branch, credit: one fork decision on a spec-to-repo task</div>
+    <div class="scroll">
+    <svg viewBox="0 0 900 290" role="img" aria-label="A running team reaches a fork decision. A barrier holds every agent's next model call and pauses the clock. A snapshot of contexts, worktrees, and harness state is taken. Three alternatives restart from the snapshot: the original decision scored 0.009, resample one scored 0.005, resample two scored 0.716. Leave-one-out credits are minus 0.35, minus 0.36 and plus 0.71.">
+      <defs>
+        <marker id="m3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--muted)"/></marker>
+      </defs>
+      <g font-family="var(--mono)" font-size="10.5" fill="var(--muted)">
+        <text x="30" y="40">team running</text>
+        <line x1="30" y1="60" x2="230" y2="60" stroke="var(--s1)" stroke-width="2"/>
+        <line x1="30" y1="80" x2="230" y2="80" stroke="var(--s1)" stroke-width="2" opacity="0.6"/>
+        <text x="30" y="108">agents a1, a2 …</text>
+      </g>
+      <rect x="235" y="40" width="10" height="60" fill="var(--gold)"/>
+      <text x="240" y="125" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">barrier</text>
+      <text x="240" y="140" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">hold next calls,</text>
+      <text x="240" y="153" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">pause clock</text>
+      <rect x="280" y="45" width="140" height="50" rx="8" fill="var(--surface-2)" stroke="var(--rule)"/>
+      <text x="350" y="66" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-soft)">snapshot</text>
+      <text x="350" y="83" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">contexts · files · harness</text>
+      <path d="M420 70 L455 70" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m3)"/>
+      <path d="M460 70 C480 70 480 190 500 190" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+      <path d="M460 70 C480 70 480 130 500 130" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+      <path d="M460 70 L500 70" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+      <g font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">
+        <text x="505" y="62">a₀ original fork</text>
+        <text x="505" y="122">resample 1</text>
+        <text x="505" y="182">resample 2</text>
+      </g>
+      <line x1="505" y1="72" x2="700" y2="72" stroke="var(--grey)" stroke-width="2"/>
+      <line x1="505" y1="132" x2="700" y2="132" stroke="var(--grey)" stroke-width="2"/>
+      <line x1="505" y1="192" x2="700" y2="192" stroke="var(--s1)" stroke-width="2"/>
+      <g font-family="var(--mono)" font-size="11" fill="var(--ink)">
+        <text x="712" y="76">R = 0.009</text>
+        <text x="712" y="136">R = 0.005</text>
+        <text x="712" y="196" font-weight="700">R = 0.716</text>
+      </g>
+      <g font-family="var(--mono)" font-size="11">
+        <text x="820" y="76" fill="var(--neg)">Â −0.35</text>
+        <text x="820" y="136" fill="var(--neg)">Â −0.36</text>
+        <text x="820" y="196" fill="var(--pos)" font-weight="700">Â +0.71</text>
+      </g>
+      <text x="450" y="250" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">Âⱼ = Rⱼ − mean of the other alternatives · applied only to the decision's own tokens</text>
+      <text x="450" y="270" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">every branch resends a byte-identical decision request; the other agents re-roll stochastically</text>
+    </svg>
+    </div>
+    <figcaption><b>One decision, three futures.</b> On a spec-to-repo task (211 tests), the same fork decision led to 2, 1 or 151 passing tests, with the other agents re-sampled in every branch, so this includes downstream noise. The leave-one-out advantage lands on the decision's own tokens; everything else in the trajectory keeps the team-outcome advantage. An earlier run of the same decision gave 0.227 / 0.114 / 0.536.</figcaption>
+  </figure>
+</div>
+<div class="wrap">
+  <p>Freezing a team means capturing more than text. It includes every agent's context and pending request, each working tree and the container filesystem, the message queues (undelivered messages too), the whiteboard and the timers. The costs that matter:</p>
+  <ul>
+    <li><strong>Freezing is cheap.</strong> The snapshot takes about a second and restoring an agent to its first model call about five. Alternatives start as soon as the snapshot is committed, not when the original trial ends, which in one case was 550 s later.</li>
+    <li><strong>Run alternatives in parallel, each on its own server.</strong> A decision then costs its slowest branch (374 s), not the sum (1,020 s), and a dedicated server per branch raised throughput 52%, partly because that run's contexts were shorter.</li>
+    <li><strong>Route a whole team to one server.</strong> Branches share almost their entire prompt, so prefix-cache hits are 97–98% and computed prefill is 2–3% of prompt tokens. Random routing would have cost 57–114% more prefill.</li>
+    <li><strong>Pick decisions carefully.</strong> Each branch still generated 130–145K tokens, and a FrontierCS branch gave no signal at all because the judge timed out on all three alternatives.</li>
+  </ul>
+  <p>Getting the measurement right took an audit. The first version sampled the original decision from the request built <em>before</em> the freeze and the alternatives from the one rebuilt <em>after</em> restoring, which had one extra resume message. Now every alternative, including the original, restarts from the snapshot and resends a byte-identical request.</p>
 </div>
 
 <hr class="sec">
@@ -902,7 +905,7 @@
 <div class="wrap">
   <ol>
     <li><strong>Agentic solo arm, rebuilt.</strong> The minimal loop is red-teamed and its eval is running on the base model and the step-40 checkpoint. RL starts once those are in, with a go/no-go rule set in advance: by step 10, reward on revisited training tasks must be rising.</li>
-    <li><strong>Single-call restart from step 40</strong>, with an entropy-preserving change that actually acts when there's one update per step, and a larger problem pool.</li>
+    <li><strong>Single-call restart from step 40</strong>, with an entropy-preserving change that acts even with one update per step (Clip-Cov is the candidate). A larger problem pool comes later.</li>
     <li><strong>A short team-RL pilot</strong>, roughly 5–10% of the full budget, with paired solo-vs-team evals at every checkpoint and freeze-and-branch credit on fork, message and submit decisions.</li>
     <li><strong>Several attempts per task on every headline comparison.</strong> Table 1 shows why one isn't enough.</li>
   </ol>
@@ -913,7 +916,7 @@
   <div class="wrap">
     <p class="eyebrow" style="color:var(--accent)">Notes</p>
     <h2>How the numbers were made</h2>
-    <p>The task is the statistical unit. Comparisons are paired over the same problems and seeds, with task-level bootstrap intervals (2,000 draws) or sign tests. Each arm is evaluated in the mode it trains in and compared with its own base model. Eval sets are excluded from training, curriculum selection and checkpoint selection. Infrastructure failures are masked, never scored as zero. The 27B baselines are single attempts and descriptive only.</p>
+    <p>The task is the statistical unit. Comparisons are paired over the same problems and seeds, with task-level bootstrap intervals (2,000 draws) or sign tests. Each arm is evaluated in the mode it trains in and compared with its own base model. Eval sets are excluded from training data and curriculum. Stopping points and the restart checkpoint were chosen from eval curves, and headline numbers are from the last evaluated checkpoint. Infrastructure failures are masked, never scored as zero. The 27B baselines are single attempts and descriptive only.</p>
     <p>Open-source pieces named in this post: <a href="https://github.com/verl-project/verl">verl</a> (RL trainer), <a href="https://github.com/vllm-project/vllm">vLLM</a> (inference), <a href="https://github.com/QwenLM/qwen-code">Qwen Code</a> (agent harness) and Claude Code (the agents that ran the campaign). The issues in §5 are reported as I observed them on my own setup.</p>
     <div class="foot-links">
       <a href="https://arxiv.org/abs/2603.06859">C3 · counterfactual credit</a>
