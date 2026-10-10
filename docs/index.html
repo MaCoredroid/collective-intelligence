@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Collective Intelligence</title>
-<meta name="description" content="Field notes from building on-policy team RL for LLM agents: what an untrained team does with teammates, why the solo control comes first, the agentic arm that didn't learn, the bugs that silently corrupt RL, and how to give credit to one decision inside a running team.">
+<title>Collective Intelligence: Preliminary Results</title>
+<meta name="description" content="Preliminary results toward on-policy team RL for LLM agents: an untrained team has the mechanics of collaboration but not the judgment; single collaboration decisions swing outcomes enough to learn from; the RL stack learns the task; and the agent harness matters more than expected.">
 <link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Collective Intelligence">
-<meta property="og:title" content="Collective Intelligence — Part 1">
-<meta property="og:description" content="Field notes from building on-policy team RL for LLM agents: the untrained team, the solo control, the agentic arm that didn't learn, silent RL bugs, and decision-level credit for a running team.">
+<meta property="og:title" content="Collective Intelligence: Preliminary Results">
+<meta property="og:description" content="Preliminary results toward on-policy team RL for LLM agents: an untrained team has the mechanics of collaboration but not the judgment; single collaboration decisions swing outcomes enough to learn from; the RL stack learns the task; and the agent harness matters more than expected.">
 <meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Collective Intelligence — Part 1">
-<meta name="twitter:description" content="Field notes from building on-policy team RL for LLM agents.">
+<meta name="twitter:title" content="Collective Intelligence: Preliminary Results">
+<meta name="twitter:description" content="Preliminary results toward on-policy team RL for LLM agents: an untrained team has the mechanics of collaboration but not the judgment; single collaboration decisions swing outcomes enough to learn from; the RL stack learns the task; and the agent harness matters more than expected.">
 
 <style>
   :root{
@@ -76,6 +76,13 @@
   .status{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:8px; padding:1.2rem 1.4rem; margin:2.4rem auto; font-size:.98rem; line-height:1.6}
   .status .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:.5rem}
   .status p{margin:.4em 0; color:var(--ink-soft); font-size:1rem}
+  .findings{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--gold); border-radius:8px; padding:1.2rem 1.4rem .6rem; margin:2.4rem auto 0; font-size:1rem; line-height:1.6}
+  .findings .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:.4rem}
+  .findings ol{margin:.2rem 0; padding-left:1.3rem}
+  .findings li{margin:.7em 0; font-size:1rem}
+  .findings a{border-bottom:0}
+  .findings a strong{color:var(--ink)}
+  .findings a:hover strong{color:var(--accent)}
   .sec-head{margin:0 auto 1.6rem; max-width:var(--measure); padding:0 1.4rem}
   .sec-head .eyebrow{color:var(--accent)}
   figure{margin:2.6rem 0; background:var(--surface); border:1px solid var(--rule); border-radius:12px; padding:1.6rem 1.5rem 1.2rem; position:relative}
@@ -133,18 +140,27 @@
 
 <header class="masthead">
   <div class="wrap">
-    <p class="eyebrow">Multi-agent RL &nbsp;·&nbsp; Field notes, part 1</p>
-    <h1>Collective Intelligence</h1>
-    <p class="dek">Can post-training teach one shared policy to work as a team, so that it knows when to fork, what to share, whom to trust and when to stop? Before training a team, I had to learn what an untrained team does, build a solo control that actually learns, and find out how to credit one decision inside a running team. These are the notes from that stretch.</p>
+    <p class="eyebrow">Multi-agent RL &nbsp;·&nbsp; Preliminary results</p>
+    <h1>Collective Intelligence: Preliminary Results</h1>
+    <p class="dek">Can post-training teach one shared policy to work as a team, so that it knows when to fork, what to share, whom to trust and when to stop? Before training any team, the groundwork already shows four things: the collaboration mechanics appear without training but the judgment doesn't, single collaboration decisions move outcomes enough to learn from, the RL stack learns the task, and the harness matters more than I expected.</p>
     <div class="meta-row">
       <span>Policy · Qwen3.5-9B (RL) · Qwen3.8-27B (untrained team baselines)</span>
       <span>Tasks · FrontierSmith → FrontierCS · NL2Repo · KernelBench · Toolathlon · EnterpriseOps-Gym</span>
       <span>Method · GRPO · team-outcome reward · freeze-and-branch credit</span>
     </div>
+    <div class="findings">
+      <span class="lbl">Preliminary findings</span>
+      <ol>
+        <li><a href="#f1"><strong>The mechanics emerge untrained; the judgment doesn't.</strong></a> Given fork, message, whiteboard and submit actions and no roles, the untrained team forked in <span class="num">15 / 116</span> trials, almost all on tasks that split by module and never on tool workflows. It rebuilt a lead-and-workers tree by itself, and its payoff over solo was about zero.</li>
+        <li><a href="#f2"><strong>Single collaboration decisions carry a large, measurable signal.</strong></a> Freezing a running team at one fork and re-running alternatives gave <span class="num">0.009 / 0.005 / 0.716</span> (2, 1 and 151 of 211 tests). Decision-level credit for team RL is feasible: the snapshot takes under a second and a restore about five.</li>
+        <li><a href="#f3"><strong>The RL stack learns the task.</strong></a> Solo single-call GRPO on Qwen3.5-9B went from <span class="num">6.22 → 11.48</span> on FrontierCS's 172 problems by step 40: paired <span class="num">+5.26 [+3.50, +7.30]</span>, with 82 problems better and 18 worse.</li>
+        <li><a href="#f4"><strong>The harness is a first-order variable.</strong></a> The same model and recipe inside a general coding harness learned nothing in 10 steps (<span class="num">−0.02 [−1.01, +0.90]</span>). Inside that harness the model thought for a median of 27 tokens per call, against tens of thousands in single-call mode. Team RL will run on a minimal loop built for the task.</li>
+      </ol>
+    </div>
     <div class="status">
       <span class="lbl">Epistemic status</span>
-      <p><strong>No team has been trained yet.</strong> This post covers the groundwork: the untrained team's behaviour, the experimental design, a solo RL control that works, an agentic solo arm that did not, and the infrastructure for decision-level team credit. Treat the collective-intelligence claims as hypotheses.</p>
-      <p>Every number below is from runs I did, with paired task-level bootstrap intervals where a comparison is made. The single-call run was still training when I wrote this; its later checkpoints will be added when grading finishes.</p>
+      <p><strong>These are preliminary results; no team has been trained yet.</strong> Findings 1 and 2 come from the untrained model. Finding 1 rests on single attempts per task, which vary by up to 0.25, so it describes behaviour rather than establishing an effect. Finding 2 is a smoke test on a handful of decisions. Whether training improves collaboration is the open question, and the design for answering it is in <a href="#design">§4</a>.</p>
+      <p>Comparisons are paired over the same problems, with task-level bootstrap intervals. The single-call run was still training when I wrote this; its later checkpoints will be added when grading finishes.</p>
     </div>
   </div>
 </header>
@@ -152,7 +168,7 @@
 <hr class="sec">
 
 <!-- ================= 01 — THE UNTRAINED TEAM ================= -->
-<div class="sec-head"><p class="eyebrow">01 · The starting point</p><h2>Give a model teammates, and it mostly works alone</h2></div>
+<div class="sec-head" id="f1"><p class="eyebrow">01 · Finding 1 · The untrained team</p><h2>The team has the mechanics of collaboration, but not the judgment</h2></div>
 <div class="wrap">
   <p>The first experiment needed no training. I took a coding-agent harness, gave each agent a few new actions (<strong>fork</strong> a copy of itself, <strong>message</strong> a peer, write to a shared <strong>whiteboard</strong>, read a peer's recent actions, and <strong>submit</strong> for the whole team) and told the root agent one sentence: <em>you are one of up to N agents working on this task at the same time.</em> No roles and no manager. Then I ran Qwen3.8-27B on five task families and counted how often it used any of this.</p>
 </div>
@@ -181,7 +197,7 @@
 <hr class="sec">
 
 <!-- ================= 02 — NOT JUST TEST-TIME COMPUTE ================= -->
-<div class="sec-head"><p class="eyebrow">02 · The claim</p><h2>A team is not just more samples</h2></div>
+<div class="sec-head"><p class="eyebrow">02 · What we are testing</p><h2>A team is not just more samples</h2></div>
 <div class="wrap">
   <p>Any multi-agent result invites the obvious objection: you spent more inference compute. A team does use more test-time compute, so the claim can't be that it avoids it. The claim is that post-training can teach a policy to <strong>allocate and connect</strong> that compute differently.</p>
 </div>
@@ -250,8 +266,81 @@
 
 <hr class="sec">
 
+<!-- ================= 08 — DECISION CREDIT ================= -->
+<div class="sec-head" id="f2"><p class="eyebrow">03 · Finding 2 · Decision-level credit</p><h2>One fork decision swung the outcome from 0.01 to 0.72</h2></div>
+<div class="wrap">
+  <p>A team-outcome reward says how the whole trial went. It says almost nothing about whether one particular fork, message or early submit helped. With six agents, hundreds of calls and an hour of work, that credit-assignment problem is the core difficulty of team RL.</p>
+  <p>The approach I took comes from counterfactual credit assignment: <strong>freeze the entire team just before one decision, sample alternative decisions from the same state, run each alternative to the end, and compare outcomes.</strong> Prior work does this for fixed pipelines of 3–4B models on single-turn math and code, where "the text history is the whole state" (C3), and for single agents (SPARK, Causal Agent Replay). A team of coding agents adds things those settings don't have. Tools have side effects on files, processes and services; several agents run at once; trials last hours; and each context can be 262K tokens.</p>
+</div>
+
+<div class="wide">
+  <figure class="rise">
+    <div class="fig-title">Figure 2 · Freeze, branch, credit: one fork decision on a spec-to-repo task</div>
+    <div class="scroll">
+    <svg viewBox="0 0 900 290" role="img" aria-label="A running team reaches a fork decision. A barrier holds every agent's next model call and pauses the clock. A snapshot of contexts, worktrees, and harness state is taken. Three alternatives restart from the snapshot: the original decision scored 0.009, resample one scored 0.005, resample two scored 0.716. Leave-one-out credits are minus 0.35, minus 0.36 and plus 0.71.">
+      <defs>
+        <marker id="m3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--muted)"/></marker>
+      </defs>
+      <g font-family="var(--mono)" font-size="10.5" fill="var(--muted)">
+        <text x="30" y="40">team running</text>
+        <line x1="30" y1="60" x2="230" y2="60" stroke="var(--s1)" stroke-width="2"/>
+        <line x1="30" y1="80" x2="230" y2="80" stroke="var(--s1)" stroke-width="2" opacity="0.6"/>
+        <text x="30" y="108">agents a1, a2 …</text>
+      </g>
+      <rect x="235" y="40" width="10" height="60" fill="var(--gold)"/>
+      <text x="240" y="125" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">barrier</text>
+      <text x="240" y="140" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">hold next calls,</text>
+      <text x="240" y="153" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">pause clock</text>
+      <rect x="280" y="45" width="140" height="50" rx="8" fill="var(--surface-2)" stroke="var(--rule)"/>
+      <text x="350" y="66" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-soft)">snapshot</text>
+      <text x="350" y="83" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">contexts · files · harness</text>
+      <path d="M420 70 L455 70" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m3)"/>
+      <path d="M460 70 C480 70 480 190 500 190" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+      <path d="M460 70 C480 70 480 130 500 130" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+      <path d="M460 70 L500 70" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+      <g font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">
+        <text x="505" y="62">a₀ original fork</text>
+        <text x="505" y="122">resample 1</text>
+        <text x="505" y="182">resample 2</text>
+      </g>
+      <line x1="505" y1="72" x2="700" y2="72" stroke="var(--grey)" stroke-width="2"/>
+      <line x1="505" y1="132" x2="700" y2="132" stroke="var(--grey)" stroke-width="2"/>
+      <line x1="505" y1="192" x2="700" y2="192" stroke="var(--s1)" stroke-width="2"/>
+      <g font-family="var(--mono)" font-size="11" fill="var(--ink)">
+        <text x="712" y="76">R = 0.009</text>
+        <text x="712" y="136">R = 0.005</text>
+        <text x="712" y="196" font-weight="700">R = 0.716</text>
+      </g>
+      <g font-family="var(--mono)" font-size="11">
+        <text x="820" y="76" fill="var(--neg)">Â −0.35</text>
+        <text x="820" y="136" fill="var(--neg)">Â −0.36</text>
+        <text x="820" y="196" fill="var(--pos)" font-weight="700">Â +0.71</text>
+      </g>
+      <text x="450" y="250" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">Âⱼ = Rⱼ − mean of the other alternatives · applied only to the decision's own tokens</text>
+      <text x="450" y="270" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">every branch resends a byte-identical decision request; the other agents re-roll stochastically</text>
+    </svg>
+    </div>
+    <figcaption><b>One decision, three futures.</b> On a spec-to-repo task (211 tests), the same fork decision led to 2, 1 or 151 passing tests depending on what was sampled at that one point. The leave-one-out advantage lands on the decision's own tokens; everything else in the trajectory keeps the team-outcome advantage. A second fork decision gave 0.227 / 0.114 / 0.536, so credits of −0.10 / −0.27 / +0.37.</figcaption>
+  </figure>
+</div>
+
+<div class="wrap">
+  <p>The hard part is defining <strong>state</strong> for a running team. It includes:</p>
+  <ul>
+    <li>every agent's context, plus the exact request it was about to send;</li>
+    <li>each agent's worktree and the container filesystem;</li>
+    <li>the harness: message queues (including undelivered messages), the whiteboard, timers and budgets;</li>
+    <li>any service state such as databases.</li>
+  </ul>
+  <p>At a chosen decision, a gateway in front of the model holds that agent's request and every other agent's next request, lets running tool calls finish, and pauses the trial clock. The snapshot takes under a second and a restore about five. Alternatives start as soon as the snapshot is committed and run in parallel, so a decision costs the time of its slowest branch, not the sum. Because each branch's prompts are mostly the previous call's prompt, 97–98% of prompt tokens come from the prefix cache.</p>
+  <p>The first audit of this machinery found a subtle bias. The original decision had been sampled from the request the agent built <em>before</em> the freeze, but the alternatives were sampled from the request it rebuilt <em>after</em> restoring, which had one extra resume message and a re-estimated output budget. Same state, different conditioning. The fix is symmetry: <strong>every</strong> alternative, including the original, restarts from the snapshot and resends a byte-identical decision request. Background processes are not restored in this version; the resume message lists them, identically in every branch.</p>
+  <p>Branching isn't free. Each branch of a spec-to-repo decision generated 130–145K tokens, and branching near the start re-runs most of a trial. And a branch only helps if outcomes differ. On an algorithm task, a late <code>submit</code> decision gave three identical zeros, so there was nothing to learn from that decision. The plan is to spend 20–30% of rollouts on branches, only at collective actions (fork, message, submit, merge), and later at high-uncertainty calls flagged by the gateway's log-probs.</p>
+</div>
+
+<hr class="sec">
+
 <!-- ================= 03 — DESIGN ================= -->
-<div class="sec-head"><p class="eyebrow">03 · The design</p><h2>Separate a better model from a better team</h2></div>
+<div class="sec-head" id="design"><p class="eyebrow">04 · The design</p><h2>Separate a better model from a better team</h2></div>
 <div class="wrap">
   <p>If team RL improves scores, the cheap explanation is that the model just got better at the task. The design is built to rule that out. Training happens in two stages, so that learning the task and learning to collaborate aren't confounded:</p>
   <div class="eq">base model M0
@@ -275,7 +364,7 @@
 <hr class="sec">
 
 <!-- ================= 04 — SOLO CONTROL ================= -->
-<div class="sec-head"><p class="eyebrow">04 · Stage A</p><h2>Build the solo control first, and make sure it learns</h2></div>
+<div class="sec-head" id="f3"><p class="eyebrow">05 · Finding 3 · The solo control</p><h2>The RL stack learns: 6.22 → 11.48 on FrontierCS in 40 steps</h2></div>
 <div class="wrap">
   <p>A negative team result means nothing if the RL stack can't improve a single agent. So the first gate was a solo run: Qwen3.5-9B, single-turn GRPO on 200 FrontierSmith training problems, evaluated on FrontierCS's 172 algorithmic problems with the benchmark's own partial-credit judge (0–100). Ten FrontierCS problems that overlap the training set are excluded from every eval.</p>
   <h3>A 16K response budget starves GRPO</h3>
@@ -317,7 +406,7 @@
 
 <div class="wide">
   <figure class="rise" id="fig2">
-    <div class="fig-title">Figure 2 · Single-call GRPO on FrontierCS (172 problems), Avg@5 with 95% CI</div>
+    <div class="fig-title">Figure 3 · Single-call GRPO on FrontierCS (172 problems), Avg@5 with 95% CI</div>
     <div class="scroll">
     <svg viewBox="0 0 900 330" role="img" aria-label="Avg@5 on 172 FrontierCS problems: base 6.22, step 10 7.42, step 20 8.82, step 40 11.48. The 95 percent interval at step 40 is 8.71 to 14.77. Steps 50 to 100 are still training.">
       <g font-family="var(--mono)" font-size="11" fill="var(--muted)">
@@ -373,7 +462,7 @@
 <hr class="sec">
 
 <!-- ================= 05 — THE AGENTIC ARM ================= -->
-<div class="sec-head"><p class="eyebrow">05 · Stage B</p><h2>The agentic arm that didn't learn</h2></div>
+<div class="sec-head" id="f4"><p class="eyebrow">06 · Finding 4 · The harness</p><h2>Inside a general-purpose harness, the same recipe learned nothing</h2></div>
 <div class="wrap">
   <p>The team arm has to run inside an agent harness, with tools, compaction and a clock. So the next step was the same task, same judge and same problems, but trained as a <strong>solo agent in a coding harness</strong> (Qwen Code): up to a 262K context window, many short model calls per trial, and deadlines of 15, 20 or 30 minutes sampled per group.</p>
   <details>
@@ -394,7 +483,7 @@
 
 <div class="wide">
   <figure class="rise">
-    <div class="fig-title">Figure 3 · Paired gain over each arm's own base, same 40 problems, same judge</div>
+    <div class="fig-title">Figure 4 · Paired gain over each arm's own base, same 40 problems, same judge</div>
     <div style="margin:-.3rem 0 .6rem"><span class="key"><i style="background:var(--s1)"></i>single call</span><span class="key"><i style="background:var(--s2)"></i>agentic harness</span></div>
     <div class="scroll">
     <svg viewBox="0 0 900 230" role="img" aria-label="Paired difference versus base on 40 problems. Single call step 10: plus 1.83, interval 0.62 to 3.32. Single call step 20: plus 1.67, interval 0.39 to 3.43. Agentic harness step 10: minus 0.02, interval minus 1.01 to 0.90.">
@@ -463,7 +552,7 @@
 <hr class="sec">
 
 <!-- ================= 06 — SILENT CORRUPTION ================= -->
-<div class="sec-head"><p class="eyebrow">06 · Plumbing</p><h2>Seven things that silently corrupt RL</h2></div>
+<div class="sec-head"><p class="eyebrow">07 · Plumbing</p><h2>Seven things that silently corrupt RL</h2></div>
 <div class="wrap">
   <p>None of these crashed a run. Each one either fed the optimizer a wrong signal or would have turned a real result into noise. They're listed roughly in order of how long they would have stayed hidden.</p>
 
@@ -497,7 +586,7 @@
 <hr class="sec">
 
 <!-- ================= 07 — REWARD HACKS ================= -->
-<div class="sec-head"><p class="eyebrow">07 · Graders</p><h2>Red-team the grader before the policy does</h2></div>
+<div class="sec-head"><p class="eyebrow">08 · Graders</p><h2>Red-team the grader before the policy does</h2></div>
 <div class="wrap">
   <p>Every grader I built or adopted got an adversarial audit before it was allowed to produce reward. Every audit found something. No policy found these first, but an RL policy optimising against the grader eventually would.</p>
   <table class="ledger" aria-label="Grader vulnerabilities found by red-teaming">
@@ -516,79 +605,6 @@
 
 <hr class="sec">
 
-<!-- ================= 08 — DECISION CREDIT ================= -->
-<div class="sec-head"><p class="eyebrow">08 · Credit</p><h2>What was one fork worth? Freeze the team and find out</h2></div>
-<div class="wrap">
-  <p>A team-outcome reward says how the whole trial went. It says almost nothing about whether one particular fork, message or early submit helped. With six agents, hundreds of calls and an hour of work, that credit-assignment problem is the core difficulty of team RL.</p>
-  <p>The approach I took comes from counterfactual credit assignment: <strong>freeze the entire team just before one decision, sample alternative decisions from the same state, run each alternative to the end, and compare outcomes.</strong> Prior work does this for fixed pipelines of 3–4B models on single-turn math and code, where "the text history is the whole state" (C3), and for single agents (SPARK, Causal Agent Replay). A team of coding agents adds things those settings don't have. Tools have side effects on files, processes and services; several agents run at once; trials last hours; and each context can be 262K tokens.</p>
-</div>
-
-<div class="wide">
-  <figure class="rise">
-    <div class="fig-title">Figure 4 · Freeze, branch, credit: one fork decision on a spec-to-repo task</div>
-    <div class="scroll">
-    <svg viewBox="0 0 900 290" role="img" aria-label="A running team reaches a fork decision. A barrier holds every agent's next model call and pauses the clock. A snapshot of contexts, worktrees, and harness state is taken. Three alternatives restart from the snapshot: the original decision scored 0.009, resample one scored 0.005, resample two scored 0.716. Leave-one-out credits are minus 0.35, minus 0.36 and plus 0.71.">
-      <defs>
-        <marker id="m3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--muted)"/></marker>
-      </defs>
-      <g font-family="var(--mono)" font-size="10.5" fill="var(--muted)">
-        <text x="30" y="40">team running</text>
-        <line x1="30" y1="60" x2="230" y2="60" stroke="var(--s1)" stroke-width="2"/>
-        <line x1="30" y1="80" x2="230" y2="80" stroke="var(--s1)" stroke-width="2" opacity="0.6"/>
-        <text x="30" y="108">agents a1, a2 …</text>
-      </g>
-      <rect x="235" y="40" width="10" height="60" fill="var(--gold)"/>
-      <text x="240" y="125" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">barrier</text>
-      <text x="240" y="140" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">hold next calls,</text>
-      <text x="240" y="153" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">pause clock</text>
-      <rect x="280" y="45" width="140" height="50" rx="8" fill="var(--surface-2)" stroke="var(--rule)"/>
-      <text x="350" y="66" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-soft)">snapshot</text>
-      <text x="350" y="83" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">contexts · files · harness</text>
-      <path d="M420 70 L455 70" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m3)"/>
-      <path d="M460 70 C480 70 480 190 500 190" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
-      <path d="M460 70 C480 70 480 130 500 130" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
-      <path d="M460 70 L500 70" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
-      <g font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">
-        <text x="505" y="62">a₀ original fork</text>
-        <text x="505" y="122">resample 1</text>
-        <text x="505" y="182">resample 2</text>
-      </g>
-      <line x1="505" y1="72" x2="700" y2="72" stroke="var(--grey)" stroke-width="2"/>
-      <line x1="505" y1="132" x2="700" y2="132" stroke="var(--grey)" stroke-width="2"/>
-      <line x1="505" y1="192" x2="700" y2="192" stroke="var(--s1)" stroke-width="2"/>
-      <g font-family="var(--mono)" font-size="11" fill="var(--ink)">
-        <text x="712" y="76">R = 0.009</text>
-        <text x="712" y="136">R = 0.005</text>
-        <text x="712" y="196" font-weight="700">R = 0.716</text>
-      </g>
-      <g font-family="var(--mono)" font-size="11">
-        <text x="820" y="76" fill="var(--neg)">Â −0.35</text>
-        <text x="820" y="136" fill="var(--neg)">Â −0.36</text>
-        <text x="820" y="196" fill="var(--pos)" font-weight="700">Â +0.71</text>
-      </g>
-      <text x="450" y="250" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">Âⱼ = Rⱼ − mean of the other alternatives · applied only to the decision's own tokens</text>
-      <text x="450" y="270" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">every branch resends a byte-identical decision request; the other agents re-roll stochastically</text>
-    </svg>
-    </div>
-    <figcaption><b>One decision, three futures.</b> On a spec-to-repo task (211 tests), the same fork decision led to 2, 1 or 151 passing tests depending on what was sampled at that one point. The leave-one-out advantage lands on the decision's own tokens; everything else in the trajectory keeps the team-outcome advantage. A second fork decision gave 0.227 / 0.114 / 0.536, so credits of −0.10 / −0.27 / +0.37.</figcaption>
-  </figure>
-</div>
-
-<div class="wrap">
-  <p>The hard part is defining <strong>state</strong> for a running team. It includes:</p>
-  <ul>
-    <li>every agent's context, plus the exact request it was about to send;</li>
-    <li>each agent's worktree and the container filesystem;</li>
-    <li>the harness: message queues (including undelivered messages), the whiteboard, timers and budgets;</li>
-    <li>any service state such as databases.</li>
-  </ul>
-  <p>At a chosen decision, a gateway in front of the model holds that agent's request and every other agent's next request, lets running tool calls finish, and pauses the trial clock. The snapshot takes under a second and a restore about five. Alternatives start as soon as the snapshot is committed and run in parallel, so a decision costs the time of its slowest branch, not the sum. Because each branch's prompts are mostly the previous call's prompt, 97–98% of prompt tokens come from the prefix cache.</p>
-  <p>The first audit of this machinery found a subtle bias. The original decision had been sampled from the request the agent built <em>before</em> the freeze, but the alternatives were sampled from the request it rebuilt <em>after</em> restoring, which had one extra resume message and a re-estimated output budget. Same state, different conditioning. The fix is symmetry: <strong>every</strong> alternative, including the original, restarts from the snapshot and resends a byte-identical decision request. Background processes are not restored in this version; the resume message lists them, identically in every branch.</p>
-  <p>Branching isn't free. Each branch of a spec-to-repo decision generated 130–145K tokens, and branching near the start re-runs most of a trial. And a branch only helps if outcomes differ. On an algorithm task, a late <code>submit</code> decision gave three identical zeros, so there was nothing to learn from that decision. The plan is to spend 20–30% of rollouts on branches, only at collective actions (fork, message, submit, merge), and later at high-uncertainty calls flagged by the gateway's log-probs.</p>
-</div>
-
-<hr class="sec">
-
 <!-- ================= 09 — WORKING WITH AGENTS ================= -->
 <div class="sec-head"><p class="eyebrow">09 · Process</p><h2>Running an RL campaign with a team of AI agents</h2></div>
 <div class="wrap">
@@ -598,9 +614,9 @@
     <li><strong>Pre-flight from artifacts, not summaries.</strong> The checklist is checked against the actual files and logs, not against an agent's description of them. That is how the all-zero 16K run was caught in pre-flight, before it burned real compute.</li>
     <li><strong>Speed first, then go.</strong> Push serving and training speed until the next improvement is under about 5%, without changing the recipe, then launch.</li>
     <li><strong>No pointless ablations.</strong> Use one best-known recipe per arm. The first steps of the real run are the pre-flight.</li>
-    <li><strong>Red-team every build, then read the diff.</strong> Every audit found a real blocker, and the reward hacks in §7 were all caught this way.</li>
+    <li><strong>Red-team every build, then read the diff.</strong> Every audit found a real blocker, and the reward hacks in §8 were all caught this way.</li>
     <li><strong>Recount every claim.</strong> The coordinator withdrew or corrected about fifteen of its own claims over four days after recounting against data, including a KL diagnosis, an overstated drop rate, and the expected benefit of a design change. That's the system working, not failing.</li>
-    <li><strong>Read trajectories.</strong> The 27-token thinking and the self-deleted solutions in §5 came from reading, not from metrics.</li>
+    <li><strong>Read trajectories.</strong> The 27-token thinking and the self-deleted solutions in §6 came from reading, not from metrics.</li>
     <li><strong>Agents stall quietly.</strong> Background agents can sit for hours on a prompt waiting for approval. Give them scripts instead of long inline commands, and watch when their output files last changed.</li>
   </ul>
 </div>
@@ -625,7 +641,7 @@
     <li>Does decision-level credit from freeze-and-branch pay for its tokens, compared with simply running more full team rollouts?</li>
     <li>Agents that share one inference server slow each other down, so wall-clock deadlines make team rewards depend on server load. A per-agent <strong>virtual clock</strong> that charges each call and tool a fixed price would make "who finished first" and critical-path cost well defined. For the solo arm, deadlines bound only about 3% of training trials, so the clock is deferred until the team arm needs it.</li>
   </ul>
-  <p>Part 2 will report whether the team learns any of this.</p>
+  <p>The next post will report whether the team learns any of this.</p>
 </div>
 
 <footer>
@@ -633,13 +649,13 @@
     <p class="eyebrow" style="color:var(--accent)">Notes</p>
     <h2>How the numbers were made</h2>
     <p>The task is the statistical unit. Comparisons are paired over the same problems and seeds, with task-level bootstrap intervals (2,000 draws). Each arm is evaluated in the mode it trains in and compared with its own base model. Eval sets are excluded from training, curriculum selection and checkpoint selection. Infrastructure failures are masked, never scored as zero. Single-attempt results on the untrained team are reported as descriptive only.</p>
-    <p>Open-source pieces named in this post: <a href="https://github.com/volcengine/verl">verl</a> (RL trainer), <a href="https://github.com/vllm-project/vllm">vLLM</a> (inference), and <a href="https://github.com/QwenLM/qwen-code">Qwen Code</a> (agent harness). The issues described in §6 are reported here as I observed them on my setup, and are being raised upstream.</p>
+    <p>Open-source pieces named in this post: <a href="https://github.com/volcengine/verl">verl</a> (RL trainer), <a href="https://github.com/vllm-project/vllm">vLLM</a> (inference), and <a href="https://github.com/QwenLM/qwen-code">Qwen Code</a> (agent harness). The issues described in §7 are reported here as I observed them on my setup, and are being raised upstream.</p>
     <div class="foot-links">
       <a href="https://arxiv.org/abs/2603.06859">C3 · counterfactual credit</a>
       <a href="https://arxiv.org/abs/2601.20209">SPARK · key-state branching</a>
       <a href="https://arxiv.org/abs/2606.08275">Causal Agent Replay</a>
     </div>
-    <p style="margin-top:2rem;font-family:var(--mono);font-size:.74rem;color:var(--muted)">Collective Intelligence, part 1. Snapshot of work through October 9, 2026; the single-call run was still training, and later checkpoints will be added when graded.</p>
+    <p style="margin-top:2rem;font-family:var(--mono);font-size:.74rem;color:var(--muted)">Collective Intelligence: preliminary results. Snapshot of work through October 9, 2026; the single-call run was still training, and later checkpoints will be added when graded.</p>
   </div>
 </footer>
 
