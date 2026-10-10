@@ -174,98 +174,171 @@
 
 <div class="wide">
   <figure>
-    <div class="fig-title">Figure 1 · Qwen3.8-27B by harness arm, mean score per family</div>
-    <div style="margin:-.3rem 0 .6rem"><span class="key"><i style="background:var(--s1)"></i>solo</span><span class="key"><i style="background:var(--s2)"></i>collective v2 (my harness)</span><span class="key"><i style="background:var(--muted)"></i>subagents · team · collective v1 · v1 + submit</span></div>
+    <div class="fig-title">Figure 1 · Qwen3.8-27B: mean score by harness arm, one panel per task family</div>
+    <div style="margin:-.3rem 0 .6rem"><span class="key"><i style="background:var(--s1)"></i>solo (vertical line = solo score)</span><span class="key"><i style="background:var(--s2)"></i>my collective harness, v2</span><span class="key"><i style="background:var(--muted)"></i>other arms</span></div>
     <div class="scroll">
-      <svg viewBox="0 0 900 368" role="img" aria-label="Dot plot of 27B mean score per task family for six harness arms; solo and collective v2 highlighted; arms overlap within noise in every family.">
-      <line x1="230.0" y1="26" x2="230.0" y2="318" stroke="var(--rule)"/>
-      <text x="230.0" y="334" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">0.0</text>
-      <line x1="387.5" y1="26" x2="387.5" y2="318" stroke="var(--rule)"/>
-      <text x="387.5" y="334" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">0.2</text>
-      <line x1="545.0" y1="26" x2="545.0" y2="318" stroke="var(--rule)"/>
-      <text x="545.0" y="334" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">0.4</text>
-      <line x1="702.5" y1="26" x2="702.5" y2="318" stroke="var(--rule)"/>
-      <text x="702.5" y="334" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">0.6</text>
-      <line x1="860.0" y1="26" x2="860.0" y2="318" stroke="var(--rule)"/>
-      <text x="860.0" y="334" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">0.8</text>
-      <text x="545.0" y="354" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">mean score (one attempt per task)</text>
-      <text x="20" y="54" font-family="var(--mono)" font-size="11.5" fill="var(--ink-soft)">Toolathlon (8)</text>
-      <line x1="623.8" y1="50" x2="820.6" y2="50" stroke="var(--grey)" stroke-width="1.5"/>
-      <circle cx="623.8" cy="43.1" r="5.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="623.8" cy="43.1" r="11" fill="transparent" tabindex="0" data-tip="Toolathlon · Solo: 0.500"/>
-      <circle cx="623.8" cy="45.9" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="623.8" cy="45.9" r="11" fill="transparent" tabindex="0" data-tip="Toolathlon · Subagents: 0.500"/>
-      <circle cx="722.2" cy="48.6" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="722.2" cy="48.6" r="11" fill="transparent" tabindex="0" data-tip="Toolathlon · Team: 0.625"/>
-      <circle cx="820.6" cy="51.4" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="820.6" cy="51.4" r="11" fill="transparent" tabindex="0" data-tip="Toolathlon · Collective v1: 0.750"/>
-      <circle cx="722.2" cy="54.1" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="722.2" cy="54.1" r="11" fill="transparent" tabindex="0" data-tip="Toolathlon · v1 + submit: 0.625"/>
-      <circle cx="623.8" cy="56.9" r="5.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="623.8" cy="56.9" r="11" fill="transparent" tabindex="0" data-tip="Toolathlon · Collective v2: 0.500"/>
-      <text x="20" y="102" font-family="var(--mono)" font-size="11.5" fill="var(--ink-soft)">EnterpriseOps-Gym (16)</text>
-      <line x1="475.7" y1="98" x2="623.8" y2="98" stroke="var(--grey)" stroke-width="1.5"/>
-      <circle cx="475.7" cy="91.1" r="5.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="475.7" cy="91.1" r="11" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Solo: 0.312"/>
-      <circle cx="623.8" cy="93.9" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="623.8" cy="93.9" r="11" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Subagents: 0.500"/>
-      <circle cx="623.8" cy="96.6" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="623.8" cy="96.6" r="11" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Team: 0.500"/>
-      <circle cx="623.8" cy="99.4" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="623.8" cy="99.4" r="11" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Collective v1: 0.500"/>
-      <circle cx="574.9" cy="102.1" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="574.9" cy="102.1" r="11" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · v1 + submit: 0.438"/>
-      <circle cx="475.7" cy="104.9" r="5.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="475.7" cy="104.9" r="11" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Collective v2: 0.312"/>
-      <text x="20" y="150" font-family="var(--mono)" font-size="11.5" fill="var(--ink-soft)">FrontierCS 1 h (40)</text>
-      <line x1="378.8" y1="146" x2="436.3" y2="146" stroke="var(--grey)" stroke-width="1.5"/>
-      <circle cx="399.3" cy="139.1" r="5.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="399.3" cy="139.1" r="11" fill="transparent" tabindex="0" data-tip="FrontierCS 1 h · Solo: 0.215"/>
-      <circle cx="436.3" cy="141.9" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="436.3" cy="141.9" r="11" fill="transparent" tabindex="0" data-tip="FrontierCS 1 h · Subagents: 0.262"/>
-      <circle cx="378.8" cy="144.6" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="378.8" cy="144.6" r="11" fill="transparent" tabindex="0" data-tip="FrontierCS 1 h · Team: 0.189"/>
-      <circle cx="381.2" cy="147.4" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="381.2" cy="147.4" r="11" fill="transparent" tabindex="0" data-tip="FrontierCS 1 h · Collective v1: 0.192"/>
-      <circle cx="417.4" cy="150.1" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="417.4" cy="150.1" r="11" fill="transparent" tabindex="0" data-tip="FrontierCS 1 h · v1 + submit: 0.238"/>
-      <circle cx="413.5" cy="152.9" r="5.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="413.5" cy="152.9" r="11" fill="transparent" tabindex="0" data-tip="FrontierCS 1 h · Collective v2: 0.233"/>
-      <text x="20" y="198" font-family="var(--mono)" font-size="11.5" fill="var(--ink-soft)">FrontierCS 3 h (20)</text>
-      <line x1="407.2" y1="194" x2="473.3" y2="194" stroke="var(--grey)" stroke-width="1.5"/>
-      <circle cx="427.7" cy="187.1" r="5.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="427.7" cy="187.1" r="11" fill="transparent" tabindex="0" data-tip="FrontierCS 3 h · Solo: 0.251"/>
-      <circle cx="407.2" cy="192.6" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="407.2" cy="192.6" r="11" fill="transparent" tabindex="0" data-tip="FrontierCS 3 h · Team: 0.225"/>
-      <circle cx="417.4" cy="198.1" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="417.4" cy="198.1" r="11" fill="transparent" tabindex="0" data-tip="FrontierCS 3 h · v1 + submit: 0.238"/>
-      <circle cx="473.3" cy="200.9" r="5.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="473.3" cy="200.9" r="11" fill="transparent" tabindex="0" data-tip="FrontierCS 3 h · Collective v2: 0.309"/>
-      <text x="20" y="246" font-family="var(--mono)" font-size="11.5" fill="var(--ink-soft)">NL2Repo (22)</text>
-      <line x1="563.1" y1="242" x2="596.2" y2="242" stroke="var(--grey)" stroke-width="1.5"/>
-      <circle cx="587.5" cy="235.1" r="5.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="587.5" cy="235.1" r="11" fill="transparent" tabindex="0" data-tip="NL2Repo · Solo: 0.454"/>
-      <circle cx="572.6" cy="237.9" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="572.6" cy="237.9" r="11" fill="transparent" tabindex="0" data-tip="NL2Repo · Subagents: 0.435"/>
-      <circle cx="563.1" cy="240.6" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="563.1" cy="240.6" r="11" fill="transparent" tabindex="0" data-tip="NL2Repo · Team: 0.423"/>
-      <circle cx="595.4" cy="246.1" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="595.4" cy="246.1" r="11" fill="transparent" tabindex="0" data-tip="NL2Repo · v1 + submit: 0.464"/>
-      <circle cx="596.2" cy="248.9" r="5.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="596.2" cy="248.9" r="11" fill="transparent" tabindex="0" data-tip="NL2Repo · Collective v2: 0.465"/>
-      <text x="20" y="294" font-family="var(--mono)" font-size="11.5" fill="var(--ink-soft)">KernelBench fast_1 (10)</text>
-      <line x1="466.2" y1="290" x2="781.2" y2="290" stroke="var(--grey)" stroke-width="1.5"/>
-      <circle cx="702.5" cy="283.1" r="5.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="702.5" cy="283.1" r="11" fill="transparent" tabindex="0" data-tip="KernelBench fast_1 · Solo: 0.600"/>
-      <circle cx="466.2" cy="285.9" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="466.2" cy="285.9" r="11" fill="transparent" tabindex="0" data-tip="KernelBench fast_1 · Subagents: 0.300"/>
-      <circle cx="781.2" cy="288.6" r="4.5" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="781.2" cy="288.6" r="11" fill="transparent" tabindex="0" data-tip="KernelBench fast_1 · Team: 0.700"/>
-      <circle cx="702.5" cy="296.9" r="5.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
-      <circle cx="702.5" cy="296.9" r="11" fill="transparent" tabindex="0" data-tip="KernelBench fast_1 · Collective v2: 0.600"/>
+      <svg viewBox="0 0 900 480" role="img" aria-label="Six small panels, one per task family, each with one bar per harness arm and a line at the solo score. In every family the arms are close to solo.">
+      <text x="15" y="24" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">Toolathlon</text>
+      <text x="285" y="24" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">8 tasks</text>
+      <line x1="115" y1="34" x2="115" y2="188" stroke="var(--rule)"/>
+      <text x="107" y="49" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
+      <path d="M115.0,38.0 h80.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-80.4 z" fill="var(--s1)"/>
+      <text x="204.4" y="49" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.500</text>
+      <rect x="115" y="34" width="180" height="24" fill="transparent" tabindex="0" data-tip="Toolathlon · Solo: 0.500"/>
+      <text x="107" y="75" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
+      <path d="M115.0,64.0 h80.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-80.4 z" fill="var(--muted)"/>
+      <text x="204.4" y="75" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.500</text>
+      <rect x="115" y="60" width="180" height="24" fill="transparent" tabindex="0" data-tip="Toolathlon · Subagents: 0.500"/>
+      <text x="107" y="101" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
+      <path d="M115.0,90.0 h101.5 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-101.5 z" fill="var(--muted)"/>
+      <text x="225.5" y="101" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.625</text>
+      <rect x="115" y="86" width="180" height="24" fill="transparent" tabindex="0" data-tip="Toolathlon · Team: 0.625"/>
+      <text x="107" y="127" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
+      <path d="M115.0,116.0 h122.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-122.6 z" fill="var(--muted)"/>
+      <text x="246.6" y="127" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.750</text>
+      <rect x="115" y="112" width="180" height="24" fill="transparent" tabindex="0" data-tip="Toolathlon · Collective v1: 0.750"/>
+      <text x="107" y="153" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
+      <path d="M115.0,142.0 h101.5 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-101.5 z" fill="var(--muted)"/>
+      <text x="225.5" y="153" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.625</text>
+      <rect x="115" y="138" width="180" height="24" fill="transparent" tabindex="0" data-tip="Toolathlon · v1 + submit: 0.625"/>
+      <text x="107" y="179" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
+      <path d="M115.0,168.0 h80.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-80.4 z" fill="var(--s2)"/>
+      <text x="204.4" y="179" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.500</text>
+      <rect x="115" y="164" width="180" height="24" fill="transparent" tabindex="0" data-tip="Toolathlon · Collective v2: 0.500"/>
+      <line x1="199.4" y1="32" x2="199.4" y2="190" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
+      <text x="310" y="24" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">EnterpriseOps-Gym</text>
+      <text x="580" y="24" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">16 tasks</text>
+      <line x1="410" y1="34" x2="410" y2="188" stroke="var(--rule)"/>
+      <text x="402" y="49" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
+      <path d="M410.0,38.0 h48.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-48.6 z" fill="var(--s1)"/>
+      <text x="467.6" y="49" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.312</text>
+      <rect x="410" y="34" width="180" height="24" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Solo: 0.312"/>
+      <text x="402" y="75" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
+      <path d="M410.0,64.0 h80.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-80.4 z" fill="var(--muted)"/>
+      <text x="499.4" y="75" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.500</text>
+      <rect x="410" y="60" width="180" height="24" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Subagents: 0.500"/>
+      <text x="402" y="101" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
+      <path d="M410.0,90.0 h80.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-80.4 z" fill="var(--muted)"/>
+      <text x="499.4" y="101" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.500</text>
+      <rect x="410" y="86" width="180" height="24" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Team: 0.500"/>
+      <text x="402" y="127" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
+      <path d="M410.0,116.0 h80.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-80.4 z" fill="var(--muted)"/>
+      <text x="499.4" y="127" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.500</text>
+      <rect x="410" y="112" width="180" height="24" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Collective v1: 0.500"/>
+      <text x="402" y="153" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
+      <path d="M410.0,142.0 h69.9 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-69.9 z" fill="var(--muted)"/>
+      <text x="488.9" y="153" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.438</text>
+      <rect x="410" y="138" width="180" height="24" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · v1 + submit: 0.438"/>
+      <text x="402" y="179" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
+      <path d="M410.0,168.0 h48.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-48.6 z" fill="var(--s2)"/>
+      <text x="467.6" y="179" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.312</text>
+      <rect x="410" y="164" width="180" height="24" fill="transparent" tabindex="0" data-tip="EnterpriseOps-Gym · Collective v2: 0.312"/>
+      <line x1="462.6" y1="32" x2="462.6" y2="190" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
+      <text x="605" y="24" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">FrontierCS · 1 h</text>
+      <text x="875" y="24" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">40 tasks</text>
+      <line x1="705" y1="34" x2="705" y2="188" stroke="var(--rule)"/>
+      <text x="697" y="49" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
+      <path d="M705.0,38.0 h32.3 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-32.3 z" fill="var(--s1)"/>
+      <text x="746.3" y="49" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.215</text>
+      <rect x="705" y="34" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 1 h · Solo: 0.215"/>
+      <text x="697" y="75" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
+      <path d="M705.0,64.0 h40.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-40.2 z" fill="var(--muted)"/>
+      <text x="754.2" y="75" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.262</text>
+      <rect x="705" y="60" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 1 h · Subagents: 0.262"/>
+      <text x="697" y="101" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
+      <path d="M705.0,90.0 h27.9 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-27.9 z" fill="var(--muted)"/>
+      <text x="741.9" y="101" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.189</text>
+      <rect x="705" y="86" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 1 h · Team: 0.189"/>
+      <text x="697" y="127" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
+      <path d="M705.0,116.0 h28.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-28.4 z" fill="var(--muted)"/>
+      <text x="742.4" y="127" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.192</text>
+      <rect x="705" y="112" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 1 h · Collective v1: 0.192"/>
+      <text x="697" y="153" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
+      <path d="M705.0,142.0 h36.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-36.2 z" fill="var(--muted)"/>
+      <text x="750.2" y="153" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.238</text>
+      <rect x="705" y="138" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 1 h · v1 + submit: 0.238"/>
+      <text x="697" y="179" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
+      <path d="M705.0,168.0 h35.3 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-35.3 z" fill="var(--s2)"/>
+      <text x="749.3" y="179" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.233</text>
+      <rect x="705" y="164" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 1 h · Collective v2: 0.233"/>
+      <line x1="741.3" y1="32" x2="741.3" y2="190" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
+      <text x="15" y="264" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">FrontierCS · 3 h</text>
+      <text x="285" y="264" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">20 tasks</text>
+      <line x1="115" y1="274" x2="115" y2="428" stroke="var(--rule)"/>
+      <text x="107" y="289" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
+      <path d="M115.0,278.0 h38.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-38.4 z" fill="var(--s1)"/>
+      <text x="162.4" y="289" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.251</text>
+      <rect x="115" y="274" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · Solo: 0.251"/>
+      <text x="107" y="315" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
+      <text x="121" y="315" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
+      <text x="107" y="341" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
+      <path d="M115.0,330.0 h34.0 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-34.0 z" fill="var(--muted)"/>
+      <text x="158.0" y="341" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.225</text>
+      <rect x="115" y="326" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · Team: 0.225"/>
+      <text x="107" y="367" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
+      <text x="121" y="367" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
+      <text x="107" y="393" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
+      <path d="M115.0,382.0 h36.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-36.2 z" fill="var(--muted)"/>
+      <text x="160.2" y="393" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.238</text>
+      <rect x="115" y="378" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · v1 + submit: 0.238"/>
+      <text x="107" y="419" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
+      <path d="M115.0,408.0 h48.1 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-48.1 z" fill="var(--s2)"/>
+      <text x="172.1" y="419" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.309</text>
+      <rect x="115" y="404" width="180" height="24" fill="transparent" tabindex="0" data-tip="FrontierCS · 3 h · Collective v2: 0.309"/>
+      <line x1="157.4" y1="272" x2="157.4" y2="430" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
+      <text x="310" y="264" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">NL2Repo</text>
+      <text x="580" y="264" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">22 tasks</text>
+      <line x1="410" y1="274" x2="410" y2="428" stroke="var(--rule)"/>
+      <text x="402" y="289" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
+      <path d="M410.0,278.0 h72.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-72.6 z" fill="var(--s1)"/>
+      <text x="491.6" y="289" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.454</text>
+      <rect x="410" y="274" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Solo: 0.454"/>
+      <text x="402" y="315" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
+      <path d="M410.0,304.0 h69.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-69.4 z" fill="var(--muted)"/>
+      <text x="488.4" y="315" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.435</text>
+      <rect x="410" y="300" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Subagents: 0.435"/>
+      <text x="402" y="341" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
+      <path d="M410.0,330.0 h67.4 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-67.4 z" fill="var(--muted)"/>
+      <text x="486.4" y="341" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.423</text>
+      <rect x="410" y="326" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Team: 0.423"/>
+      <text x="402" y="367" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
+      <text x="416" y="367" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
+      <text x="402" y="393" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
+      <path d="M410.0,382.0 h74.3 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-74.3 z" fill="var(--muted)"/>
+      <text x="493.3" y="393" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.464</text>
+      <rect x="410" y="378" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · v1 + submit: 0.464"/>
+      <text x="402" y="419" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
+      <path d="M410.0,408.0 h74.5 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-74.5 z" fill="var(--s2)"/>
+      <text x="493.5" y="419" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.465</text>
+      <rect x="410" y="404" width="180" height="24" fill="transparent" tabindex="0" data-tip="NL2Repo · Collective v2: 0.465"/>
+      <line x1="486.6" y1="272" x2="486.6" y2="430" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
+      <text x="605" y="264" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">KernelBench · fast_1</text>
+      <text x="875" y="264" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">10 tasks</text>
+      <line x1="705" y1="274" x2="705" y2="428" stroke="var(--rule)"/>
+      <text x="697" y="289" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Solo</text>
+      <path d="M705.0,278.0 h97.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-97.2 z" fill="var(--s1)"/>
+      <text x="811.2" y="289" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.6</text>
+      <rect x="705" y="274" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Solo: 0.600"/>
+      <text x="697" y="315" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Subagents</text>
+      <path d="M705.0,304.0 h46.6 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-46.6 z" fill="var(--muted)"/>
+      <text x="760.6" y="315" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.3</text>
+      <rect x="705" y="300" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Subagents: 0.300"/>
+      <text x="697" y="341" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Team</text>
+      <path d="M705.0,330.0 h114.1 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-114.1 z" fill="var(--muted)"/>
+      <text x="828.1" y="341" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.7</text>
+      <rect x="705" y="326" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Team: 0.700"/>
+      <text x="697" y="367" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v1</text>
+      <text x="711" y="367" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
+      <text x="697" y="393" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">v1 + submit</text>
+      <text x="711" y="393" font-family="var(--mono)" font-size="10" fill="var(--muted)">not run</text>
+      <text x="697" y="419" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--ink-soft)">Collective v2</text>
+      <path d="M705.0,408.0 h97.2 a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h-97.2 z" fill="var(--s2)"/>
+      <text x="811.2" y="419" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">0.6</text>
+      <rect x="705" y="404" width="180" height="24" fill="transparent" tabindex="0" data-tip="KernelBench · fast_1 · Collective v2: 0.600"/>
+      <line x1="806.2" y1="272" x2="806.2" y2="430" stroke="var(--s1)" stroke-width="1.5" opacity="0.8"/>
       </svg>
     </div>
-    <figcaption><b>Every arm lands in the same band.</b> The grey line spans the lowest to highest arm in each family. Repeat single-agent runs moved by up to 0.25 on the tool and enterprise families, wider than most of these spreads, and no paired comparison is significant (p 0.10–0.82). Hover a dot for the arm and score; Table 1 below has every number.</figcaption>
+    <figcaption><b>No arm reliably beats solo.</b> Bars to the right of the blue line beat solo on that family, but none of these differences is statistically significant (paired sign tests, p 0.10–0.82). Three repeat runs of the same single-agent setup moved by up to 0.25 on Toolathlon and EnterpriseOps-Gym. "Not run" means that arm wasn't evaluated on that family.</figcaption>
   </figure>
 </div>
 
@@ -514,28 +587,87 @@
 
 <div class="wrap">
   <h3>Serving many long-context agents</h3>
-  <p><strong>Admission control was the single biggest lever: about 10×.</strong> On the 27B at 262K context, 22 concurrent agents at about 192K tokens each need roughly 4.2M tokens of KV cache, more than the 3.5M available. Agents take turns cyclically, and LRU eviction meets that pattern in the worst way: the prefix needed next is always the one just evicted. The prefix-cache hit rate fell from 97% to 1–4%, every turn re-prefilled ~190K tokens, and in a two-hour pilot 70 of 73 trials hit the time cap after about 130 tool calls. Healthy runs make 367–893 calls in four hours. Capping concurrent trials at the number of slots the cache can hold (12–14 per replica) restored throughput about tenfold.</p>
-  <p><strong>Decode is memory-bandwidth-bound, so adding KV capacity doesn't add throughput.</strong> Offloading KV to CPU memory stopped the thrashing: evicted prefixes reload at about 118K tokens/s. But unit throughput stayed flat (38–44 turns/min) while per-agent speed fell from 4.4 to 2.2 turns/min as agents were added. Each decode step reads about 12 GB of KV per 190K-token agent, and that bandwidth is the ceiling. I kept offload as a safety margin, not a speedup.</p>
-  <p><strong>FP8 KV cache: twice the capacity, fine quality, still slower.</strong> Capacity went from 3.1M to 6.0M tokens. Quality held: top-1 agreement 99.1% with BF16 and NLL +0.2% at 81K, though +1.2% at 164K, so the error grows with context. Yet at equal load it was 13% slower, and doubling the agents to fill the extra capacity halved each agent's speed. A bandwidth model predicted 1.4–1.6× faster. The likely culprits are FP8 prefill at this head size and a doubled cache-block alignment. I kept BF16. Capacity only pays when preemption is the bottleneck, and here it wasn't.</p>
-  <p><strong>Speculative decoding with the model's own multi-token-prediction head</strong> gave 1.9× agent turns per minute on the 27B (2 draft tokens), and on the 9B a call without it is about 1.9× slower. It's lossless for RL: the trainer-vs-rollout log-prob gap didn't change.</p>
-  <p><strong>Agents per GPU has a knee.</strong> On the 9B, going from 12 to 18 agents per GPU raised GPU output only 5% (850 → 896 tok/s) while every trial got 32–44% slower, so about 12 is the knee. Prefix-cache hits stay around 97% up to 16 agents per replica and fall to 63–67% at 32.</p>
-  <p><strong>The best tensor-parallel layout flips between workloads.</strong> For 48 concurrent 9B agents on 4 GPUs, four 1-GPU replicas beat one 4-GPU replica by 29% (976 vs 754 tok/s per GPU). For single-call RL rollout, a batch of long generations on one engine, a single 4-GPU engine was about 20% faster than four 1-GPU engines. For the 27B at 262K context the 4-GPU layout wins again, because each 1-GPU replica holds too little KV per agent.</p>
-  <p><strong>Hybrid models need their prefix cache configured.</strong> On a model with linear-attention layers, the inference engine by default kept the recurrent state only at prompt boundaries. A resubmitted prompt-plus-output reused 10.6% of its tokens; keeping state at every cache block raised that to 90.3%, with the same decode speed and identical greedy output. I also compared two inference engines on the same GPU: one decoded 8–22% faster and held 2.7× more KV, while the other ignored the thinking budget when speculative decoding was on. That settled it.</p>
+  <p>The workload is unusual. Up to a dozen agents share each inference replica, each holding up to ~200K tokens of context and taking short turns between tool calls. The biggest lesson is that <strong>decode is memory-bandwidth-bound</strong>: what pays is keeping the right prefixes in cache and the right number of agents per GPU, not adding raw capacity.</p>
+</div>
+
+<div class="wide">
+  <figure>
+    <div class="fig-title">Table 3 · Serving: problem → fix → measured effect</div>
+    <div class="scroll">
+    <table class="ledger" aria-label="Serving optimizations">
+      <thead><tr><th>Problem</th><th>Fix</th><th>Measured effect</th></tr></thead>
+      <tbody>
+        <tr><td>KV-cache thrash. 22 agents × ~192K tokens need ~4.2M tokens of KV against 3.5M available. Agents take turns cyclically, so LRU always evicts the prefix needed next: hit rate fell 97% → 1–4%, and every turn re-prefilled ~190K tokens.</td><td><strong>Admission control.</strong> Never run more concurrent trials than the cache can hold (12–14 per replica on the 27B).</td><td><strong>≈10× throughput.</strong> Before, 70 of 73 pilot trials hit the time cap after ~130 tool calls. Healthy runs make 367–893 calls in 4 h.</td></tr>
+        <tr><td>Want more agents per replica.</td><td>Offload KV to CPU memory.</td><td>Thrash gone: evicted prefixes reload at ~118K tok/s. But replica throughput stayed flat (38–44 turns/min) while per-agent speed fell 4.4 → 2.2 turns/min. <strong>Kept as a safety margin, not a speedup.</strong></td></tr>
+        <tr><td>Want more KV capacity.</td><td>FP8 KV cache.</td><td>Capacity 3.1M → 6.0M tokens. Quality held: top-1 agreement 99.1%, NLL +0.2% at 81K and +1.2% at 164K. But it was <strong>13% slower</strong> at equal load, and doubling agents halved per-agent speed. <strong>Rejected</strong>; stayed on BF16.</td></tr>
+        <tr><td>Slow per-call decode.</td><td>Speculative decoding with the model's own multi-token-prediction head.</td><td>27B: <strong>1.9× agent turns/min</strong> (2 draft tokens). 9B: calls without it are ~1.9× slower. Single-call rollout generation −26%. Lossless: the trainer-vs-rollout log-prob gap is unchanged. Locked at 3 draft tokens.</td></tr>
+        <tr><td>How many agents per GPU?</td><td>Measured the knee on the 9B.</td><td>12 → 18 agents per GPU: GPU output +5% (850 → 896 tok/s), every trial 32–44% slower. <strong>Knee ≈ 12.</strong> Prefix hits stay ~97% up to 16 agents per replica, 63–67% at 32.</td></tr>
+        <tr><td>Which tensor-parallel layout?</td><td>Measured both workloads.</td><td>48 agents on 4 GPUs: four 1-GPU replicas beat one 4-GPU replica by 29% (976 vs 754 tok/s/GPU). Single-call RL rollout, the opposite: one 4-GPU engine is ~20% faster. 27B at 262K: 4-GPU replicas, for KV per agent.</td></tr>
+        <tr><td>Hybrid (linear-attention) model reused only 10.6% of a resubmitted prompt.</td><td>Keep recurrent state at every cache block, not just prompt boundaries.</td><td><strong>10.6% → 90.3% reuse</strong>, same decode speed, identical greedy output. Costs ~4× cache blocks per kept prefix.</td></tr>
+        <tr><td>Decode micro-optimisations.</td><td>Checked CUDA graphs and async scheduling.</td><td>Already on for 90.8% of steps; a denser capture list gave +1–2%. <strong>Below the 5% bar; stopped.</strong></td></tr>
+        <tr><td>Which inference engine?</td><td>Head-to-head on one GPU.</td><td>One engine decoded 8–22% faster and held 2.7× more KV. The other ignored the thinking budget with speculative decoding on. Stayed with vLLM.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </figure>
 </div>
 
 <div class="wrap">
   <h3>Between rollout and trainer</h3>
-  <p><strong>Feed the model its own tokens back.</strong> An agent harness talks to the server in text, and the server re-tokenises it. At temperature 1 the model sometimes samples a non-canonical token split, and when that text comes back in the next prompt the ids no longer match what was generated. The training sequence has to break there and re-process the prefix. About 3.3% of calls had such a split, and that alone made the trainer process <strong>2.71×</strong> the unique tokens. Most of the waste came from the tokenizer round trip; a smaller share came from the chat template and tool-call parser re-rendering things (<code>false</code> came back as <code>False</code>). Passing token ids in and out instead of text brought overhead to <strong>1.05×</strong>. The trainer update went from 3,184 s to 1,171 s, the step from about 89 to about 47 minutes, at 73 ms extra per call. Training is now exactly on-policy for context. Because this changes what the model sees, the base model had to be re-evaluated under the new path before comparing checkpoints.</p>
-  <p><strong>Stop surplus rollouts early.</strong> Dynamic sampling launches more groups than it keeps. Cancelling the surplus as soon as enough groups with a reward spread have finished cut step time 20% (2,598 → 2,085 s), and the kept set was identical on 14 replayed steps. Rewards computed under rollout load only decide when to stop; the kept groups are graded again once load settles, because a judge under heavy CPU load lowered 3 of 96 scores.</p>
-  <p><strong>Overlap training with rollout without going off-policy.</strong> A one-step-stale asynchronous design would have nearly halved step time, but it changes the algorithm. Instead the trainer accumulates gradients per group as each group finishes. That is mathematically the same update, matching the batch path to a relative L2 of 2.5e-8 once losses are pre-scaled by a power of two. The time the trainer still waits after the last group fell from 871 s to 460 s.</p>
-  <p><strong>Small things on the critical path add up.</strong> Background, per-rank checkpoint writes took the save on the critical path from 43.5 s to 8–11 s, with bit-identical weights. Parallel per-shard weight sync to rollout servers took 31–37 s down to 10–13 s. Grading inside the generation loop hid judge time almost completely. A chunked loop-detector cost 20–35% of generation for a 0.4% hit rate, so it was turned off.</p>
-  <p><strong>More GPUs isn't always cheaper.</strong> The trainer scaled 1.88–1.90× from 4 to 8 GPUs, about 95% efficiency. But on a small single-call job, 4 GPUs used 31% fewer GPU-hours per step than 8, because generation, not the update, dominated. Memory had its own trap: Adam's state only exists after the first optimizer step, so a run that fits at step 1 can run out of memory at step 2 (§5).</p>
+  <p>The agentic arm's step was ~89 minutes at first. The fixes below roughly halved it, and every one was checked to leave the update unchanged.</p>
+</div>
 
+<div class="wide">
+  <figure>
+    <div class="fig-title">Table 4 · Rollout and training: problem → fix → measured effect</div>
+    <div class="scroll">
+    <table class="ledger" aria-label="Rollout and trainer optimizations">
+      <thead><tr><th>Problem</th><th>Fix</th><th>Measured effect</th></tr></thead>
+      <tbody>
+        <tr><td>Re-tokenisation drift. The harness sends text, and the server re-tokenises it. In 3.3% of calls the model had sampled a non-canonical split, so ids no longer matched and the training sequence broke: <strong>2.71×</strong> the unique tokens were trained.</td><td><strong>Token-in/token-out.</strong> Store the sampled ids and splice them into the next request.</td><td>Overhead 2.71× → <strong>1.05×</strong>. Update 3,184 → 1,171 s. Step ~89 → ~47 min. +73 ms per call. Training is now exactly on-policy for context; the base model was re-evaluated under the new path.</td></tr>
+        <tr><td>Dynamic sampling launches more groups than it keeps, and the step waits for the slowest.</td><td>Cancel surplus groups once enough groups with a reward spread finish. Regrade the kept ones after load settles.</td><td>Step 2,598 → 2,085 s (<strong>−20%</strong>). Kept set identical on 14 replayed steps. Regrading matters: under rollout load the judge lowered 3 of 96 scores.</td></tr>
+        <tr><td>Trainer idle until the last group finishes.</td><td>Streaming per-group gradient accumulation. Exact, so it replaces the one-step-stale async design, which would have changed the algorithm.</td><td>Wait after the last group 871 → 460 s. Matches the batch update to rel. L2 2.5e-8 (with power-of-two loss prescaling). Deterministic kernels would cost +14%, so the faster kernels were kept: cosine is at the noise floor.</td></tr>
+        <tr><td>Checkpoint save on the critical path.</td><td>Background, per-rank writes.</td><td>43.5 s → 8–11 s, bit-identical weights.</td></tr>
+        <tr><td>Weight sync to rollout servers.</td><td>Parallel per-shard copies.</td><td>31–37 s → 10–13 s; reload and probe 83 → 22 s.</td></tr>
+        <tr><td>Out of memory at step 2, not step 1. Adam's moments only exist after the first <code>optimizer.step()</code>.</td><td>Load optimizer state only around the step; re-offload after each update.</td><td>Peak 70.5 GiB (+4.2 GiB sleeping inference engine) → 51.0 GiB. Step 2 matches step 1.</td></tr>
+        <tr><td>Long agent chains (up to 202K tokens) lost 5.9% of trainable tokens at a 131K max length.</td><td>Sequence parallelism with a head-parallel implementation of the linear-attention layers, after a gradient check against data parallelism (§5).</td><td>0 tokens dropped. A 262K chain takes 38–62 s forward + backward. Re-training one step: 666–688 s vs 1,137 s on the default context-parallel path.</td></tr>
+        <tr><td>Loop detection during generation.</td><td>Chunked loop-stop.</td><td>Cost 20–35% of generation for a 0.4% hit rate. <strong>Turned off</strong>; loops end at the budget and stay in the batch as failures.</td></tr>
+        <tr><td>Grading latency in single-call RL.</td><td>Grade inside the generation loop.</td><td>Exposed judge time ≈ 0: the last grade lands 3–5 s before generation ends.</td></tr>
+        <tr><td>More GPUs per job?</td><td>Measured scaling.</td><td>Trainer 4 → 8 GPUs: 1.88–1.90× (≈95% efficient). A small single-call job used <strong>31% fewer GPU-hours on 4 GPUs than on 8</strong>, because generation dominated.</td></tr>
+        <tr><td>Redundant work with one update per step.</td><td>Identified: the "old log-prob" forward recomputes what the rollout already has.</td><td>85–125 s per step available. Not applied mid-run; it's queued for the restart.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </figure>
+</div>
+
+<div class="wrap">
   <h3>Evaluation and grading</h3>
-  <p><strong>Size the judge farm by CPU, and know where scores start to degrade.</strong> A programmatic judge for competitive programming costs about 20 s of CPU per submission (median 6 s, p90 32 s), and many problems have time limits. Oversubscribing cores doesn't fail loudly. It lowers scores: 16 parallel test cases on 16 cores lowered 7 of 144 scores, while 12 lowered none. The rule I ended up with is to keep test-case slots at or below 0.75× the cores, with slots plus judge workers at or below cores minus 2. Under that rule one judge host sustained about 90 submissions per minute. A run at 145 per minute released wrong scores. An agentic training step with real per-submission feedback needs 190–240 per minute, which is the next capacity problem.</p>
-  <p><strong>Timeouts can be queueing.</strong> 26 "judge timeouts" turned out to be submissions waiting in a stalled judge's queue; re-judged, they took 5 seconds in total. Waits and stalls are now logged separately, and the grading wait is long enough that queueing can't look like failure.</p>
-  <p><strong>Cheap evals, chosen from data.</strong> All 172 problems × 5 samples cost about 9 GPU-hours; the 40-problem subset about 2, and it can be read off the full run for free. Packing 20 requests per eval job instead of 10 halved GPU-hours at the same wall time. The 1-hour agentic eval cap was set because 0 of 320 trials ran past 55 minutes; a 3-hour cap would triple the worst-case cost per checkpoint. On the 27B baselines, raising a 32K per-call output cap fixed a setting that truncated 37% of responses and wasted about 90% of output tokens.</p>
+  <p>Grading is CPU work with time limits, which makes it fragile in a quiet way: overload doesn't crash, it <strong>lowers scores</strong>. The biggest fixes here were about trust, not speed.</p>
+</div>
 
+<div class="wide">
+  <figure>
+    <div class="fig-title">Table 5 · Evaluation and grading: problem → fix → measured effect</div>
+    <div class="scroll">
+    <table class="ledger" aria-label="Evaluation and grading optimizations">
+      <thead><tr><th>Problem</th><th>Fix</th><th>Measured effect</th></tr></thead>
+      <tbody>
+        <tr><td>Oversubscribed judges silently lower scores on time-limited problems.</td><td>Test-case slots ≤ 0.75 × cores; slots + judge workers ≤ cores − 2.</td><td>16 slots on 16 cores lowered 7 of 144 scores; 12 lowered none. ~90 submissions/min per judge host with correct scores; 145/min released wrong ones. Real-feedback agentic training needs 190–240/min, the next bottleneck.</td></tr>
+        <tr><td>"Timeouts" that were really queueing; one judge stalled at ~144 concurrent submissions.</td><td>One eval per judge, ≤16 workers, a long wait, and stalls logged separately from failures.</td><td>26 "timeouts" re-judged in 5 s total. 256 of 860 graded in 127 s on split judges.</td></tr>
+        <tr><td>After a sandbox crash, a judge graded known-correct code "Wrong Answer" with no error.</td><td>Known-solution canary every few minutes; any deviation pauses training. Infra failures are masked, never scored 0.</td><td>Caught a silently broken judge before it fed rewards.</td></tr>
+        <tr><td>Eval cost per checkpoint.</td><td>Read the 40-problem subset off the full run. Pack 20 requests per eval job instead of 10.</td><td>Full 172 × 5 ≈ 9 GPU-h; subset ≈ 2 GPU-h, now free. Packing halves GPU-hours at the same wall time.</td></tr>
+        <tr><td>How long should an agentic eval run?</td><td>Set the cap from data.</td><td>0 of 320 trials ran past 55 minutes at a 1 h cap. A 3 h cap would triple the worst-case cost per checkpoint.</td></tr>
+        <tr><td>27B baselines: a 32K per-call output cap.</td><td>Raise it to the window.</td><td>It had truncated 37% of responses and wasted ~90% of output tokens; solo FrontierCS went 0.108 → 0.215.</td></tr>
+        <tr><td>Container start-up and isolation cost for agent trials.</td><td>A lighter container-free sandbox, checked for parity.</td><td>~9% faster per trial; paired Avg@4 difference −0.0014 (parity).</td></tr>
+        <tr><td>Wall-clock deadlines make reward depend on server load.</td><td>Measured first: deadlines bound only 3.2% of solo training trials.</td><td>A per-agent virtual clock was deferred to the team arm. Its exact message ordering costs +10% wall time.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </figure>
+</div>
+
+<div class="wrap">
   <h3>Team RL: freezing a running team</h3>
   <p>A team-outcome reward can't say which fork or message helped. The tool I built for that freezes the whole team just before one decision, samples alternatives from the same state, runs each to the end, and credits the decision with the difference (a leave-one-out baseline, as in counterfactual credit-assignment work). On a spec-to-repo task, one fork decision led to 2, 1 or 151 passing tests out of 211, depending only on what was sampled at that point. One decision carries a large, learnable signal.</p>
 </div>
