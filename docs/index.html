@@ -11,7 +11,14 @@
 <meta property="og:title" content="The Harness Is Part of the Model">
 <meta property="og:description" content="Preliminary results toward team RL for LLM agents: 27B agent-harness baselines (solo, subagents, team, and a collective harness), a 9B GRPO run that doubled FrontierCS, an agentic RL arm that didn't learn, and the infrastructure and efficiency lessons from running them.">
 <meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://macoredroid.github.io/collective-intelligence/media/og-cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Can one model learn to work as a team?">
+<meta property="og:video" content="https://macoredroid.github.io/collective-intelligence/media/the-harness-is-part-of-the-model.mp4">
+<meta property="og:video:type" content="video/mp4">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://macoredroid.github.io/collective-intelligence/media/og-cover.jpg">
 <meta name="twitter:title" content="The Harness Is Part of the Model">
 <meta name="twitter:description" content="Preliminary results toward team RL for LLM agents: 27B agent-harness baselines (solo, subagents, team, and a collective harness), a 9B GRPO run that doubled FrontierCS, an agentic RL arm that didn't learn, and the infrastructure and efficiency lessons from running them.">
 
@@ -76,6 +83,9 @@
   .status{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:8px; padding:1.2rem 1.4rem; margin:2.4rem auto; font-size:.98rem; line-height:1.6}
   .status .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:.5rem}
   .status p{margin:.4em 0; color:var(--ink-soft); font-size:1rem}
+  .film{margin:2rem 0 0}
+  .film video{display:block; width:100%; height:auto; border-radius:10px; border:1px solid var(--rule); background:#F4F1EA}
+  .film .cap{font-family:var(--mono); font-size:.74rem; color:var(--muted); margin-top:.55rem}
   .findings{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--gold); border-radius:8px; padding:1.2rem 1.4rem .6rem; margin:2.4rem auto 0; font-size:1rem; line-height:1.6}
   .findings .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:.4rem}
   .findings ol{margin:.2rem 0; padding-left:1.3rem}
@@ -172,6 +182,13 @@
       <span>Models · Qwen3.8-27B (baselines) · Qwen3.5-9B (RL)</span>
       <span>Tasks · FrontierSmith → FrontierCS · NL2Repo · KernelBench · Toolathlon · EnterpriseOps-Gym</span>
       <span>Stack · vLLM · verl / FSDP2 · Qwen Code · GRPO</span>
+    </div>
+    <div class="film">
+      <video controls preload="metadata" playsinline poster="media/poster.jpg" aria-label="97-second narrated summary of this post">
+        <source src="media/the-harness-is-part-of-the-model.mp4" type="video/mp4">
+        <a href="media/the-harness-is-part-of-the-model.mp4">Watch the 97-second summary (MP4)</a>
+      </video>
+      <div class="cap">97-second summary · animated with Manim · narration voice: ElevenLabs</div>
     </div>
     <div class="findings">
       <span class="lbl">Findings so far</span>
@@ -917,7 +934,7 @@
     <p class="eyebrow" style="color:var(--accent)">Notes</p>
     <h2>How the numbers were made</h2>
     <p>The task is the statistical unit. Comparisons are paired over the same problems and seeds, with task-level bootstrap intervals (2,000 draws) or sign tests. Each arm is evaluated in the mode it trains in and compared with its own base model. Eval sets are excluded from training data and curriculum. Stopping points and the restart checkpoint were chosen from eval curves, and headline numbers are from the last evaluated checkpoint. Infrastructure failures are masked, never scored as zero. The 27B baselines are single attempts and descriptive only.</p>
-    <p>Open-source pieces named in this post: <a href="https://github.com/verl-project/verl">verl</a> (RL trainer), <a href="https://github.com/vllm-project/vllm">vLLM</a> (inference), <a href="https://github.com/QwenLM/qwen-code">Qwen Code</a> (agent harness) and Claude Code (the agents that ran the campaign). The issues in §5 are reported as I observed them on my own setup.</p>
+    <p>Open-source pieces named in this post: <a href="https://github.com/verl-project/verl">verl</a> (RL trainer), <a href="https://github.com/vllm-project/vllm">vLLM</a> (inference), <a href="https://github.com/QwenLM/qwen-code">Qwen Code</a> (agent harness) and Claude Code (the agents that ran the campaign). The summary video was animated with <a href="https://www.manim.community/">Manim</a>, with narration generated by <a href="https://elevenlabs.io/">ElevenLabs</a>. The issues in §5 are reported as I observed them on my own setup.</p>
     <div class="foot-links">
       <a href="https://arxiv.org/abs/2603.06859">C3 · counterfactual credit</a>
       <a href="https://arxiv.org/abs/2601.20209">SPARK · key-state branching</a>
