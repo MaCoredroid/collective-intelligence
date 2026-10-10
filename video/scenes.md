@@ -68,7 +68,7 @@ Pose the team question with a single dot that splits into many. Show that untrai
 - Neutral data: `#9AA0A6`
 
 ## Typography
-- Serif titles and captions: Iowan Old Style (fallback Charter / Georgia)
+- Serif titles and captions: Charter
 - Numbers and labels: Menlo
 
 ## Mathematical content

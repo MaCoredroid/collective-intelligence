@@ -11,7 +11,7 @@ INK2 = "#5B6168"
 RULE = "#D9D4C7"
 CLAY = "#C8643B"
 GREY = "#8E959C"
-SERIF = "Iowan Old Style"
+SERIF = "Charter"
 MONO = "Menlo"
 
 
@@ -110,10 +110,10 @@ class Film(Scene):
             Dot(radius=0.06, color=INK2), mono("subagents · team · collective v1 / v1+submit", 15, INK2),
             Circle(radius=0.06, color=CLAY, stroke_width=2.5), mono("collective v2", 15, INK2),
         ).arrange(RIGHT, buff=0.18).to_edge(DOWN, buff=0.35)
-        note = mono("96 tasks · one attempt each · no difference is statistically significant", 16, INK2).next_to(key, UP, buff=0.18)
+        note = mono("up to 96 tasks · one attempt each · no difference is statistically significant", 16, INK2).next_to(key, UP, buff=0.18)
         self.play(FadeIn(key), FadeIn(note), run_time=0.8)
         self.wait(2.2)
-        top2 = serif("Collaboration appeared only where work split.\nA visible clock changed more than teammates did.", 34).to_edge(UP, buff=0.55)
+        top2 = serif("Collaboration appeared only where work split.\nNew stopping rules changed more than teammates did.", 34).to_edge(UP, buff=0.55)
         self.play(FadeTransform(top, top2), run_time=1.0)
         self.wait(2.6)
         self.play(*[FadeOut(m) for m in self.mobjects], run_time=0.9)
@@ -144,6 +144,7 @@ class Film(Scene):
             ChangeDecimalToValue(val, 12.22), run_time=4.0, rate_func=smooth,
         )
         val.clear_updaters()
+        val.set_value(12.22)
         note = mono("+6.00 [4.00, 8.33] vs base, paired · most of it by step 40, then flat", 17, INK2).to_edge(DOWN, buff=0.35)
         self.play(FadeIn(note), run_time=0.8)
         self.wait(2.6)
@@ -151,7 +152,7 @@ class Film(Scene):
 
     # ------------------------------------------------------------------ 4
     def thinking(self):
-        top = serif("Same model, same recipe, inside a coding-agent harness.", 36).to_edge(UP, buff=0.7)
+        top = serif("Same model, problems and judge, trained as an agent.", 36).to_edge(UP, buff=0.7)
         self.play(FadeIn(top, shift=DOWN * 0.1), run_time=0.9)
         x0, full = -5.2, 10.4
         l1 = mono("single call · one problem", 18, INK2).move_to([x0, 1.15, 0], aligned_edge=LEFT)
@@ -164,8 +165,8 @@ class Film(Scene):
         self.play(FadeIn(n1), run_time=0.5)
         self.play(FadeIn(l2), GrowFromEdge(b2, LEFT), FadeIn(n2), run_time=1.0)
         self.wait(1.4)
-        res = serif("No gain at step 10:  −0.02 [−1.01, +0.90]", 30, INK).to_edge(DOWN, buff=0.95)
-        res2 = mono("the harness asked it to act, so it stopped thinking", 18, INK2).next_to(res, DOWN, buff=0.18)
+        res = serif("No sign of learning by step 10:  −0.02 [−1.01, +0.90]", 30, INK).to_edge(DOWN, buff=0.95)
+        res2 = mono("a minimal loop only raised it to 41: mostly the model's own habit", 17, INK2).next_to(res, DOWN, buff=0.18)
         self.play(FadeIn(res, shift=UP * 0.1), run_time=0.8)
         self.play(FadeIn(res2), run_time=0.6)
         self.wait(2.6)
@@ -173,7 +174,7 @@ class Film(Scene):
 
     # ------------------------------------------------------------------ 5
     def cost(self):
-        top = serif("Agentic RL cost about 8× more per training step.", 38).to_edge(UP, buff=0.7)
+        top = serif("Agentic RL used about 8× the GPU-hours per step.", 38).to_edge(UP, buff=0.7)
         self.play(FadeIn(top, shift=DOWN * 0.1), run_time=0.9)
         base = -2.2
         u = 0.42
@@ -189,7 +190,7 @@ class Film(Scene):
         self.play(FadeIn(VGroup(t1, t2, v1, v2, gl)), run_time=0.6)
         chips = VGroup()
         for name, eff in [
-            ("admission control", "≈ 10× throughput"),
+            ("admission control (serving)", "≈ 10× throughput"),
             ("feed the model its own token ids", "2.71× → 1.05× trained tokens"),
             ("speculative decoding", "1.9× agent turns / min"),
         ]:
@@ -199,7 +200,7 @@ class Film(Scene):
             chips.add(VGroup(box, a, b))
         chips.arrange(DOWN, buff=0.28).move_to([2.6, -0.45, 0])
         self.play(LaggedStart(*[FadeIn(c, shift=LEFT * 0.3) for c in chips], lag_ratio=0.35), run_time=2.2)
-        cap = mono("most of the gap was infrastructure, and fixable", 18, INK2).to_edge(DOWN, buff=0.4)
+        cap = mono("only ~1.4× is extra work; the rest is idle or underfilled GPUs", 18, INK2).to_edge(DOWN, buff=0.4)
         self.play(FadeIn(cap), run_time=0.7)
         self.wait(2.6)
         self.play(*[FadeOut(m) for m in self.mobjects], run_time=0.9)
@@ -222,7 +223,7 @@ class Film(Scene):
         self.play(FadeIn(canary, scale=0.4), FadeIn(cl), run_time=0.8)
         ring = Circle(radius=0.13, color=CLAY, stroke_width=2).move_to(canary)
         self.play(ring.animate.scale(4).set_stroke(opacity=0), run_time=1.0)
-        flag = mono("expected 40.0 · got 0 → pause training", 17, CLAY).next_to(out, DOWN, buff=0.35)
+        flag = mono("canary expected 40.0, got 0  →  pause training", 17, CLAY).move_to(DOWN * 0.95)
         self.play(FadeIn(flag, shift=UP * 0.1), out.animate.set_color(GREY), run_time=0.8)
         self.wait(2.0)
         self.play(*[FadeOut(m) for m in self.mobjects], run_time=0.9)
