@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Collective Intelligence: Preliminary Results</title>
+<title>The Harness Is Part of the Model</title>
 <meta name="description" content="Preliminary results toward team RL for LLM agents: 27B agent-harness baselines (solo, subagents, team, and a collective harness), a 9B GRPO run that doubled FrontierCS, an agentic RL arm that didn't learn, and the infrastructure and efficiency lessons from running them.">
 <link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/">
 <meta property="og:type" content="article">
-<meta property="og:site_name" content="Collective Intelligence">
-<meta property="og:title" content="Collective Intelligence: Preliminary Results">
+<meta property="og:site_name" content="Collective Intelligence, Part 1">
+<meta property="og:title" content="The Harness Is Part of the Model">
 <meta property="og:description" content="Preliminary results toward team RL for LLM agents: 27B agent-harness baselines (solo, subagents, team, and a collective harness), a 9B GRPO run that doubled FrontierCS, an agentic RL arm that didn't learn, and the infrastructure and efficiency lessons from running them.">
 <meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Collective Intelligence: Preliminary Results">
+<meta name="twitter:title" content="The Harness Is Part of the Model">
 <meta name="twitter:description" content="Preliminary results toward team RL for LLM agents: 27B agent-harness baselines (solo, subagents, team, and a collective harness), a 9B GRPO run that doubled FrontierCS, an agentic RL arm that didn't learn, and the infrastructure and efficiency lessons from running them.">
 
 <style>
@@ -137,9 +137,9 @@
 
 <header class="masthead">
   <div class="wrap">
-    <p class="eyebrow">Agent RL &nbsp;·&nbsp; Preliminary results</p>
-    <h1>Collective Intelligence: Preliminary Results</h1>
-    <p class="dek">Before training a team of agents, I ran the groundwork: harness baselines on a 27B model, an RL run on a 9B model, an agentic RL arm, and the infrastructure to make all of it affordable. These are the results, and what each one taught me.</p>
+    <p class="eyebrow">Collective intelligence &nbsp;·&nbsp; Part 1 &nbsp;·&nbsp; Lessons from the groundwork</p>
+    <h1>The Harness Is Part of the Model</h1>
+    <p class="dek">Before training agents to work as a team, I ran the groundwork, and the agent harness kept turning out to matter more than the agents. Untrained, a 27B model did no better with teammates than alone, and a visible clock changed its behaviour more than any collaboration tool. Single-call GRPO nearly doubled a 9B model on FrontierCS, but the same recipe inside a general coding harness learned nothing, because the harness cut its thinking to 27 tokens per call. Agentic RL cost 8× more per step, mostly for infrastructure reasons that could be fixed. And the failures that mattered most were silent.</p>
     <div class="meta-row">
       <span>Models · Qwen3.8-27B (baselines) · Qwen3.5-9B (RL)</span>
       <span>Tasks · FrontierSmith → FrontierCS · NL2Repo · KernelBench · Toolathlon · EnterpriseOps-Gym</span>
@@ -760,7 +760,7 @@
       <a href="https://arxiv.org/abs/2601.20209">SPARK · key-state branching</a>
       <a href="https://arxiv.org/abs/2606.08275">Causal Agent Replay</a>
     </div>
-    <p style="margin-top:2rem;font-family:var(--mono);font-size:.74rem;color:var(--muted)">Collective Intelligence: preliminary results. A snapshot of work through October 10, 2026.</p>
+    <p style="margin-top:2rem;font-family:var(--mono);font-size:.74rem;color:var(--muted)">The Harness Is Part of the Model. Collective intelligence, part 1: a snapshot of work through October 10, 2026.</p>
   </div>
 </footer>
 

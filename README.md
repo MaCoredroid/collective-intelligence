@@ -1,6 +1,6 @@
-# Collective Intelligence: Preliminary Results
+# The Harness Is Part of the Model
 
-The groundwork before training a team of LLM agents:
+*Collective intelligence, part 1.* Lessons from the groundwork before training a team of LLM agents:
 
 1. **Untrained, the harness mode doesn't matter.** On 96 tasks, Qwen3.8-27B as a solo agent, with built-in subagents, in team mode, and in three versions of a collective harness are all within noise (one attempt per task). Collaboration appears only where the work splits by module.
 2. **Single-call GRPO nearly doubled FrontierCS.** Qwen3.5-9B went from 6.22 to 12.22 on 172 problems by step 70 (paired +6.00 [+4.00, +8.33]), then flattened.
