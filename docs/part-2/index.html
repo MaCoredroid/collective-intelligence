@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Wall, the Compile Tax, and the Oracle</title>
+<meta name="description" content="Collective intelligence, part 2: why single-call RL on a 9B coding model stopped at ~12 on FrontierCS — it learned to write code that compiles rather than code that wins, its best sample is 2.4x its average, rewarding the best answer keeps exploration but not the average, and in agent mode the judge became the test suite. Plus the experiments now running.">
+<link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-2/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Collective Intelligence, Part 2">
+<meta property="og:title" content="The Wall, the Compile Tax, and the Oracle">
+<meta property="og:description" content="Collective intelligence, part 2: why single-call RL on a 9B coding model stopped at ~12 on FrontierCS — it learned to write code that compiles rather than code that wins, its best sample is 2.4x its average, rewarding the best answer keeps exploration but not the average, and in agent mode the judge became the test suite. Plus the experiments now running.">
+<meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-2/">
+<meta property="og:image" content="https://macoredroid.github.io/collective-intelligence/part-2/media/og-cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The wall, the compile tax, and the oracle">
+<meta property="og:video" content="https://macoredroid.github.io/collective-intelligence/part-2/media/the-wall-the-compile-tax-and-the-oracle.mp4">
+<meta property="og:video:type" content="video/mp4">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://macoredroid.github.io/collective-intelligence/part-2/media/og-cover.jpg">
+<meta name="twitter:title" content="The Wall, the Compile Tax, and the Oracle">
+<meta name="twitter:description" content="Collective intelligence, part 2: why single-call RL on a 9B coding model stopped at ~12 on FrontierCS — it learned to write code that compiles rather than code that wins, its best sample is 2.4x its average, rewarding the best answer keeps exploration but not the average, and in agent mode the judge became the test suite. Plus the experiments now running.">
+
+<style>
+  :root{
+    --bg:#f7f8f9; --surface:#ffffff; --surface-2:#f0f2f4;
+    --ink:#1a1c1f; --ink-soft:#474d54; --muted:#7c848b; --rule:#dee2e6;
+    --accent:#3a5f8a; --accent-soft:#e4ebf3;
+    --gold:#a9781f; --gold-soft:#f2e9d5;
+    --pos:#3f7d5b; --neg:#b3543f; --grey:#b7bec4;
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+    --serif:Georgia,"Iowan Old Style",Charter,"Palatino Linotype",Palatino,"Book Antiqua",serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+    --measure:41rem;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#131518; --surface:#1b1e22; --surface-2:#22262b;
+      --ink:#e7e9ec; --ink-soft:#b6bbc1; --muted:#838a91; --rule:#2b3036;
+      --accent:#7ea6dc; --accent-soft:#1e2a38;
+      --gold:#d8b365; --gold-soft:#2c2617;
+      --pos:#6bbf8f; --neg:#e08a72; --grey:#4a5158;
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#131518; --surface:#1b1e22; --surface-2:#22262b;
+    --ink:#e7e9ec; --ink-soft:#b6bbc1; --muted:#838a91; --rule:#2b3036;
+    --accent:#7ea6dc; --accent-soft:#1e2a38;
+    --gold:#d8b365; --gold-soft:#2c2617;
+    --pos:#6bbf8f; --neg:#e08a72; --grey:#4a5158;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--serif); font-size:19px; line-height:1.66;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:var(--measure); margin:0 auto; padding:0 1.4rem}
+  .wide{max-width:60rem; margin:0 auto; padding:0 1.4rem}
+  p{margin:1.1em 0; color:var(--ink-soft)}
+  li{color:var(--ink-soft); margin:.45em 0}
+  strong{color:var(--ink); font-weight:600}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+  a:hover{border-bottom-color:var(--accent)}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+  .eyebrow{font-family:var(--mono); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin:0 0 .9rem}
+  h1{font-size:clamp(2.2rem,6vw,3.35rem); line-height:1.06; letter-spacing:-.015em; margin:.2em 0 .3em; color:var(--ink); text-wrap:balance; font-weight:600}
+  h2{font-size:clamp(1.5rem,3.6vw,2rem); line-height:1.12; letter-spacing:-.01em; margin:0 0 .1em; color:var(--ink); text-wrap:balance; font-weight:600}
+  h3{font-size:1.12rem; margin:2em 0 .2em; color:var(--ink); font-weight:600}
+  .dek{font-size:1.28rem; line-height:1.5; color:var(--ink-soft); font-style:italic; text-wrap:balance}
+  .num{font-family:var(--mono); font-variant-numeric:tabular-nums; font-style:normal; letter-spacing:-.01em; font-size:.92em}
+  code{font-family:var(--mono); font-size:.85em; background:var(--surface-2); padding:.1em .35em; border-radius:4px}
+  hr.sec{border:0; border-top:1px solid var(--rule); max-width:60rem; margin:4.2rem auto}
+  header.masthead{padding:4.5rem 0 1rem}
+  .meta-row{display:flex; flex-wrap:wrap; gap:.5rem 1.4rem; font-family:var(--mono); font-size:.76rem; color:var(--muted); margin-top:1.8rem; padding-top:1.4rem; border-top:1px solid var(--rule)}
+  .meta-row span{white-space:normal}
+  .toggle{position:fixed; top:1rem; right:1rem; z-index:10; font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; background:var(--surface); color:var(--ink-soft); border:1px solid var(--rule); border-radius:20px; padding:.4rem .8rem; cursor:pointer}
+  .toggle:hover{color:var(--ink); border-color:var(--muted)}
+  .status{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:8px; padding:1.2rem 1.4rem; margin:2.4rem auto; font-size:.98rem; line-height:1.6}
+  .status .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:.5rem}
+  .status p{margin:.4em 0; color:var(--ink-soft); font-size:1rem}
+  .film{margin:2rem 0 0}
+  .film video{display:block; width:100%; height:auto; border-radius:10px; border:1px solid var(--rule); background:#F4F1EA}
+  .film .cap{font-family:var(--mono); font-size:.74rem; color:var(--muted); margin-top:.55rem}
+  .findings{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--gold); border-radius:8px; padding:1.2rem 1.4rem .6rem; margin:2.4rem auto 0; font-size:1rem; line-height:1.6}
+  .findings .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:.4rem}
+  .findings ol{margin:.2rem 0; padding-left:1.3rem}
+  .findings li{margin:.7em 0; font-size:1rem}
+  .findings a{border-bottom:0}
+  .findings a strong{color:var(--ink)}
+  .findings a:hover strong{color:var(--accent)}
+  .sec-head{margin:0 auto 1.6rem; max-width:var(--measure); padding:0 1.4rem}
+  .sec-head .eyebrow{color:var(--accent)}
+  figure{margin:2.6rem 0; background:var(--surface); border:1px solid var(--rule); border-radius:12px; padding:1.6rem 1.5rem 1.2rem; position:relative}
+  figure svg{display:block; width:100%; height:auto; overflow:visible}
+  figcaption{font-family:var(--mono); font-size:.78rem; line-height:1.55; color:var(--muted); margin-top:1.1rem; padding-top:.9rem; border-top:1px solid var(--rule)}
+  figcaption b{color:var(--ink-soft); font-weight:600}
+  .fig-title{font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem}
+  .scroll{overflow-x:auto}
+  .take{border-left:3px solid var(--gold); padding:.2rem 0 .2rem 1.2rem; margin:2rem 0; font-family:var(--serif); font-size:1.16rem; line-height:1.5; color:var(--ink); font-style:italic}
+  details{margin:1.6rem 0; border:1px solid var(--rule); border-radius:8px; background:var(--surface); overflow:hidden}
+  details>summary{cursor:pointer; padding:.85rem 1.1rem; font-family:var(--mono); font-size:.78rem; letter-spacing:.06em; color:var(--accent); list-style:none; display:flex; align-items:center; gap:.6rem}
+  details>summary::-webkit-details-marker{display:none}
+  details>summary::before{content:"+"; font-size:1rem; color:var(--muted)}
+  details[open]>summary::before{content:"−"}
+  details>summary:hover{background:var(--surface-2)}
+  details .body{padding:.2rem 1.2rem 1.1rem; font-size:.94rem; line-height:1.6; color:var(--ink-soft); border-top:1px solid var(--rule)}
+  details .body p,details .body li{font-size:.94rem}
+  .pill{font-family:var(--mono); font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; padding:.18em .55em; border-radius:20px; white-space:nowrap; font-weight:600}
+  .pill.pos{background:color-mix(in srgb,var(--pos) 16%,transparent); color:var(--pos)}
+  .pill.neg{background:color-mix(in srgb,var(--neg) 16%,transparent); color:var(--neg)}
+  .pill.null{background:var(--surface-2); color:var(--muted)}
+  .ledger{width:100%; border-collapse:collapse; font-size:.9rem; margin:1.4rem 0}
+  .ledger th,.ledger td{text-align:left; padding:.6rem .7rem; border-bottom:1px solid var(--rule); vertical-align:top; color:var(--ink-soft)}
+  .ledger th{font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:400}
+  .ledger td:first-child{font-family:var(--serif); color:var(--ink)}
+  .ledger td{overflow-wrap:anywhere}
+  .ledger code{overflow-wrap:anywhere}
+  .ledger td.r,.ledger th.r{white-space:nowrap; overflow-wrap:normal}
+  .ledger td.r,.ledger th.r{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums}
+  .eq{font-family:var(--mono); font-size:.9rem; background:var(--surface); border:1px solid var(--rule); border-radius:8px; padding:1rem 1.2rem; color:var(--ink); overflow-x:auto; white-space:pre; margin:1.4rem 0; line-height:1.7}
+  .key{display:inline-flex; align-items:center; gap:.4rem; font-family:var(--mono); font-size:.74rem; color:var(--ink-soft); margin-right:1.2rem}
+  .key i{display:inline-block; width:10px; height:10px; border-radius:50%}
+  .tip{position:absolute; pointer-events:none; background:var(--ink); color:var(--bg); font-family:var(--mono); font-size:.74rem; line-height:1.45; padding:.45rem .6rem; border-radius:6px; max-width:18rem; opacity:0; transition:opacity .12s; z-index:5}
+  .tip.on{opacity:1}
+  [data-tip]{cursor:default}
+  [data-tip]:focus{outline:none}
+  /* desktop: wider column and figures, larger type */
+  @media (min-width:1100px){
+    :root{--measure:44rem}
+    body{font-size:20px}
+    .wide{max-width:min(78rem, 94vw)}
+    hr.sec{max-width:min(78rem, 94vw)}
+  }
+  /* very wide screens: section menu in the left margin */
+  .toc{display:none}
+  @media (min-width:1760px){
+    .toc{display:block; position:fixed; top:6.5rem; left:1.5rem; width:13rem; font-family:var(--mono); font-size:.72rem; line-height:1.5; z-index:5}
+    .toc .lbl{letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:.8rem}
+    .toc a{display:block; border:0; border-left:2px solid var(--rule); padding:.32rem 0 .32rem .8rem; color:var(--muted)}
+    .toc a:hover{color:var(--ink); border-left-color:var(--muted)}
+    .toc a.on{color:var(--accent); border-left-color:var(--accent)}
+  }
+  footer{margin-top:5rem; padding:3rem 0 4rem; border-top:1px solid var(--rule); background:var(--surface-2)}
+  footer .wrap{color:var(--muted)}
+  footer h2{font-size:1.4rem}
+  .foot-links{display:flex; flex-wrap:wrap; gap:.6rem 1.6rem; font-family:var(--mono); font-size:.8rem; margin-top:1.4rem}
+  @media (max-width:640px){
+    body{font-size:17px}
+    .ledger{font-size:.82rem}
+    .ledger th,.ledger td{padding:.5rem .4rem}
+    figure{padding:1.1rem .9rem .9rem}
+  }
+</style>
+</head>
+<body>
+
+<button class="toggle" id="tgl" aria-label="Toggle color theme">◐ Theme</button>
+
+<nav class="toc" aria-label="Sections">
+  <div class="lbl">Contents</div>
+  <a href="#wall">01 · The wall</a>
+  <a href="#gain">02 · Where the gain came from</a>
+  <a href="#tax">03 · The compile tax</a>
+  <a href="#knows">04 · It knows better</a>
+  <a href="#best">05 · Rewarding the best</a>
+  <a href="#agent">06 · The judge as test suite</a>
+  <a href="#next">07 · Now running</a>
+  <a href="#team">08 · What it means for teams</a>
+</nav>
+
+
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Collective intelligence &nbsp;·&nbsp; Part 2 &nbsp;·&nbsp; <a href="../">Part 1</a></p>
+    <h1>The Wall, the Compile Tax, and the Oracle</h1>
+    <p class="dek">In part 1, RL nearly doubled a 9B model on competitive programming, then stopped. This post is about why. The model learned to write code that compiles rather than code that wins. It often names the better algorithm and ships the safe one, and its best sample is more than twice its average. Rewarding the best answer kept exploration alive but couldn't lift the average. In agent mode, the model learned to use the judge as its test suite. The next experiments make the oracle scarce.</p>
+    <div class="meta-row">
+      <span>Model · Qwen3.5-9B</span>
+      <span>Train → eval · FrontierSmith (200 problems) → FrontierCS (172)</span>
+      <span>Method · GRPO, Clip-Cov, max@k, own agent loop</span>
+    </div>
+    <div class="film">
+      <video controls preload="metadata" playsinline poster="media/poster.jpg" aria-label="Narrated summary of part 2">
+        <source src="media/the-wall-the-compile-tax-and-the-oracle.mp4" type="video/mp4">
+        <a href="media/the-wall-the-compile-tax-and-the-oracle.mp4">Watch the summary (MP4)</a>
+      </video>
+      <div class="cap">Narrated summary · animated with Manim · narration voice: ElevenLabs</div>
+    </div>
+    <div class="findings">
+      <span class="lbl">Findings</span>
+      <ol>
+        <li><a href="#wall"><strong>The wall is the recipe, not compute.</strong></a> Every checkpoint from step 50 to step 100, across three runs, scores 11.6–12.7 Avg@5 on FrontierCS; none of the differences is significant. Training reward plateaus at the same point, and so does reward on the training problems themselves.</li>
+        <li><a href="#gain"><strong>Most of the gain was learning to produce valid code.</strong></a> Of +6.3 points, about +4.9 came from more answers that compile and run, and about +1.4 from better answers.</li>
+        <li><a href="#tax"><strong>RL learned to avoid ambitious code: a compile tax.</strong></a> Search-style programs fail to compile more often (+16 points), but score <span class="num">+4.3</span> higher when they run. Mean-reward RL cut them from 19% of rollouts to 4–9%.</li>
+        <li><a href="#knows"><strong>It knows better than it ships.</strong></a> The trained model often names the better algorithm, then submits the safer program. The best of its 55 samples per problem averages <span class="num">29</span>, against ~12 for a single sample.</li>
+        <li><a href="#best"><strong>Rewarding the best answer keeps exploration, not the average.</strong></a> It held Best@5 near 20 and brought search-style code back, but the average didn't move. With deterministic scores, collapsing onto one program is that objective's optimum.</li>
+        <li><a href="#agent"><strong>In agent mode, the judge became the test suite.</strong></a> Training reward rose, but eval stayed flat at step 20 (<span class="num">−0.12 [−0.76, +0.53]</span>). Extra submissions all came after the last improvement, and local testing never rose.</li>
+      </ol>
+    </div>
+    <div class="status">
+      <span class="lbl">Epistemic status</span>
+      <p>Everything in §1–§6 is measured, with paired bootstrap intervals over problems. The experiments in §7 are running or about to run; <strong>no results are reported for them here</strong>. The eval resolves differences of about 1.5–2 points, so small effects in either direction are invisible.</p>
+      <p>Snapshot of work through October 11, 2026.</p>
+    </div>
+  </div>
+</header>
+
+<hr class="sec">
+
+<div class="sec-head" id="wall"><p class="eyebrow">01 · The wall</p><h2>Three recipes, one ceiling</h2></div>
+<div class="wrap">
+  <p>Part 1 ended with single-call GRPO taking Qwen3.5-9B from 6.22 to 12.22 Avg@5 on FrontierCS by step 70, with most of the gain by step 40. I then restarted from step 40 twice, each time with a recipe aimed at the obvious suspect, lost exploration. One restart used <strong>Clip-Cov</strong>, which stops the gradient on the tokens most responsible for entropy collapse. The other <strong>rewarded the best answer in each group</strong>: 75% of the advantage came from a leave-one-out best-of-4 score, 25% from ordinary GRPO.</p>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 1 · FrontierCS Avg@5 (0–100), three runs</div>
+    <div style="margin:-.3rem 0 .6rem"><span class="key"><i style="background:var(--s1)"></i>plain GRPO</span><span class="key"><i style="background:var(--s2)"></i>Clip-Cov, restarted at step 40</span><span class="key"><i style="background:var(--s3)"></i>reward the best of the group, restarted at step 40</span></div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 330" role="img" aria-label="FrontierCS Avg@5 by training step for three runs: plain GRPO rises from 6.22 to about 12 by step 50; restarts from step 40 with Clip-Cov and with a reward for the best answer in the group land between 11.6 and 12.7 at every checkpoint.">
+      <g font-family="var(--mono)" font-size="11" fill="var(--muted)">
+      <line x1="70" y1="280.0" x2="860" y2="280.0" stroke="var(--rule)"/>
+      <text x="58" y="284.0" text-anchor="end">0</text>
+      <line x1="70" y1="217.5" x2="860" y2="217.5" stroke="var(--rule)"/>
+      <text x="58" y="221.5" text-anchor="end">4</text>
+      <line x1="70" y1="155.0" x2="860" y2="155.0" stroke="var(--rule)"/>
+      <text x="58" y="159.0" text-anchor="end">8</text>
+      <line x1="70" y1="92.5" x2="860" y2="92.5" stroke="var(--rule)"/>
+      <text x="58" y="96.5" text-anchor="end">12</text>
+      <line x1="70" y1="30.0" x2="860" y2="30.0" stroke="var(--rule)"/>
+      <text x="58" y="34.0" text-anchor="end">16</text>
+      <text x="70.0" y="302" text-anchor="middle">base</text>
+      <text x="220.5" y="302" text-anchor="middle">20</text>
+      <text x="371.0" y="302" text-anchor="middle">40</text>
+      <text x="521.4" y="302" text-anchor="middle">60</text>
+      <text x="671.9" y="302" text-anchor="middle">80</text>
+      <text x="822.4" y="302" text-anchor="middle">100</text>
+      <text x="465.0" y="324" text-anchor="middle">training step</text>
+      <text x="58" y="18" text-anchor="end">Avg@5</text>
+      </g>
+      <polygon points="70.0,144.7 145.2,128.9 220.5,100.6 371.0,49.2 446.2,41.4 596.7,35.0 596.7,137.2 446.2,140.9 371.0,143.9 220.5,179.5 145.2,195.8 70.0,215.3" fill="var(--s1)" opacity="0.1"/>
+      <polyline points="70.0,182.8 145.2,164.1 220.5,142.2 371.0,100.6 446.2,94.8 596.7,89.1" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="70.0" cy="182.8" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="70.0" cy="182.8" r="13" fill="transparent" tabindex="0" data-tip="Plain GRPO · base 6.22 [4.14, 8.66]"/>
+      <circle cx="145.2" cy="164.1" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="145.2" cy="164.1" r="13" fill="transparent" tabindex="0" data-tip="Plain GRPO · step 10 · 7.42"/>
+      <circle cx="220.5" cy="142.2" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="220.5" cy="142.2" r="13" fill="transparent" tabindex="0" data-tip="Plain GRPO · step 20 · 8.82"/>
+      <circle cx="371.0" cy="100.6" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="371.0" cy="100.6" r="13" fill="transparent" tabindex="0" data-tip="Plain GRPO · step 40 · 11.48 · Best@5 20.88"/>
+      <circle cx="446.2" cy="94.8" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="446.2" cy="94.8" r="13" fill="transparent" tabindex="0" data-tip="Plain GRPO · step 50 · 11.85"/>
+      <circle cx="596.7" cy="89.1" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="596.7" cy="89.1" r="13" fill="transparent" tabindex="0" data-tip="Plain GRPO · step 70 · 12.22 · Best@5 18.83"/>
+      <polyline points="371.0,100.6 446.2,99.4 521.4,82.8 596.7,85.8" fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="371.0" cy="100.6" r="4.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="371.0" cy="100.6" r="13" fill="transparent" tabindex="0" data-tip="Clip-Cov (from step 40) · restart point"/>
+      <circle cx="446.2" cy="99.4" r="4.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="446.2" cy="99.4" r="13" fill="transparent" tabindex="0" data-tip="Clip-Cov (from step 40) · step 50 · 11.56"/>
+      <circle cx="521.4" cy="82.8" r="4.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="521.4" cy="82.8" r="13" fill="transparent" tabindex="0" data-tip="Clip-Cov (from step 40) · step 60 · 12.62"/>
+      <circle cx="596.7" cy="85.8" r="4.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="596.7" cy="85.8" r="13" fill="transparent" tabindex="0" data-tip="Clip-Cov (from step 40) · step 70 · 12.43 · vs plain +0.21 [−0.81, +1.31]"/>
+      <polyline points="371.0,100.6 446.2,81.1 596.7,84.7 822.4,95.0" fill="none" stroke="var(--s3)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="371.0" cy="100.6" r="4.5" fill="var(--s3)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="371.0" cy="100.6" r="13" fill="transparent" tabindex="0" data-tip="Reward the best of the group (from step 40) · restart point"/>
+      <circle cx="446.2" cy="81.1" r="4.5" fill="var(--s3)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="446.2" cy="81.1" r="13" fill="transparent" tabindex="0" data-tip="Reward the best of the group (from step 40) · step 50 · 12.73 · Best@5 20.82"/>
+      <circle cx="596.7" cy="84.7" r="4.5" fill="var(--s3)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="596.7" cy="84.7" r="13" fill="transparent" tabindex="0" data-tip="Reward the best of the group (from step 40) · step 70 · 12.50 · Best@5 20.01"/>
+      <circle cx="822.4" cy="95.0" r="4.5" fill="var(--s3)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="822.4" cy="95.0" r="13" fill="transparent" tabindex="0" data-tip="Reward the best of the group (from step 40) · step 100 · 11.84 · stop rule fired"/>
+      <text x="634.3" y="248.8" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-soft)">every checkpoint from step 50 on: 11.6–12.7</text>
+      </svg>
+    </div>
+    <figcaption><b>Every checkpoint after step 50 lands in the same band.</b> The shaded band is plain GRPO's 95% CI. Clip-Cov at step 70 is +0.21 [−0.81, +1.31] over plain GRPO, and rewarding the best is +0.28 [−0.91, +1.46]. The reward-the-best run stopped itself at step 103 after two evals without a gain. Hover a point for its numbers.</figcaption>
+  </figure>
+</div>
+<div class="wrap">
+  <div class="scroll"><table class="ledger" aria-label="Checkpoint comparison">
+    <thead><tr><th>Checkpoint</th><th class="r">Avg@5</th><th class="r">Best@5</th><th class="r">Valid</th><th class="r">Search-style</th><th class="r">All 5 samples equal</th></tr></thead>
+    <tbody>
+      <tr><td>Plain GRPO, step 40</td><td class="r">11.48</td><td class="r">20.88</td><td class="r">72%</td><td class="r">14.4%</td><td class="r">45%</td></tr>
+      <tr><td>Plain GRPO, step 70</td><td class="r">12.22</td><td class="r">18.83</td><td class="r">83%</td><td class="r">13.1%</td><td class="r">49%</td></tr>
+      <tr><td>Clip-Cov, step 70</td><td class="r">12.43</td><td class="r">18.64</td><td class="r">83%</td><td class="r">7.8%</td><td class="r">52%</td></tr>
+      <tr><td>Reward the best, step 50</td><td class="r">12.73</td><td class="r">20.82</td><td class="r">83%</td><td class="r">12.7%</td><td class="r">47%</td></tr>
+      <tr><td>Reward the best, step 70</td><td class="r">12.50</td><td class="r">20.01</td><td class="r">84%</td><td class="r">13.4%</td><td class="r">48%</td></tr>
+      <tr><td>Reward the best, step 100</td><td class="r">11.84</td><td class="r">19.80</td><td class="r">84%</td><td class="r">14.9%</td><td class="r">52%</td></tr>
+    </tbody>
+  </table></div>
+  <p>Two things rule out "just train longer". Training reward rose from 0.10 to 0.26 by step 40 and then sat at 0.30–0.33 from step 50 in all three runs. And the model stopped improving on the training problems themselves. Each problem came back about every 14 steps, and reward on the same problem climbed visit by visit until the fourth visit, then went flat (Figure 2). The best of 8 samples on a problem stayed stuck at 0.46 from that point.</p>
+  <p>It isn't a lack of learning signal either. After step 20, 85–95% of groups still had a spread of scores, and all-zero groups were under 5%. Entropy held at 0.65–0.69. The whole Stage A budget was about 87 GPU-hours, so compute is small, but the plateau looks like the pattern large-scale RL studies report for small batches: training reward keeps rising while the downstream eval stalls. My working conclusion is that the 9B model hit a wall of <strong>model plus recipe</strong>, and more steps of the same recipe would add at most about a point.</p>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 2 · Reward on the same training problem, by visit</div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 260" role="img" aria-label="Mean reward on the same training problem by visit: 0.14, 0.19, 0.25, 0.30, 0.31, 0.31.">
+      <g font-family="var(--mono)" font-size="11" fill="var(--muted)">
+      <line x1="70" y1="210.0" x2="860" y2="210.0" stroke="var(--rule)"/>
+      <text x="58" y="214.0" text-anchor="end">0</text>
+      <line x1="70" y1="165.0" x2="860" y2="165.0" stroke="var(--rule)"/>
+      <text x="58" y="169.0" text-anchor="end">0.1</text>
+      <line x1="70" y1="120.0" x2="860" y2="120.0" stroke="var(--rule)"/>
+      <text x="58" y="124.0" text-anchor="end">0.2</text>
+      <line x1="70" y1="75.0" x2="860" y2="75.0" stroke="var(--rule)"/>
+      <text x="58" y="79.0" text-anchor="end">0.3</text>
+      <line x1="70" y1="30.0" x2="860" y2="30.0" stroke="var(--rule)"/>
+      <text x="58" y="34.0" text-anchor="end">0.4</text>
+      <text x="191.5" y="232" text-anchor="middle">1</text>
+      <text x="313.1" y="232" text-anchor="middle">2</text>
+      <text x="434.6" y="232" text-anchor="middle">3</text>
+      <text x="556.2" y="232" text-anchor="middle">4</text>
+      <text x="677.7" y="232" text-anchor="middle">5</text>
+      <text x="799.2" y="232" text-anchor="middle">6</text>
+      <text x="465.0" y="254" text-anchor="middle">visit to the same training problem (about every 14 steps)</text>
+      <text x="58" y="18" text-anchor="end">reward</text>
+      </g>
+      <polyline points="191.5,147.0 313.1,124.5 434.6,97.5 556.2,75.0 677.7,70.5 799.2,70.5" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="191.5" cy="147.0" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="191.5" cy="147.0" r="13" fill="transparent" tabindex="0" data-tip="Same training problem, revisited · visit 1 · 0.14"/>
+      <circle cx="313.1" cy="124.5" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="313.1" cy="124.5" r="13" fill="transparent" tabindex="0" data-tip="Same training problem, revisited · visit 2 · 0.19"/>
+      <circle cx="434.6" cy="97.5" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="434.6" cy="97.5" r="13" fill="transparent" tabindex="0" data-tip="Same training problem, revisited · visit 3 · 0.25"/>
+      <circle cx="556.2" cy="75.0" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="556.2" cy="75.0" r="13" fill="transparent" tabindex="0" data-tip="Same training problem, revisited · visit 4 · 0.30"/>
+      <circle cx="677.7" cy="70.5" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="677.7" cy="70.5" r="13" fill="transparent" tabindex="0" data-tip="Same training problem, revisited · visit 5 · 0.31"/>
+      <circle cx="799.2" cy="70.5" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="799.2" cy="70.5" r="13" fill="transparent" tabindex="0" data-tip="Same training problem, revisited · visit 6 · 0.31"/>
+      <text x="677.7" y="48.0" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-soft)">flat after the 4th visit</text>
+      </svg>
+    </div>
+    <figcaption><b>In-sample improvement stops too.</b> Mean reward over the 200 FrontierSmith training problems, by how many times the problem had been drawn. About two thirds of the gain is validity (43% → 84–87% valid) and one third is quality on valid answers (0.29 → 0.36). 95–105 problems improved and at most one regressed. There is no held-out FrontierSmith split to check unseen training-style problems.</figcaption>
+  </figure>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="gain"><p class="eyebrow">02 · Where the gain came from</p><h2>Mostly: answers that compile and run</h2></div>
+<div class="wrap">
+  <p>Splitting the step-70 gain into "more valid answers" and "better valid answers" shows what RL actually bought. Valid answers rose from 38% to 83–85%, and the share of problems where all five samples got the same nonzero score went from 2 to 10. The spread across a problem's five samples halved.</p>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 3 · Decomposing the gain, base → Clip-Cov step 70 (Avg@5 points)</div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 152" role="img" aria-label="Of the +6.3 point gain at step 70, +4.9 came from more valid answers and +1.4 from better answers.">
+      <text x="316" y="28" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">base model</text>
+      <path d="M330,14 h369.2 a4,4 0 0 1 4,4 v10 a4,4 0 0 1 -4,4 h-369.2 z" fill="var(--muted)"/>
+      <text x="711.2" y="28" font-family="var(--mono)" font-size="12" fill="var(--ink)">6.2</text>
+      <rect x="330" y="8" width="540" height="36" fill="transparent" tabindex="0" data-tip="Base model · Avg@5 6.22"/>
+      <text x="316" y="72" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">+ more answers that compile and run</text>
+      <path d="M330,58 h290.0 a4,4 0 0 1 4,4 v10 a4,4 0 0 1 -4,4 h-290.0 z" fill="var(--s1)"/>
+      <text x="632.0" y="72" font-family="var(--mono)" font-size="12" fill="var(--ink)">4.9</text>
+      <rect x="330" y="52" width="540" height="36" fill="transparent" tabindex="0" data-tip="Validity: valid answers 38% → 83–85% · +4.9 points"/>
+      <text x="316" y="116" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">+ better answers when valid</text>
+      <path d="M330,102 h80.0 a4,4 0 0 1 4,4 v10 a4,4 0 0 1 -4,4 h-80.0 z" fill="var(--s2)"/>
+      <text x="422.0" y="116" font-family="var(--mono)" font-size="12" fill="var(--ink)">1.4</text>
+      <rect x="330" y="96" width="540" height="36" fill="transparent" tabindex="0" data-tip="Quality on valid answers · +1.4 points (+2.1 [−0.2, +4.5] per valid answer)"/>
+      <line x1="330" y1="6" x2="330" y2="146" stroke="var(--rule)"/>
+      </svg>
+    </div>
+    <figcaption><b>About 80% of the gain is validity.</b> Quality on valid answers rose +2.1 [−0.2, +4.5] per answer, which is not significant on its own. The training curves agree: the share of valid rollouts went from 35% to 85–90%.</figcaption>
+  </figure>
+</div>
+<div class="wrap">
+  <p>A 172-problem eval with 5 samples per problem resolves differences of about 1.5–2 points, and every difference between checkpoints after step 50 is under 0.9. Training reward and eval Avg@5 correlate at 0.90 across all checkpoints, but only at 0.12 after step 50. The eval can see the climb, but not the ranking at the top.</p>
+  <p>There is also a train/eval mismatch worth knowing: 74 of the 172 eval problems are interactive, and none of the 200 training problems are. Interactive problems score 7.2 on average against 16.2 for the rest.</p>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="tax"><p class="eyebrow">03 · The compile tax</p><h2>RL learned that ambitious code is risky</h2></div>
+<div class="wrap">
+  <p>FrontierCS problems are optimisation problems with partial credit, so the good solutions are often search: simulated annealing, randomised restarts, timed local search. Comparing programs <em>within the same group</em>, on the same problem, shows what the reward was teaching:</p>
+  <ul>
+    <li>Search-style programs fail to compile <strong>16 points more often</strong> than safe ones.</li>
+    <li>Once they compile and are judged, they score 0 about as often as safe code (−0.5 points).</li>
+    <li>When they score, they score <strong>+4.3 higher</strong>.</li>
+    <li>There's no time-limit signature: the risk is getting the program to build, not running out of time.</li>
+  </ul>
+  <p>A mean-centred reward sees a group where the safe programs reliably earn a modest score and the ambitious ones sometimes earn more but often earn nothing. Its gradient pushes toward safe.</p>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 4 · Algorithm style in training rollouts, base → trained</div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 178" role="img" aria-label="Share of training rollouts by algorithm style, base vs trained: greedy 36% to 62–70%, timed search and annealing 19% to 4–9%, trivial code 9.5% to 1%.">
+      <g font-family="var(--mono)" font-size="11" fill="var(--muted)">
+      <line x1="280.0" y1="22" x2="280.0" y2="168" stroke="var(--rule)"/>
+      <text x="280.0" y="14" text-anchor="middle">0%</text>
+      <line x1="417.5" y1="22" x2="417.5" y2="168" stroke="var(--rule)"/>
+      <text x="417.5" y="14" text-anchor="middle">20%</text>
+      <line x1="555.0" y1="22" x2="555.0" y2="168" stroke="var(--rule)"/>
+      <text x="555.0" y="14" text-anchor="middle">40%</text>
+      <line x1="692.5" y1="22" x2="692.5" y2="168" stroke="var(--rule)"/>
+      <text x="692.5" y="14" text-anchor="middle">60%</text>
+      <line x1="830.0" y1="22" x2="830.0" y2="168" stroke="var(--rule)"/>
+      <text x="830.0" y="14" text-anchor="middle">80%</text>
+      </g>
+      <text x="266" y="48" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">greedy / constructive</text>
+      <line x1="527.5" y1="44" x2="733.8" y2="44" stroke="var(--muted)" stroke-width="2"/>
+      <circle cx="527.5" cy="44" r="6" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="733.8" cy="44" r="6" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
+      <text x="527.5" y="32" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-soft)">36%</text>
+      <text x="733.8" y="32" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink)">62–70%</text>
+      <rect x="280" y="28" width="550" height="30" fill="transparent" tabindex="0" data-tip="Greedy share of training rollouts: 36% → 62–70%"/>
+      <text x="266" y="94" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">timed search, annealing</text>
+      <line x1="410.6" y1="90" x2="324.7" y2="90" stroke="var(--muted)" stroke-width="2"/>
+      <circle cx="410.6" cy="90" r="6" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="324.7" cy="90" r="6" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
+      <text x="410.6" y="78" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-soft)">19%</text>
+      <text x="324.7" y="78" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink)">4–9%</text>
+      <rect x="280" y="74" width="550" height="30" fill="transparent" tabindex="0" data-tip="Search / annealing share: 19% → 4–9%"/>
+      <text x="266" y="140" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">trivial code</text>
+      <line x1="345.3" y1="136" x2="286.9" y2="136" stroke="var(--muted)" stroke-width="2"/>
+      <circle cx="345.3" cy="136" r="6" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
+      <circle cx="286.9" cy="136" r="6" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
+      <text x="345.3" y="124" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-soft)">9.5%</text>
+      <text x="286.9" y="124" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink)">1%</text>
+      <rect x="280" y="120" width="550" height="30" fill="transparent" tabindex="0" data-tip="Trivial code: 9.5% → 1%"/>
+      </svg>
+    </div>
+    <figcaption><b>Search was trained out.</b> Training rollouts by algorithm style, classified from the code. In eval the same shift appears: programs using a timer fell from 12% to 2.5% and programs using randomness from 22.5% to 7.8%, even though code that uses them scores 2–3× higher.</figcaption>
+  </figure>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="knows"><p class="eyebrow">04 · It knows better than it ships</p><h2>Naming the better algorithm, submitting the safe one</h2></div>
+<div class="wrap">
+  <p>Reading paired base and trained solutions on eight problems in full showed a pattern the numbers only hint at. The trained model often states the better algorithm, or names the flaw in its own approach, and then submits the safer program anyway. In its own words: <em>"simple is better"</em>, and <em>"It's safer for TLE."</em> On one problem the score went from 99.9 for the base model to 48. On a maximum-independent-set problem it went from 86 to 34, and on a sphere-spreading problem from about 99 to 59.5.</p>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 5 · The model writes much better programs than it reliably picks (FrontierCS, 0–100)</div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 152" role="img" aria-label="Per-problem scores on FrontierCS: average sample about 12, best of 5 about 20, best of all 55 trained samples 29.">
+      <text x="316" y="28" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">Avg@5 (one sample, on average)</text>
+      <path d="M330,14 h168.2 a4,4 0 0 1 4,4 v10 a4,4 0 0 1 -4,4 h-168.2 z" fill="var(--s1)"/>
+      <text x="510.2" y="28" font-family="var(--mono)" font-size="12" fill="var(--ink)">12</text>
+      <rect x="330" y="8" width="540" height="36" fill="transparent" tabindex="0" data-tip="Average sample · ~12 (step 70: 12.22)"/>
+      <text x="316" y="72" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">Best@5 (best of 5 samples)</text>
+      <path d="M330,58 h278.4 a4,4 0 0 1 4,4 v10 a4,4 0 0 1 -4,4 h-278.4 z" fill="var(--s1)"/>
+      <text x="620.4" y="72" font-family="var(--mono)" font-size="12" fill="var(--ink)">20</text>
+      <rect x="330" y="52" width="540" height="36" fill="transparent" tabindex="0" data-tip="Best of 5 · ~20 (step 40: 20.88; reward-the-best step 70: 20.01)"/>
+      <text x="316" y="116" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">best of all 55 trained samples</text>
+      <path d="M330,102 h405.4 a4,4 0 0 1 4,4 v10 a4,4 0 0 1 -4,4 h-405.4 z" fill="var(--s2)"/>
+      <text x="747.4" y="116" font-family="var(--mono)" font-size="12" fill="var(--ink)">29</text>
+      <rect x="330" y="96" width="540" height="36" fill="transparent" tabindex="0" data-tip="Best of all 55 samples from the trained checkpoints, per eval problem · 29.0"/>
+      <line x1="330" y1="6" x2="330" y2="146" stroke="var(--rule)"/>
+      </svg>
+    </div>
+    <figcaption><b>The best of 55 samples per problem averages 29.</b> A single sample averages about 12 and the best of 5 about 20. The ability to write a strong program is there; the policy doesn't put it first. 48 of 172 eval problems never score at all, 24 of them interactive, and about 47% of late samples run but score 0.</figcaption>
+  </figure>
+</div>
+<div class="wrap">
+  <p class="take">RL didn't fail to teach the model good algorithms. It taught the model which of its own algorithms is safe to submit under a mean-reward objective.</p>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="best"><p class="eyebrow">05 · Rewarding the best answer</p><h2>It keeps the best alive. It can't raise the average.</h2></div>
+<div class="wrap">
+  <p>If the problem is that the policy picks safe over strong, the natural fix is to reward the best answer in each group instead of the mean, in the max@k family of objectives. It did what it promised on the top end. Best@5 held near 20 instead of drifting down, search-style code came back to 13.4% (<span class="num">+5.6 points [+3.3, +8.0]</span> over Clip-Cov), and quality on valid answers at step 50 was the one significant gain anywhere: <span class="num">+1.36 [+0.04, +2.72]</span> over Clip-Cov. But Avg@5 drifted from 12.7 at step 50 to 11.8 at step 100, and the run's stop rule ended it.</p>
+  <p>The reason turns out to be structural, not a tuning problem:</p>
+  <ul>
+    <li><strong>Copies of the best answer are never penalised; they just stop being paid.</strong> Each extra copy gets much less credit (Figure 6), and once five or more of eight samples tie for the best, the whole group's advantage is exactly zero.</li>
+    <li><strong>In converging groups, the remaining GRPO term takes over</strong>: 88–100% of the update, where per-group standard-deviation scaling turns a ±0.002 score gap into a ±0.43 advantage.</li>
+    <li><strong>All-tied groups carry no gradient and are dropped by dynamic sampling</strong>, so the share of converged problems can only ratchet up.</li>
+    <li><strong>With deterministic scores, collapse is the optimum.</strong> The objective is maximised by always emitting the single best program; diversity only pays as a hedge, and the hedge costs mean score. In a toy model with a 75% best-of-4 weight, the policy reaches 0.969 best-of-4 but a 0.755 mean, below the 0.800 of always playing the safe heuristic. That roughly matches what the real run did.</li>
+  </ul>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 6 · Credit per copy of the best answer, under a reward for the best of the group</div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 172" role="img" aria-label="Credit per copy of the best answer under a reward for the best of the group: 0.5, 0.21, 0.07, 0.014 times the gap.">
+      <text x="216" y="26" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">1 copy of the best</text>
+      <path d="M230,14 h479.3 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-479.3 z" fill="var(--s3)"/>
+      <text x="721.3" y="26" font-family="var(--mono)" font-size="12" fill="var(--ink)">0.5</text>
+      <rect x="230" y="8" width="640" height="30" fill="transparent" tabindex="0" data-tip="One copy of the best answer · credit 0.5 × gap"/>
+      <text x="216" y="64" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">2 copies</text>
+      <path d="M230,52 h199.0 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-199.0 z" fill="var(--s3)"/>
+      <text x="441.0" y="64" font-family="var(--mono)" font-size="12" fill="var(--ink)">0.21</text>
+      <rect x="230" y="46" width="640" height="30" fill="transparent" tabindex="0" data-tip="Two copies · 0.21 × gap each"/>
+      <text x="216" y="102" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">3 copies</text>
+      <path d="M230,90 h63.7 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-63.7 z" fill="var(--s3)"/>
+      <text x="305.7" y="102" font-family="var(--mono)" font-size="12" fill="var(--ink)">0.07</text>
+      <rect x="230" y="84" width="640" height="30" fill="transparent" tabindex="0" data-tip="Three copies · 0.07 × gap each"/>
+      <text x="216" y="140" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">4 copies</text>
+      <path d="M230,128 h9.5 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-9.5 z" fill="var(--s3)"/>
+      <text x="251.5" y="140" font-family="var(--mono)" font-size="12" fill="var(--ink)">0.014</text>
+      <rect x="230" y="122" width="640" height="30" fill="transparent" tabindex="0" data-tip="Four copies · 0.014 × gap each"/>
+      <line x1="230" y1="6" x2="230" y2="166" stroke="var(--rule)"/>
+      </svg>
+    </div>
+    <figcaption><b>Duplicating the winner is free.</b> Credit per copy, as a multiple of the gap between the best answer and the rest, for 1–4 copies in a group of 8. A version with a diverse optimum needs an explicit un-centred penalty on duplicates; it's designed but held for a later run.</figcaption>
+  </figure>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="agent"><p class="eyebrow">06 · The judge as test suite</p><h2>In agent mode, RL learned to submit instead of test</h2></div>
+<div class="wrap">
+  <p>The agentic arm now runs in a minimal loop of my own: the problem statement in the first message, a handful of tools, and a <code>submit</code> that runs the benchmark's official feedback, up to 100 judged submissions per trial, credited with the best of the final and best submission. Trained from the base model with GRPO (and, from step 13, a reward for the best of the group), training reward rose from 0.37 to about 0.46. The eval didn't follow.</p>
+  <div class="scroll"><table class="ledger" aria-label="Agent-mode eval">
+    <thead><tr><th>Eval (40 problems × 4 attempts)</th><th class="r">Base</th><th class="r">Trained</th><th class="r">Paired difference</th></tr></thead>
+    <tbody>
+      <tr><td>Step 10 vs base (partly paired)</td><td class="r">5.78</td><td class="r">6.71</td><td class="r">+0.88 [−0.15, +2.05]</td></tr>
+      <tr><td>Step 20 vs base (later harness revision)</td><td class="r">7.09</td><td class="r">6.79</td><td class="r">−0.12 [−0.76, +0.53]</td></tr>
+      <tr><td>Single-call step 40, run in agent mode</td><td class="r">4.84</td><td class="r">5.37</td><td class="r">+0.53 [−0.70, +2.23]</td></tr>
+    </tbody>
+  </table></div>
+  <p>The traces at step 20 explain it. The four attempts on a problem became more alike: all four identical on 23 of 39 problems, up from 18. The worst attempt improved (+1.15, significant) while the best didn't (−0.69). Median submissions per trial rose from 38 to 50, <strong>all of the extra ones after the last improvement</strong>. Local testing didn't move (14.8% → 14.6% of runs), and thinking per call fell 8%. With 100 exact-score submissions per trial, the judge was nearly free, so the cheapest way to learn was to use it as the test suite.</p>
+  <p>The single-call model's gain also didn't carry over: run in agent mode, step 40 is +0.53 [−0.70, +2.23] over the base model. The two modes don't share as much as I'd hoped.</p>
+  <h3>Short thinking is the model's habit, not the prompt's</h3>
+  <p>In part 1 I suspected the harness was suppressing thinking. A 2×2 prompt ablation says it's mostly the model: a neutral task prompt and a "think first" system prompt changed thinking per call by −38 [−111, +33] and −26 [−95, +49] tokens from a base of 566. The planning call runs about 1.3K tokens in every arm, while the same problem asked as one question gets 42K or more, 15–45× more. Removing "submit early and iterate" from the prompt changed nothing either (9.0 vs 9.1 submits per 10 minutes).</p>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="next"><p class="eyebrow">07 · Now running</p><h2>Make the reward care about each test, and make the oracle scarce</h2></div>
+<div class="wrap">
+  <div class="status" style="border-left-color:var(--gold)">
+    <span class="lbl" style="color:var(--gold)">Running, no results yet</span>
+    <p>The scarce-oracle run started on October 11; the per-test-case reward arms are in final review. Their success measures are stated here in advance.</p>
+  </div>
+  <h3>Reward per test case (from step 40, 16 samples × 8 problems)</h3>
+  <p>Both arms score each test case separately, drop the per-group standard-deviation division in favour of one batch-wide scale, and give −1 to invalid code. That last choice risks making the compile tax worse, and it switches to 0 if search-style code keeps falling.</p>
+  <ul>
+    <li><strong>Arm R, rank-based (after RiVER).</strong> On each test case the winner gets +1, the rest a bounded rank value, and a failed case −1. RiVER reports that a reward shaped like this, emphasising top-ranked solutions, improved rating on heuristic contests and transferred to exact-solution benchmarks, where raw-score training didn't. My change: tied winners share the bonus, so copying the best isn't paid.</li>
+    <li><strong>Arm D, fixed quality bars.</strong> Each case pays 1.0 at or above a frozen top-10% bar and 0.5 above a top-30% bar, set from historical training results, never from the eval. A merely valid program earns nothing. This follows recent work on RL for code optimisation, which composes correctness with a speed objective instead of rewarding correctness alone.</li>
+  </ul>
+  <p><strong>What would count:</strong> the in-sample per-visit curve rising past the fourth visit, search-style share and Best@5 holding, fewer all-identical groups, and an Avg@5 gain over the step-70 checkpoints of all three earlier runs that the eval can resolve.</p>
+  <h3>A scarce oracle (agent mode, from the base model)</h3>
+  <p>OpenAI's o1-ioi needed hand-engineered inference strategies to do well at the 2024 olympiad; o3 reached gold without them. The search moved inside the model. My agent learned the opposite lesson because judging was nearly free. So the training run now allows <strong>10 judged submissions per trial</strong> (with a visible counter), and feedback is only the verdict and a 10-point score band, never the exact score. The reward still uses the exact hidden score, and the eval stays in the benchmark's official mode.</p>
+  <p><strong>What would count:</strong> the model starting to check its own work. That means more local compile-and-run before each judged submission (the share of judged submissions whose exact code was run locally first), brute-force checkers and stress tests appearing in the traces, those behaviours predicting higher scores, and the gain showing up in the official eval. <strong>The risk</strong> is that a 9B model barely self-tests today: about 15% local runs, and a brute-force checker plus generator in under 1% of trials. RL mostly amplifies what's already there.</p>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="team"><p class="eyebrow">08 · What it means for teams</p><h2>Every solo run collapsed diversity. A team has to be paid not to.</h2></div>
+<div class="wrap">
+  <p>The series is about collective intelligence: whether a team of copies of one model can learn to do more than the same model sampled more times. I don't think it's test-time compute in a different costume, but I'll only find out with a recipe that produces a different scaling curve. People specialised once communities grew past a certain size; the hope is something similar once a team does.</p>
+  <p>This post is a warning for that plan. Mean-centred RL collapsed diversity in the single-call runs and in agent mode. A team reward based on the best answer would make copying a teammate optimal, by the same argument as Figure 6. So the team experiment will:</p>
+  <ul>
+    <li>credit each agent by its marginal contribution, not by the team's outcome alone;</li>
+    <li>give duplicate solutions, detected from per-test score vectors, only a fraction of the credit;</li>
+    <li>sweep team size from 1 to 6 at matched tokens, against N independent agents with a best-of-N pick and one agent given N× the tokens.</li>
+  </ul>
+  <p>If teams are more than extra samples, the online team's curve should bend above best-of-N past some team size, with measures of specialisation rising at the same point. I haven't found published work showing roles emerging among shared-weight agents after RL, and I'm not assuming they will. A flat solo curve at least makes any team effect easy to see.</p>
+  <p class="take">RL learns what you pay for. Pay for valid code, and you get safe code. Make the judge free, and it becomes the test suite. The next experiments change what is paid for.</p>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p class="eyebrow" style="color:var(--accent)">Notes</p>
+    <h2>How the numbers were made</h2>
+    <p>The task is the statistical unit. Comparisons are paired over the same problems and seeds with task-level bootstrap intervals; Avg@5 is the mean over 5 samples per problem and Best@5 the mean of each problem's best. Single-call evals use all 172 algorithmic FrontierCS problems; agent-mode evals use a 40-problem hard subset with 4 attempts each. Training uses the 200 FrontierSmith problems; ten FrontierCS problems that duplicate them are excluded everywhere. Infrastructure failures are masked, never scored as zero. Algorithm-style labels come from classifying the submitted code.</p>
+    <p>References: RiVER, <a href="https://arxiv.org/abs/2606.27369">Reinforcement Learning without Ground-Truth Solutions can Improve LLMs</a>; <a href="https://arxiv.org/abs/2607.25970">Reinforcement Learning for Code Optimization</a>; OpenAI, <a href="https://arxiv.org/abs/2502.06807">Competitive Programming with Large Reasoning Models</a>. The summary video was animated with <a href="https://www.manim.community/">Manim</a>, with narration generated by <a href="https://elevenlabs.io/">ElevenLabs</a>.</p>
+    <div class="foot-links">
+      <a href="../">← Part 1 · The Harness Is Part of the Model</a>
+      <a href="https://github.com/MaCoredroid/collective-intelligence">Repository</a>
+    </div>
+    <p style="margin-top:2rem;font-family:var(--mono);font-size:.74rem;color:var(--muted)">The Wall, the Compile Tax, and the Oracle. Collective intelligence, part 2: a snapshot of work through October 11, 2026.</p>
+  </div>
+</footer>
+
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+  (function(){
+    var t=document.getElementById('tgl');
+    function cur(){var e=document.documentElement.getAttribute('data-theme'); if(e) return e; return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}
+    t.addEventListener('click',function(){var n=cur()==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',n);});
+    var els=document.querySelectorAll('.rise');
+    if(!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in'); io.unobserve(e.target);}});},{threshold:0.12});
+      els.forEach(function(e){io.observe(e);});
+    } else { els.forEach(function(e){e.classList.add('in');}); }
+    var links=[].slice.call(document.querySelectorAll('.toc a'));
+    if('IntersectionObserver' in window && links.length){
+      var map={}; links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+      var so=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.remove('on');}); var a=map[e.target.id]; if(a) a.classList.add('on');}});},{rootMargin:'-20% 0px -70% 0px'});
+      Object.keys(map).forEach(function(id){var el=document.getElementById(id); if(el) so.observe(el);});
+    }
+    var tip=document.getElementById('tip');
+    function show(el){
+      tip.textContent=el.getAttribute('data-tip');
+      var r=el.getBoundingClientRect();
+      tip.classList.add('on');
+      var w=tip.offsetWidth, x=r.left+r.width/2-w/2+window.scrollX, y=r.top+window.scrollY-tip.offsetHeight-8;
+      x=Math.max(window.scrollX+8,Math.min(x,window.scrollX+document.documentElement.clientWidth-w-8));
+      tip.style.left=x+'px'; tip.style.top=y+'px';
+    }
+    function hide(){tip.classList.remove('on');}
+    document.querySelectorAll('[data-tip]').forEach(function(el){
+      el.addEventListener('mouseenter',function(){show(el);});
+      el.addEventListener('mouseleave',hide);
+      el.addEventListener('focus',function(){show(el);});
+      el.addEventListener('blur',hide);
+    });
+  })();
+</script>
+
+</body>
+</html>
