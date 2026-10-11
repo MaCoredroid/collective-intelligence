@@ -123,7 +123,7 @@ class Film2(Scene):
         lt = serif("safe greedy code", 28).move_to(left.get_top() + DOWN * 0.45)
         rt = serif("search / annealing", 28, CLAY).move_to(right.get_top() + DOWN * 0.45)
         r1 = mono("compile failures: +16 points", 17, INK).move_to(right.get_center() + DOWN * 0.05)
-        r2 = mono("when it runs: +4.3 higher", 17, CLAY).move_to(right.get_center() + DOWN * 0.6)
+        r2 = mono("when it scores: +4.3 higher", 17, CLAY).move_to(right.get_center() + DOWN * 0.6)
         l1 = mono("compiles more reliably", 17, INK).move_to(left.get_center() + DOWN * 0.05)
         l2 = mono("modest, steady score", 17, INK2).move_to(left.get_center() + DOWN * 0.6)
         self.play(FadeIn(left), FadeIn(lt), FadeIn(right), FadeIn(rt), run_time=0.9)
@@ -149,7 +149,7 @@ class Film2(Scene):
         q2 = serif("“It's safer for TLE.”", 32, INK2, slant=ITALIC).move_to(RIGHT * 3.0 + UP * 1.2)
         self.play(FadeIn(q1, shift=UP * 0.1), run_time=0.6)
         self.play(FadeIn(q2, shift=UP * 0.1), run_time=0.6)
-        rows = [("one sample (Avg@5)", 12, SLATE), ("best of 5", 20, SLATE), ("best of all its samples", 29, CLAY)]
+        rows = [("one sample (Avg@5)", 12, SLATE), ("best of 5", 20, SLATE), ("best of 55, pooled checkpoints", 29, CLAY)]
         u = 0.25
         bars = VGroup()
         for i, (name, v, col) in enumerate(rows):
@@ -176,11 +176,11 @@ class Film2(Scene):
         self.play(Create(ax), FadeIn(xl), FadeIn(yl), run_time=0.8)
         b5 = VMobject(color=CLAY, stroke_width=4).set_points_as_corners([ax.c2p(*p) for p in [(40, 20.88), (50, 20.82), (70, 20.01), (100, 19.80)]])
         av = VMobject(color=SLATE, stroke_width=4).set_points_as_corners([ax.c2p(*p) for p in [(40, 11.48), (50, 12.73), (70, 12.50), (100, 11.84)]])
-        t1 = mono("best of 5 · holds", 16, CLAY).next_to(ax.c2p(100, 19.8), RIGHT, buff=0.15)
-        t2 = mono("average · drifts down", 16, SLATE).next_to(ax.c2p(100, 11.84), RIGHT, buff=0.15)
+        t1 = mono("best of 5", 16, CLAY).next_to(ax.c2p(100, 19.8), RIGHT, buff=0.15)
+        t2 = mono("average · no gain", 16, SLATE).next_to(ax.c2p(100, 11.84), RIGHT, buff=0.15)
         self.play(Create(b5), Create(av), run_time=1.6)
         self.play(FadeIn(t1), FadeIn(t2), run_time=0.6)
-        cap = serif("With deterministic scores, collapse is the optimum.", 30).to_edge(DOWN, buff=0.45)
+        cap = serif("In theory, with deterministic scores, collapse is the optimum.", 28).to_edge(DOWN, buff=0.45)
         self.play(FadeIn(cap, shift=UP * 0.1), run_time=0.7)
         self.wait(0.6)
         self.pad()
@@ -189,15 +189,15 @@ class Film2(Scene):
     # 6 ---------------------------------------------------------------
     def agent(self):
         self.begin("s6")
-        top = serif("In agent mode, the judge became the test suite", 36).to_edge(UP, buff=0.7)
+        top = serif("In agent mode, RL added submissions, not testing", 36).to_edge(UP, buff=0.7)
         self.play(FadeIn(top, shift=DOWN * 0.1), run_time=0.7)
-        lab1 = mono("judged submissions per trial (median)", 17, INK2).move_to(UP * 1.1)
+        lab1 = mono("judged submissions per trial (median), base → step 20", 17, INK2).move_to(UP * 1.1)
         n = DecimalNumber(38, num_decimal_places=0, font_size=72, color=CLAY).move_to(UP * 0.1)
         self.play(FadeIn(lab1), FadeIn(n), run_time=0.6)
         self.play(ChangeDecimalToValue(n, 50), run_time=1.2)
         n.set_value(50)
         note = mono("all of the extra ones after the last improvement", 17, INK).next_to(n, DOWN, buff=0.3)
-        lab2 = mono("local testing: 14.8% → 14.6% of runs", 18, INK2).next_to(note, DOWN, buff=0.6)
+        lab2 = mono("submissions run locally first: 14.6% → 14.8%", 18, INK2).next_to(note, DOWN, buff=0.6)
         self.play(FadeIn(note), run_time=0.6)
         self.play(FadeIn(lab2), run_time=0.6)
         self.wait(0.6)

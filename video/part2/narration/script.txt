@@ -2,7 +2,9 @@ s1|In part one, reinforcement learning nearly doubled a nine-billion-parameter m
 s2|Most of the gain was not better algorithms. It was answers that compile and run.
 s3|Ambitious search code fails to compile more often, but scores higher when it does run. A mean reward sees the risk, not the upside. So training removed the search.
 s4|The model often names the better algorithm, then ships the safe one. The best of its samples averages twenty-nine. A single sample, about twelve.
-s5|Rewarding the best answer kept exploration alive, but not the average. With deterministic scores, collapsing onto one program is that objective's optimum.
-s6|As an agent, the model learned to use the judge as its test suite. Submissions went up. Local testing didn't.
+s5|Rewarding the best answer kept exploration alive, but not the average.
+s6|As an agent, even untrained, the model used the judge as its test suite. Training added submissions, not testing.
 s7|So now the oracle is scarce: ten submissions, and only a score band as feedback. Will the search move inside the model? That run has just started.
 s8|Reinforcement learning learns what you pay for. Next, we change what we pay for.
+
+# Note: s3/s4/s5 audio is from the first generation (free-tier quota ran out); s5 is trimmed to its first sentence; s6 regenerated with eleven_flash_v2_5.
