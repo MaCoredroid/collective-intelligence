@@ -4,7 +4,7 @@
 - **Topic**: What the groundwork for agent-team RL actually showed
 - **Hook**: "Can one model learn to work as a team?" Then the twist: before a team can learn anything, the harness decides more than the agents do.
 - **Target audience**: ML researchers and engineers
-- **Length**: ~97 s, 1920×1080, 30 fps, narrated (ElevenLabs voice "George"); on-screen text also works muted
+- **Length**: narrated with an AI-generated voice (OpenAI TTS "ash" for part 2; ElevenLabs "George" for part 1)
 - **Key insight**: what the model is shown (a clock, a file instead of a question, its own tokens) moved results more than teammates did. So the harness is part of the model.
 
 ## Narrative arc
