@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowing Simulated Annealing Isn't Running It</title>
+<meta name="description" content="Collective intelligence, part 3: a 9B model can name and plan a search algorithm but almost never runs one. Some teacher-free levers changed its habits; none changed its algorithms. Its 27B sibling already has the skill.">
+<link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-3/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Collective Intelligence, Part 3">
+<meta property="og:title" content="Knowing Simulated Annealing Isn't Running It">
+<meta property="og:description" content="Collective intelligence, part 3: a 9B model can name and plan a search algorithm but almost never runs one. Some teacher-free levers changed its habits; none changed its algorithms. Its 27B sibling already has the skill.">
+<meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-3/">
+<meta property="og:image" content="https://macoredroid.github.io/collective-intelligence/part-3/media/og-cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Knowing simulated annealing is not running it">
+<meta property="og:video" content="https://macoredroid.github.io/collective-intelligence/part-3/media/knowing-isnt-running.mp4">
+<meta property="og:video:type" content="video/mp4">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://macoredroid.github.io/collective-intelligence/part-3/media/og-cover.jpg">
+<meta name="twitter:title" content="Knowing Simulated Annealing Isn't Running It">
+<meta name="twitter:description" content="Collective intelligence, part 3: a 9B model can name and plan a search algorithm but almost never runs one. Some teacher-free levers changed its habits; none changed its algorithms. Its 27B sibling already has the skill.">
+
+<style>
+  :root{
+    --bg:#f7f8f9; --surface:#ffffff; --surface-2:#f0f2f4;
+    --ink:#1a1c1f; --ink-soft:#474d54; --muted:#7c848b; --rule:#dee2e6;
+    --accent:#3a5f8a; --accent-soft:#e4ebf3;
+    --gold:#a9781f; --gold-soft:#f2e9d5;
+    --pos:#3f7d5b; --neg:#b3543f; --grey:#b7bec4;
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+    --serif:Georgia,"Iowan Old Style",Charter,"Palatino Linotype",Palatino,"Book Antiqua",serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+    --measure:41rem;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#131518; --surface:#1b1e22; --surface-2:#22262b;
+      --ink:#e7e9ec; --ink-soft:#b6bbc1; --muted:#838a91; --rule:#2b3036;
+      --accent:#7ea6dc; --accent-soft:#1e2a38;
+      --gold:#d8b365; --gold-soft:#2c2617;
+      --pos:#6bbf8f; --neg:#e08a72; --grey:#4a5158;
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#131518; --surface:#1b1e22; --surface-2:#22262b;
+    --ink:#e7e9ec; --ink-soft:#b6bbc1; --muted:#838a91; --rule:#2b3036;
+    --accent:#7ea6dc; --accent-soft:#1e2a38;
+    --gold:#d8b365; --gold-soft:#2c2617;
+    --pos:#6bbf8f; --neg:#e08a72; --grey:#4a5158;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--serif); font-size:19px; line-height:1.66;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:var(--measure); margin:0 auto; padding:0 1.4rem}
+  .wide{max-width:60rem; margin:0 auto; padding:0 1.4rem}
+  p{margin:1.1em 0; color:var(--ink-soft)}
+  li{color:var(--ink-soft); margin:.45em 0}
+  strong{color:var(--ink); font-weight:600}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+  a:hover{border-bottom-color:var(--accent)}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+  .eyebrow{font-family:var(--mono); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin:0 0 .9rem}
+  h1{font-size:clamp(2.2rem,6vw,3.35rem); line-height:1.06; letter-spacing:-.015em; margin:.2em 0 .3em; color:var(--ink); text-wrap:balance; font-weight:600}
+  h2{font-size:clamp(1.5rem,3.6vw,2rem); line-height:1.12; letter-spacing:-.01em; margin:0 0 .1em; color:var(--ink); text-wrap:balance; font-weight:600}
+  h3{font-size:1.12rem; margin:2em 0 .2em; color:var(--ink); font-weight:600}
+  .dek{font-size:1.28rem; line-height:1.5; color:var(--ink-soft); font-style:italic; text-wrap:balance}
+  .num{font-family:var(--mono); font-variant-numeric:tabular-nums; font-style:normal; letter-spacing:-.01em; font-size:.92em}
+  code{font-family:var(--mono); font-size:.85em; background:var(--surface-2); padding:.1em .35em; border-radius:4px}
+  hr.sec{border:0; border-top:1px solid var(--rule); max-width:60rem; margin:4.2rem auto}
+  header.masthead{padding:4.5rem 0 1rem}
+  .meta-row{display:flex; flex-wrap:wrap; gap:.5rem 1.4rem; font-family:var(--mono); font-size:.76rem; color:var(--muted); margin-top:1.8rem; padding-top:1.4rem; border-top:1px solid var(--rule)}
+  .meta-row span{white-space:normal}
+  .toggle{position:fixed; top:1rem; right:1rem; z-index:10; font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; background:var(--surface); color:var(--ink-soft); border:1px solid var(--rule); border-radius:20px; padding:.4rem .8rem; cursor:pointer}
+  .toggle:hover{color:var(--ink); border-color:var(--muted)}
+  .status{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:8px; padding:1.2rem 1.4rem; margin:2.4rem auto; font-size:.98rem; line-height:1.6}
+  .status .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:.5rem}
+  .status p{margin:.4em 0; color:var(--ink-soft); font-size:1rem}
+  .film{margin:2rem 0 0}
+  .film video{display:block; width:100%; height:auto; border-radius:10px; border:1px solid var(--rule); background:#F4F1EA}
+  .film .cap{font-family:var(--mono); font-size:.74rem; color:var(--muted); margin-top:.55rem}
+  .findings{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--gold); border-radius:8px; padding:1.2rem 1.4rem .6rem; margin:2.4rem auto 0; font-size:1rem; line-height:1.6}
+  .findings .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:.4rem}
+  .findings ol{margin:.2rem 0; padding-left:1.3rem}
+  .findings li{margin:.7em 0; font-size:1rem}
+  .findings a{border-bottom:0}
+  .findings a strong{color:var(--ink)}
+  .findings a:hover strong{color:var(--accent)}
+  .sec-head{margin:0 auto 1.6rem; max-width:var(--measure); padding:0 1.4rem}
+  .sec-head .eyebrow{color:var(--accent)}
+  figure{margin:2.6rem 0; background:var(--surface); border:1px solid var(--rule); border-radius:12px; padding:1.6rem 1.5rem 1.2rem; position:relative}
+  figure svg{display:block; width:100%; height:auto; overflow:visible}
+  figcaption{font-family:var(--mono); font-size:.78rem; line-height:1.55; color:var(--muted); margin-top:1.1rem; padding-top:.9rem; border-top:1px solid var(--rule)}
+  figcaption b{color:var(--ink-soft); font-weight:600}
+  .fig-title{font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem}
+  .scroll{overflow-x:auto}
+  .take{border-left:3px solid var(--gold); padding:.2rem 0 .2rem 1.2rem; margin:2rem 0; font-family:var(--serif); font-size:1.16rem; line-height:1.5; color:var(--ink); font-style:italic}
+  details{margin:1.6rem 0; border:1px solid var(--rule); border-radius:8px; background:var(--surface); overflow:hidden}
+  details>summary{cursor:pointer; padding:.85rem 1.1rem; font-family:var(--mono); font-size:.78rem; letter-spacing:.06em; color:var(--accent); list-style:none; display:flex; align-items:center; gap:.6rem}
+  details>summary::-webkit-details-marker{display:none}
+  details>summary::before{content:"+"; font-size:1rem; color:var(--muted)}
+  details[open]>summary::before{content:"−"}
+  details>summary:hover{background:var(--surface-2)}
+  details .body{padding:.2rem 1.2rem 1.1rem; font-size:.94rem; line-height:1.6; color:var(--ink-soft); border-top:1px solid var(--rule)}
+  details .body p,details .body li{font-size:.94rem}
+  .pill{font-family:var(--mono); font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; padding:.18em .55em; border-radius:20px; white-space:nowrap; font-weight:600}
+  .pill.pos{background:color-mix(in srgb,var(--pos) 16%,transparent); color:var(--pos)}
+  .pill.neg{background:color-mix(in srgb,var(--neg) 16%,transparent); color:var(--neg)}
+  .pill.null{background:var(--surface-2); color:var(--muted)}
+  .ledger{width:100%; border-collapse:collapse; font-size:.9rem; margin:1.4rem 0}
+  .ledger th,.ledger td{text-align:left; padding:.6rem .7rem; border-bottom:1px solid var(--rule); vertical-align:top; color:var(--ink-soft)}
+  .ledger th{font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:400}
+  .ledger td:first-child{font-family:var(--serif); color:var(--ink)}
+  .ledger td{overflow-wrap:anywhere}
+  .ledger code{overflow-wrap:anywhere}
+  .ledger td.r,.ledger th.r{white-space:nowrap; overflow-wrap:normal}
+  .ledger td.r,.ledger th.r{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums}
+  .eq{font-family:var(--mono); font-size:.9rem; background:var(--surface); border:1px solid var(--rule); border-radius:8px; padding:1rem 1.2rem; color:var(--ink); overflow-x:auto; white-space:pre; margin:1.4rem 0; line-height:1.7}
+  .key{display:inline-flex; align-items:center; gap:.4rem; font-family:var(--mono); font-size:.74rem; color:var(--ink-soft); margin-right:1.2rem}
+  .key i{display:inline-block; width:10px; height:10px; border-radius:50%}
+  .tip{position:absolute; pointer-events:none; background:var(--ink); color:var(--bg); font-family:var(--mono); font-size:.74rem; line-height:1.45; padding:.45rem .6rem; border-radius:6px; max-width:18rem; opacity:0; transition:opacity .12s; z-index:5}
+  .tip.on{opacity:1}
+  [data-tip]{cursor:default}
+  [data-tip]:focus{outline:none}
+  /* desktop: wider column and figures, larger type */
+  @media (min-width:1100px){
+    :root{--measure:44rem}
+    body{font-size:20px}
+    .wide{max-width:min(78rem, 94vw)}
+    hr.sec{max-width:min(78rem, 94vw)}
+  }
+  /* very wide screens: section menu in the left margin */
+  .toc{display:none}
+  @media (min-width:1760px){
+    .toc{display:block; position:fixed; top:6.5rem; left:1.5rem; width:13rem; font-family:var(--mono); font-size:.72rem; line-height:1.5; z-index:5}
+    .toc .lbl{letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:.8rem}
+    .toc a{display:block; border:0; border-left:2px solid var(--rule); padding:.32rem 0 .32rem .8rem; color:var(--muted)}
+    .toc a:hover{color:var(--ink); border-left-color:var(--muted)}
+    .toc a.on{color:var(--accent); border-left-color:var(--accent)}
+  }
+  footer{margin-top:5rem; padding:3rem 0 4rem; border-top:1px solid var(--rule); background:var(--surface-2)}
+  footer .wrap{color:var(--muted)}
+  footer h2{font-size:1.4rem}
+  .foot-links{display:flex; flex-wrap:wrap; gap:.6rem 1.6rem; font-family:var(--mono); font-size:.8rem; margin-top:1.4rem}
+  @media (max-width:640px){
+    body{font-size:17px}
+    .ledger{font-size:.82rem}
+    .ledger th,.ledger td{padding:.5rem .4rem}
+    figure{padding:1.1rem .9rem .9rem}
+  }
+.src{display:inline-block;margin-top:.35rem;font-family:var(--mono);font-size:.74rem;line-height:1.4;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<button class="toggle" id="tgl" aria-label="Toggle color theme">◐ Theme</button>
+
+<nav class="toc" aria-label="Sections">
+  <div class="lbl">Contents</div>
+  <a href="#ruler">01 · A better ruler</a>
+  <a href="#skill">02 · The missing skill</a>
+  <a href="#levers">03 · Eight levers</a>
+  <a href="#habits">04 · Habits, not algorithms</a>
+  <a href="#sibling">05 · The 27B sibling</a>
+  <a href="#corrections">06 · Corrections</a>
+  <a href="#method">07 · Method lessons</a>
+  <a href="#next">08 · Next</a>
+</nav>
+
+
+
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Collective intelligence &nbsp;·&nbsp; Part 3 &nbsp;·&nbsp; <a href="../">Part 1</a> &nbsp;·&nbsp; <a href="../part-2/">Part 2</a></p>
+    <h1>Knowing Simulated Annealing Isn't Running It</h1>
+    <p class="dek">The 9B model I'm training can name simulated annealing, plan it, and explain why it would win. It almost never ships a working version. Over two days I tried eight ways to teach that skill without a teacher: new rewards, a scarce oracle, plans, a search kit, bonuses, self-distillation and expert iteration. Several changed the model's habits. None changed its algorithms. Its 27B sibling, untrained, already has the skill.</p>
+    <div class="meta-row">
+      <span>Model · Qwen3.5-9B (trained) · Qwen3.8-27B (reference)</span>
+      <span>Eval · FrontierCS (172-problem set; 40-problem agent set)</span>
+      <span>Method · pre-registered checks and kill rules</span>
+    </div>
+    <div class="film">
+      <video controls preload="metadata" playsinline poster="media/poster.jpg" aria-label="Narrated summary of part 3">
+        <source src="media/knowing-isnt-running.mp4" type="video/mp4">
+        <a href="media/knowing-isnt-running.mp4">Watch the summary (MP4)</a>
+      </video>
+      <div class="cap">Narrated summary · animated with Manim · AI-generated voice (OpenAI text-to-speech)</div>
+    </div>
+    <div class="findings">
+      <span class="lbl">Findings</span>
+      <ol>
+        <li><a href="#ruler"><strong>A better ruler shows nothing had moved.</strong></a> An algorithm score that counts only points more than 1 above the best trivial program shows that about 98% of the 9B's score is at or below that bar. Every gain in part 2's restarts sits in that part.</li>
+        <li><a href="#skill"><strong>The missing piece is a skill, not an idea.</strong></a> The model plans search but rarely runs it: no timer-bounded loop, no incremental scoring, no keeping the best answer so far. Started from its own archived programs, it produced 0 working searches in 127 attempts, and 0 in 128 from scratch.</li>
+        <li><a href="#levers"><strong>Eight teacher-free levers, no new algorithms.</strong></a> Rank and bar rewards, a scarce oracle, plan prefixes, a search kit, a kit bonus, self-distillation and archive-seeded expert iteration all failed their pre-registered checks or left the algorithm score flat.</li>
+        <li><a href="#habits"><strong>Scarcity and scaffolds change habits, not algorithms.</strong></a> Capping submissions at 10 raised the share run locally first from ~15% to 56% before any training; RL took it to 65–72%. The code being tested stayed greedy.</li>
+        <li><a href="#sibling"><strong>The 27B sibling already has the skill.</strong></a> Untrained, it writes a working search in 75–90% of attempts on held-out problems, against 3–4% for the 9B. That makes size, a teacher, or human examples the honest levers.</li>
+      </ol>
+    </div>
+    <div class="status">
+      <span class="lbl">Epistemic status</span>
+      <p>These are short runs: most levers were stopped by a pre-registered check within a few to a few dozen steps, by design. A negative result here means "this lever, at this size, didn't start to work", not "this can never work". Comparisons are paired over the same problems with bootstrap intervals; <span class="num">*</span> marks an interval that excludes zero.</p>
+      <p>Snapshot of work through October 13, 2026. This post also corrects two readings from part 2 (§6).</p>
+    </div>
+  </div>
+</header>
+
+<hr class="sec">
+
+<div class="sec-head" id="ruler"><p class="eyebrow">01 · A better ruler</p><h2>Most of the score was never algorithmic</h2></div>
+<div class="wrap">
+  <p>FrontierCS problems give partial credit, and a surprising amount of it goes to programs that barely try: print a trivial valid answer, or run one greedy pass. Part 2's gains in Avg@5 were real, but they didn't say <em>what kind</em> of program earned them.</p>
+  <p>So I built an <strong>algorithm score</strong>: for each problem, it credits only the points more than 1 above the best trivial program for that problem. A model that just learns to ship valid code more often barely moves it; a greedy program can earn credit, but only by beating the trivial bar.</p>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 1 · Where the 9B's official score comes from</div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 120" role="img" aria-label="Share of the 9B model’s official FrontierCS score: about 98% at or below the best trivial program’s score, about 2% above it.">
+      <rect x="40.0" y="30" width="803.6" height="34" fill="var(--muted)"/>
+      <rect x="40.0" y="30" width="803.6" height="34" fill="transparent" tabindex="0" data-tip="About 98% of the 9B model’s official score is at or below the best trivial program’s score"/>
+      <text x="52.0" y="52" font-family="var(--mono)" font-size="12" fill="var(--surface)">points at or below the trivial bar · ~98%</text>
+      <rect x="845.6" y="30" width="16.4" height="34" fill="var(--s2)"/>
+      <rect x="845.6" y="30" width="16.4" height="34" fill="transparent" tabindex="0" data-tip="About 2% comes from points more than 1 above the best trivial program"/>
+      <text x="862.0" y="88" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink)">above the trivial bar (algorithm score) · ~2%</text>
+      </svg>
+    </div>
+    <figcaption><b>About 98% of the 9B's points are at or below the trivial bar.</b> Every gain over step 40 in part 2's restarts (+0.4 to +1.25 points) sits in that grey part; part 1's base-to-step-70 gain was never split this way. The algorithm score was flat or down at every checkpoint, and Clip-Cov's step 70 significantly lost tasks with algorithmic credit. On the 40-problem set, frontier models' published single-call programs score about 50× the untrained 9B (agent mode) on the algorithm score, but only about 2× on the official score.</figcaption>
+  </figure>
+</div>
+<div class="wrap">
+  <p class="take">If your metric can't tell "learned a better algorithm" from "learned to ship valid greedy code", you'll celebrate the wrong thing.</p>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="skill"><p class="eyebrow">02 · The missing skill</p><h2>It can name the search. It can't run it.</h2></div>
+<div class="wrap">
+  <p>A working search for these problems needs three things: a loop bounded by a timer, an incremental way to score a small change, and keeping the best answer found so far. The 9B talks about all three. It writes them almost never.</p>
+  <ul>
+    <li><strong>Handed a search family</strong> in its opening thought or in the prompt (untrained 9B, 10 judged submissions), it attempts search more often, up to 28% of programs vs 7% for controls, but writes that family at most about 13% of the time. Time guards appeared in 3 of the first 308 programs (automatic labels).</li>
+    <li><strong>Started from its own archived programs</strong> (mostly search) and paid only for beating them, it produced 0 working searches in 127 attempts, against 0 in 128 from scratch. Here a working search is a static check: a search class, a timer inside a loop, and a clean run. It patched its own scaffolding or rewrote it as greedy, and never added a timer-guarded loop.</li>
+    <li><strong>When it does submit search code</strong> (scarce-oracle training attempts), 40–46% of those submissions time out, against 13–15% for greedy, and its best search attempt loses to its own greedy 67–72% of the time. Timeouts are inferred from the judge's per-test status, which reports a time limit as Wrong Answer.</li>
+  </ul>
+  <p>Part 2 called this a compile tax. In agent mode it's more an execution tax: search code that compiles still runs out of time, because the loop has no clock.</p>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="levers"><p class="eyebrow">03 · Eight levers</p><h2>Every teacher-free lever I tried</h2></div>
+<div class="wrap">
+  <p>Each lever had a check written down before it ran, and most had a kill rule: a stop condition that ends the run early if the first signal isn't there. They start from either the untrained 9B or the step-40 RL checkpoint, and are read on different instruments, noted per row. Avg@5 is the mean over 5 samples per problem; Best@5 the mean of each problem's best.</p>
+  <div class="scroll"><table class="ledger" aria-label="Eight teacher-free levers">
+    <thead><tr><th>Lever</th><th>The idea</th><th>What happened</th></tr></thead>
+    <tbody>
+      <tr><td>Rank reward per test case</td><td>Reward being the best on each test, so a rare strong program beats ten safe ones.</td><td>Worse at the top on the 172-problem set: Best@5 −3.19*, Avg@5 −0.78 (n.s.) at step 50, graded on a judge under another job's CPU load (the clean regrade never ran). In a blind read, 6 of 8 of this arm's programs still copied the baseline described in the problem (65% across five runs).<br><span class="src">From step 40, single-call · read on the 172-problem set</span></td></tr>
+      <tr><td>Fixed quality bars</td><td>Pay only for clearing a frozen top-10% or top-30% bar per test.</td><td>No eval result (grading stopped). The design was flawed: a copy of the statement's baseline clears the top-30% bar on 76 of 165 problems. With −1 for invalid code, search nets −0.12 to −0.14 vs ~0 for greedy.<br><span class="src">From step 40, single-call · no eval read</span></td></tr>
+      <tr><td>Scarce oracle</td><td>Allow 10 judged submissions and only a coarse score band, so checking your own work pays.</td><td>Self-testing rose sharply (Figure 2). Algorithms didn't change; step-10 eval −1.01 [−2.26, +0.14].<br><span class="src">From the untrained 9B, agent mode · read on the 40-problem agent eval</span></td></tr>
+      <tr><td>Plan first</td><td>Train with a stated plan before the code.</td><td>91% of the positive advantage went to trials whose code didn't match the stated plan, and stating a plan fell from 56% to 44% by step 20. Held-out score at step 20 was +1.8 [+0.1, +3.7]*, but the run failed 2 of 5 pre-registered gates.<br><span class="src">From the untrained 9B · read on held-out problems</span></td></tr>
+      <tr><td>A search kit</td><td>Offer a small header with a timer and a search driver.</td><td>Used mostly under a strong prompt; time guards vanished once the prompt was neutral (Figure 3). Offered attempts trailed controls in most strong- and neutral-prompt steps; as a plain include they did 4–10 points better for three steps.<br><span class="src">Inside the plan-first run · read on training attempts</span></td></tr>
+      <tr><td>A kit bonus</td><td>+0.3 reward for a valid, improving search using the kit.</td><td>1 call to the driver in 480 offered attempts; no bonus paid in five steps.<br><span class="src">From step 40 · read on training attempts</span></td></tr>
+      <tr><td>Self-distillation</td><td>Fine-tune on the model's own best samples.</td><td>Validity +8.4 points*, no new algorithms.<br><span class="src">Read on single-call samples</span></td></tr>
+      <tr><td>Archive-seeded expert iteration</td><td>Start from the model's own search programs; pay only for beating them.</td><td>0 of 127 working searches vs 0 of 128 from scratch, and paid gains of 6.8% against a 7% bar. The kill rule fired at step 2 on both counts.<br><span class="src">From step 40 · read on training attempts</span></td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="habits"><p class="eyebrow">04 · Habits, not algorithms</p><h2>What moved, and what didn't</h2></div>
+<div class="wrap">
+  <p>Two levers moved behaviour a lot, which makes them the clearest evidence of what RL and scaffolding can and can't do at this size.</p>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 2 · Scarce oracle: verification rose, algorithms didn't</div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 260" role="img" aria-label="With an unlimited judge, 15–18% of submissions were run locally first. Capping submissions at 10 raised that to 56% before any training; training took it to 65–72%. Search-style code stayed at 3–19% with no trend.">
+      <g font-family="var(--mono)" font-size="11" fill="var(--muted)">
+      <line x1="330.0" y1="22" x2="330.0" y2="252" stroke="var(--rule)"/>
+      <text x="330.0" y="14" text-anchor="middle">0%</text>
+      <line x1="445.0" y1="22" x2="445.0" y2="252" stroke="var(--rule)"/>
+      <text x="445.0" y="14" text-anchor="middle">20%</text>
+      <line x1="560.0" y1="22" x2="560.0" y2="252" stroke="var(--rule)"/>
+      <text x="560.0" y="14" text-anchor="middle">40%</text>
+      <line x1="675.0" y1="22" x2="675.0" y2="252" stroke="var(--rule)"/>
+      <text x="675.0" y="14" text-anchor="middle">60%</text>
+      <line x1="790.0" y1="22" x2="790.0" y2="252" stroke="var(--rule)"/>
+      <text x="790.0" y="14" text-anchor="middle">80%</text>
+      </g>
+      <text x="316" y="45" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">unlimited judge (earlier runs)</text>
+      <line x1="416.2" y1="40" x2="433.5" y2="40" stroke="var(--muted)" stroke-width="12" stroke-linecap="round"/>
+      <text x="445.5" y="44" font-family="var(--mono)" font-size="12" fill="var(--ink)">15–18%</text>
+      <rect x="330" y="24" width="560" height="30" fill="transparent" tabindex="0" data-tip="Share of judged submissions run locally first, unlimited judge: ~15–18%"/>
+      <text x="316" y="89" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">10 submissions, step 1 (untrained)</text>
+      <circle cx="652.0" cy="84" r="6" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+      <text x="664.0" y="88" font-family="var(--mono)" font-size="12" fill="var(--ink)">56%</text>
+      <rect x="330" y="68" width="560" height="30" fill="transparent" tabindex="0" data-tip="Scarce oracle at step 1, before any training: 56% of judged submissions run locally first"/>
+      <text x="316" y="133" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">scarce oracle, steps 1–12</text>
+      <line x1="640.5" y1="128" x2="686.5" y2="128" stroke="var(--s1)" stroke-width="12" stroke-linecap="round"/>
+      <text x="698.5" y="132" font-family="var(--mono)" font-size="12" fill="var(--ink)">54–62%</text>
+      <rect x="330" y="112" width="560" height="30" fill="transparent" tabindex="0" data-tip="Scarce oracle, steps 1–12: 54–62% of judged submissions run locally first"/>
+      <text x="316" y="177" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">scarce oracle, steps 13–18</text>
+      <line x1="703.8" y1="172" x2="744.0" y2="172" stroke="var(--s1)" stroke-width="12" stroke-linecap="round"/>
+      <text x="756.0" y="176" font-family="var(--mono)" font-size="12" fill="var(--ink)">65–72%</text>
+      <rect x="330" y="156" width="560" height="30" fill="transparent" tabindex="0" data-tip="Scarce oracle, steps 13–18: 65–72%"/>
+      <text x="316" y="221" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">search-style code, steps 1–18</text>
+      <line x1="347.2" y1="216" x2="439.2" y2="216" stroke="var(--s2)" stroke-width="12" stroke-linecap="round"/>
+      <text x="451.2" y="220" font-family="var(--mono)" font-size="12" fill="var(--ink)">3–19%, no trend</text>
+      <rect x="330" y="200" width="560" height="30" fill="transparent" tabindex="0" data-tip="Search-style share proxy, scarce-oracle steps 1–18: 0.03–0.19, no upward trend"/>
+      </svg>
+    </div>
+    <figcaption><b>Scarcity changed behaviour at once; training added a little.</b> Capping judged submissions at 10 raised the share run locally first from 15–18% to 56% before any training, and RL took it to 65–72%. Local runs per submission rose from about 2 to 3, and the cap was hit in 92–97% of trials. The share of search-style code (steps 1–18) stayed in a 3–19% band with no trend. The testing wraps the same greedy programs.</figcaption>
+  </figure>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 3 · Search kit: used when told, dropped when not</div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 260" role="img" aria-label="Search kit use by phase: 0% as a file, 20–33% as an include, 72–82% with a strong prompt; under the strong prompt, time guards appeared in 18–24% and working search in 3–5% of offered code.">
+      <g font-family="var(--mono)" font-size="11" fill="var(--muted)">
+      <line x1="330.0" y1="22" x2="330.0" y2="252" stroke="var(--rule)"/>
+      <text x="330.0" y="14" text-anchor="middle">0%</text>
+      <line x1="422.0" y1="22" x2="422.0" y2="252" stroke="var(--rule)"/>
+      <text x="422.0" y="14" text-anchor="middle">20%</text>
+      <line x1="514.0" y1="22" x2="514.0" y2="252" stroke="var(--rule)"/>
+      <text x="514.0" y="14" text-anchor="middle">40%</text>
+      <line x1="606.0" y1="22" x2="606.0" y2="252" stroke="var(--rule)"/>
+      <text x="606.0" y="14" text-anchor="middle">60%</text>
+      <line x1="698.0" y1="22" x2="698.0" y2="252" stroke="var(--rule)"/>
+      <text x="698.0" y="14" text-anchor="middle">80%</text>
+      <line x1="790.0" y1="22" x2="790.0" y2="252" stroke="var(--rule)"/>
+      <text x="790.0" y="14" text-anchor="middle">100%</text>
+      </g>
+      <text x="316" y="45" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">kit offered as a file</text>
+      <circle cx="330.0" cy="40" r="6" fill="var(--muted)" stroke="var(--surface)" stroke-width="2"/>
+      <text x="342.0" y="44" font-family="var(--mono)" font-size="12" fill="var(--ink)">0%</text>
+      <rect x="330" y="24" width="560" height="30" fill="transparent" tabindex="0" data-tip="Kit offered as a file: 0% use in final code"/>
+      <text x="316" y="89" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">kit as an include</text>
+      <line x1="422.0" y1="84" x2="481.8" y2="84" stroke="var(--s1)" stroke-width="12" stroke-linecap="round"/>
+      <text x="493.8" y="88" font-family="var(--mono)" font-size="12" fill="var(--ink)">20–33%</text>
+      <rect x="330" y="68" width="560" height="30" fill="transparent" tabindex="0" data-tip="Kit as an include: in 20–33% of offered code"/>
+      <text x="316" y="133" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">include + strong prompt</text>
+      <line x1="661.2" y1="128" x2="707.2" y2="128" stroke="var(--s1)" stroke-width="12" stroke-linecap="round"/>
+      <text x="719.2" y="132" font-family="var(--mono)" font-size="12" fill="var(--ink)">72–82%</text>
+      <rect x="330" y="112" width="560" height="30" fill="transparent" tabindex="0" data-tip="With a strong prompt: kit in 72–82% of offered code"/>
+      <text x="316" y="177" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">  … time guards written</text>
+      <line x1="412.8" y1="172" x2="440.4" y2="172" stroke="var(--s2)" stroke-width="12" stroke-linecap="round"/>
+      <text x="452.4" y="176" font-family="var(--mono)" font-size="12" fill="var(--ink)">18–24%</text>
+      <rect x="330" y="156" width="560" height="30" fill="transparent" tabindex="0" data-tip="Time guards in 18–24% of offered code under the strong prompt"/>
+      <text x="316" y="221" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">  … working search</text>
+      <line x1="343.8" y1="216" x2="353.0" y2="216" stroke="var(--s2)" stroke-width="12" stroke-linecap="round"/>
+      <text x="365.0" y="220" font-family="var(--mono)" font-size="12" fill="var(--ink)">3–5%</text>
+      <rect x="330" y="200" width="560" height="30" fill="transparent" tabindex="0" data-tip="Working search in 3–5% of offered code under the strong prompt"/>
+      </svg>
+    </div>
+    <figcaption><b>A scaffold the model mostly uses under instruction isn't a skill.</b> As a plain include, the kit appeared in 20–33% of offered code; under the strong prompt in 72–82%, but with working search in only 3–5%. Back on a neutral prompt the time-guard habit vanished, and offered attempts trailed controls on clearing the trivial bar by 2–8 points per step. Holding the strong prompt gave −9, −4, −9, −13, +1 and −6 points, and a rule set before the phase reverted it. A single step carries about ±10 points of noise, so read the phases, not single steps. Attempts never offered the kit never wrote time guards.</figcaption>
+  </figure>
+</div>
+<div class="wrap">
+  <p>Amplifying the model's own best output tells the same story. Comparing the agent's best program with the single-call best on 30 problems, the agent's was a genuinely better algorithm in only 6; in 12 it was the same algorithm, tuned. 81% of that agent-mode pool came from tuning against judge feedback. Distilling those samples would teach tuning, not search.</p>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="sibling"><p class="eyebrow">05 · The 27B sibling</p><h2>The skill is already one size up</h2></div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 4 · 9B vs its 27B sibling, both untrained</div>
+    <div style="margin:-.3rem 0 .6rem"><span class="key"><i style="background:var(--s1)"></i>9B base, untrained</span><span class="key"><i style="background:var(--s2)"></i>27B sibling, untrained</span></div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 222" role="img" aria-label="27B vs 9B, both untrained: attempts with a working search on held-out sets 75.5% vs 3.7% and 89.8% vs 3.1%; 40-problem agent-eval tasks with algorithmic credit 29 of 40 vs 1 of 39.">
+      <text x="316" y="34" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">attempts with working search, set A</text>
+      <rect x="330" y="18" width="17.8" height="16" rx="3" fill="var(--s1)"/>
+      <text x="355.8" y="31" font-family="var(--mono)" font-size="12" fill="var(--ink)">3.7% · 9B</text>
+      <rect x="330" y="40" width="362.4" height="16" rx="3" fill="var(--s2)"/>
+      <text x="700.4" y="53" font-family="var(--mono)" font-size="12" fill="var(--ink)">75.5% · 27B</text>
+      <rect x="330" y="14" width="560" height="54" fill="transparent" tabindex="0" data-tip="Attempts with a working search (blind read), held-out set A: 9B 3.7%, 27B 75.5%"/>
+      <text x="316" y="98" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">attempts with working search, set B</text>
+      <rect x="330" y="82" width="14.9" height="16" rx="3" fill="var(--s1)"/>
+      <text x="352.9" y="95" font-family="var(--mono)" font-size="12" fill="var(--ink)">3.1% · 9B</text>
+      <rect x="330" y="104" width="431.0" height="16" rx="3" fill="var(--s2)"/>
+      <text x="769.0" y="117" font-family="var(--mono)" font-size="12" fill="var(--ink)">89.8% · 27B</text>
+      <rect x="330" y="78" width="560" height="54" fill="transparent" tabindex="0" data-tip="Attempts with a working search (blind read), held-out set B: 9B 3.1%, 27B 89.8%"/>
+      <text x="316" y="162" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">tasks with algorithmic credit</text>
+      <rect x="330" y="146" width="12.5" height="16" rx="3" fill="var(--s1)"/>
+      <text x="350.5" y="159" font-family="var(--mono)" font-size="12" fill="var(--ink)">2.6% · 9B</text>
+      <rect x="330" y="168" width="348.0" height="16" rx="3" fill="var(--s2)"/>
+      <text x="686.0" y="181" font-family="var(--mono)" font-size="12" fill="var(--ink)">72.5% · 27B</text>
+      <rect x="330" y="142" width="560" height="54" fill="transparent" tabindex="0" data-tip="40-problem agent eval, tasks with algorithmic credit: 9B 1 of 39, 27B 29 of 40"/>
+      <line x1="330" y1="8" x2="330" y2="216" stroke="var(--rule)"/>
+      </svg>
+    </div>
+    <figcaption><b>The 27B writes a working search in most attempts on held-out problems.</b> Here a working search is a blind-read label (by LLM readers): a local-search, annealing, beam or exact/DP program that isn't broken, invalid or exploiting the judge. The held-out sets ran in the training harness (60-minute trials, 10 judged submissions); the 27B won 12 of 12 and 8 of 8 problems. On the 40-problem agent eval the 27B averages 23.56 Avg@4 (mean of 4 attempts) against 6.77, a paired difference of +15.9 [+9.7, +22.8]* over 39 tasks; the 27B ran with context compaction and still hit the context limit in 32% of trials.</figcaption>
+  </figure>
+</div>
+<div class="wrap">
+  <p>That reframes the problem. The 9B isn't missing an incentive that a clever reward could supply; it's missing a skill its bigger sibling already has. The honest levers are size, a teacher that has the skill, or human examples of it. The DeepSeek-R1 report makes a related point: larger models' reasoning patterns can be harnessed to improve smaller ones.</p>
+  <p>The goal I set for this direction was a 0→1 breakthrough in a world where the 9B is the strongest model available. These results say that, without a teacher, a 0→1 jump on this skill didn't happen at 9B with any of eight levers. The next step tests the teacher route.</p>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="corrections"><p class="eyebrow">06 · Corrections</p><h2>What this changes in parts 1 and 2</h2></div>
+<div class="wrap">
+  <ul>
+    <li><strong>"It knows better than it ships" (part 2, §4).</strong> The model does name better algorithms and ship safe ones. But the gap between the best of 55 samples (29) and a single sample (~12) isn't evidence of a hidden algorithm: algorithmic credit is about 2% of the score at every checkpoint, and the best single-call samples I distilled were mostly greedy.</li>
+    <li><strong>"Now running" (part 2, §7).</strong> Both experiments have stopped. The rank reward made the top end worse, and the bar reward has no result. The scarce oracle raised self-testing but not algorithms or scores.</li>
+    <li><strong>"Agent mode" (part 2, §6).</strong> Step 30 confirms the flat eval: −0.52 [−1.18, +0.08], with mean judged submissions per trial rising from 47 to 77 (part 2 quoted medians).</li>
+    <li><strong>Comparing single-call and agent-mode scores.</strong> The 40-problem agent set was hand-picked to be hard, about 3.4× harder than the 172-problem set by one measure: single-call step 40 scores 3.34 on it, against 11.48. On the same 40 problems, the untrained agent (6.77) scores about twice the RL-trained single-call model.</li>
+    <li><strong>"The compile tax" (part 2, §3)</strong> got harsher under −1 for invalid code, and in agent mode it's an execution tax (§2).</li>
+  </ul>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="method"><p class="eyebrow">07 · Method lessons</p><h2>What I'd keep doing</h2></div>
+<div class="wrap">
+  <ul>
+    <li><strong>Write the kill rule, and its edge cases, before the run.</strong> Expert iteration's rule fired at step 2 on both counts. I wrote down its 0-vs-0 case after step 1, before step 2 was graded; better to have it from the start. It saved about 8 steps, roughly 150 GPU-hours.</li>
+    <li><strong>Don't keep a group because it finished first.</strong> Keeping the first 16 of 24 groups to finish dropped 32% of groups for being slow, against 8 of 696 for having no signal. That quietly trains toward fast, simple attempts.</li>
+    <li><strong>Watch held-out contamination across restarts.</strong> The single-call run's first 40 steps trained on 10 of 12 problems in held-out set A and 7 of 8 in set B, and the earlier agent runs on all 20. Held-out numbers for models started from those checkpoints are biased. The 172- and 40-problem eval sets were clean, and Figure 4 compares untrained models.</li>
+    <li><strong>Re-anchor the base model whenever the harness changes.</strong> Three harness revisions put the untrained base at 5.78, 7.09 and 6.77 on the same 40 problems.</li>
+    <li><strong>Compaction may quietly cut thinking.</strong> After compactions that stripped old reasoning, the 27B's thinking per call fell about 40% (controls rose about 10%). Heavy thinkers compact first, so I can't yet separate imitation from regression to the mean.</li>
+  </ul>
+</div>
+
+<hr class="sec">
+
+<div class="sec-head" id="next"><p class="eyebrow">08 · Next</p><h2>A teacher, then human code, then teams</h2></div>
+<div class="wrap">
+  <div class="status" style="border-left-color:var(--gold)">
+    <span class="lbl" style="color:var(--gold)">Running, no results yet</span>
+    <p>On-policy distillation from the 27B started on October 13; its first eval is pre-registered for step 10.</p>
+  </div>
+  <ol>
+    <li><strong>On-policy distillation.</strong> The 9B samples, the 27B scores the exact tokens it sampled, and the per-token difference is the training signal, with no outcome reward (in the spirit of GKD). Training is stable so far, with no dropped samples; the divergence from the teacher was 0.089 at step 5 against 0.093 at step 1, too early to call a trend.</li>
+    <li><strong>Seeding from human search code.</strong> Collecting permissively licensed human-written search programs as examples of the missing skill.</li>
+    <li><strong>Longer horizons for the 27B.</strong> Without compaction, 11 of 20 27B attempts hit the context limit before a judged submission. A new compaction keeps a summary, recent turns verbatim, and the judge's record.</li>
+    <li><strong>Teams.</strong> The team runtime is built on my own harness. Untrained, the 9B only forks when hinted. The collective-intelligence question comes back once a model has a skill worth dividing up.</li>
+  </ol>
+  <p class="take">Knowing the algorithm isn't running it. Neither rewards nor scaffolds taught the skill at 9B. The next step is learning it from a model that has it.</p>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p class="eyebrow" style="color:var(--accent)">Notes</p>
+    <h2>How the numbers were made</h2>
+    <p>The task is the statistical unit. Comparisons are paired over the same problems with task-level bootstrap intervals; * marks an interval that excludes zero. "Working search" is defined where it's used (a static check in §2, a blind-read label in Figure 4); "search-style" is a code-keyword proxy. The algorithm score credits points more than 1 above the best trivial program per problem. Single-call means one model call per attempt; agent mode is a multi-turn loop with tools and judged submissions. Held-out sets A and B are 12 and 8 FrontierSmith problems; the 9B and 27B rows in Figure 4 are both untrained, while the step-40 checkpoint and earlier agent runs did train on them. Blind reads were done by LLM readers given the program and the problem. Infrastructure failures are masked, never scored as zero.</p>
+    <p>References: DeepSeek-AI, <a href="https://arxiv.org/abs/2501.12948">DeepSeek-R1</a>; Agarwal et al., <a href="https://arxiv.org/abs/2306.13649">On-Policy Distillation of Language Models (GKD)</a>. The summary video was animated with <a href="https://www.manim.community/">Manim</a>, with an AI-generated narration voice from <a href="https://platform.openai.com/docs/guides/text-to-speech">OpenAI text-to-speech</a>.</p>
+    <div class="foot-links">
+      <a href="../">Part 1 · The Harness Is Part of the Model</a>
+      <a href="../part-2/">Part 2 · The Wall, the Compile Tax, and the Oracle</a>
+      <a href="https://github.com/MaCoredroid/collective-intelligence">Repository</a>
+    </div>
+    <p style="margin-top:2rem;font-family:var(--mono);font-size:.74rem;color:var(--muted)">Knowing Simulated Annealing Isn't Running It. Collective intelligence, part 3: a snapshot of work through October 13, 2026.</p>
+  </div>
+</footer>
+
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+  (function(){
+    var t=document.getElementById('tgl');
+    function cur(){var e=document.documentElement.getAttribute('data-theme'); if(e) return e; return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}
+    t.addEventListener('click',function(){var n=cur()==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',n);});
+    var els=document.querySelectorAll('.rise');
+    if(!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in'); io.unobserve(e.target);}});},{threshold:0.12});
+      els.forEach(function(e){io.observe(e);});
+    } else { els.forEach(function(e){e.classList.add('in');}); }
+    var links=[].slice.call(document.querySelectorAll('.toc a'));
+    if('IntersectionObserver' in window && links.length){
+      var map={}; links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+      var so=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.remove('on');}); var a=map[e.target.id]; if(a) a.classList.add('on');}});},{rootMargin:'-20% 0px -70% 0px'});
+      Object.keys(map).forEach(function(id){var el=document.getElementById(id); if(el) so.observe(el);});
+    }
+    var tip=document.getElementById('tip');
+    function show(el){
+      tip.textContent=el.getAttribute('data-tip');
+      var r=el.getBoundingClientRect();
+      tip.classList.add('on');
+      var w=tip.offsetWidth, x=r.left+r.width/2-w/2+window.scrollX, y=r.top+window.scrollY-tip.offsetHeight-8;
+      x=Math.max(window.scrollX+8,Math.min(x,window.scrollX+document.documentElement.clientWidth-w-8));
+      tip.style.left=x+'px'; tip.style.top=y+'px';
+    }
+    function hide(){tip.classList.remove('on');}
+    document.querySelectorAll('[data-tip]').forEach(function(el){
+      el.addEventListener('mouseenter',function(){show(el);});
+      el.addEventListener('mouseleave',hide);
+      el.addEventListener('focus',function(){show(el);});
+      el.addEventListener('blur',hide);
+    });
+  })();
+</script>
+
+</body>
+</html>

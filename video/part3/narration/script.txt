@@ -1,0 +1,8 @@
+s1|The model I'm training can name simulated annealing. It can plan it, and explain why it would win. It almost never ships a working version.
+s2|A better ruler showed why the scores had stalled. About ninety-eight percent of its points sat at or below what a trivial program scores.
+s3|A working search needs a clock, a cheap way to score a small change, and a memory of the best answer so far. Started from its own archived programs, the model wrote zero working searches in a hundred and twenty-seven tries. From scratch, zero in a hundred and twenty-eight.
+s4|I tried eight levers without a teacher: new rewards, a scarce oracle, plans, a search kit, a bonus, self-distillation, and expert iteration. Several changed habits. None changed the algorithm.
+s5|Capping it at ten submissions changed habits at once. Testing before submitting jumped from about fifteen percent to fifty-six, before any training, and to about seventy after. The code it tested stayed greedy.
+s6|Its bigger sibling, untrained, writes a working search in seventy-five to ninety percent of attempts on held-out problems. The small model: about four percent.
+s7|So the next step is a teacher: on-policy distillation from the bigger model. Then human-written search code. Then teams.
+s8|Knowing the algorithm isn't running it.
