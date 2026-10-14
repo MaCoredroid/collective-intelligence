@@ -156,6 +156,12 @@
     figure{padding:1.1rem .9rem .9rem}
   }
 .src{display:inline-block;margin-top:.35rem;font-family:var(--mono);font-size:.74rem;line-height:1.4;color:var(--muted)}
+.lever{display:grid;grid-template-columns:8.5rem 1fr;gap:.45rem 1.2rem;margin:.5rem 0 2rem}
+.lever dt{font-family:var(--mono);font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding-top:.32rem}
+.lever dd{margin:0;font-size:.96em}
+.lv-meta{font-family:var(--mono);font-size:.74rem;line-height:1.5;color:var(--muted);margin:.15rem 0 .5rem}
+@media (max-width:640px){.lever{grid-template-columns:1fr;gap:.15rem}.lever dt{padding-top:.7rem}}
+.ledger td a{color:inherit}
 .ledger tr.fam td{padding-top:1.4rem;font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);border-bottom:1px solid var(--rule)}
 .ledger tr.fam td span{text-transform:none;letter-spacing:0;color:var(--muted)}
 </style>
@@ -173,8 +179,7 @@
   <a href="#habits">05 · Habits, not algorithms</a>
   <a href="#sibling">06 · The 27B sibling</a>
   <a href="#corrections">07 · Corrections</a>
-  <a href="#method">08 · Method lessons</a>
-  <a href="#next">09 · Next</a>
+  <a href="#next">08 · Next</a>
 </nav>
 
 
@@ -202,7 +207,7 @@
       <span class="lbl">Findings</span>
       <ol>
         <li><a href="#ruler"><strong>A better ruler shows nothing had climbed.</strong></a> An algorithm score that counts only points more than 1 above the best trivial program shows that about 98% of the 9B's score is at or below that bar. Every gain in part 2's restarts sits there.</li>
-        <li><a href="#valley"><strong>There is a foothold, but the slope runs the wrong way.</strong></a> The untrained 9B writes a working search in 3–4% of attempts on held-out problems. But its search submissions time out 40–46% of the time, against 13–15% for greedy, and its best search attempt loses to its own greedy 67–72% of the time. On average, the reward favours greedy.</li>
+        <li><a href="#valley"><strong>There is a foothold, but the slope runs the wrong way.</strong></a> The untrained 9B writes a working search in 3–4% of attempts on held-out problems. But its search submissions time out 40–46% of the time, against 13–15% for greedy, and in trials that tried both, its best search failed to beat its own best greedy submission 67–72% of the time. On average, the reward favours greedy.</li>
         <li><a href="#levers"><strong>Eight teacher-free levers, no new algorithms.</strong></a> Reshaped rewards, a scarcer judge, hints and scaffolds, and learning from its own best, each borrowed from prior work, failed their pre-registered checks or left the algorithm score flat. Started from its own archived programs, it wrote 0 working searches in 127 attempts.</li>
         <li><a href="#habits"><strong>Scarcity produced a local-testing habit, not new algorithms.</strong></a> Capping judged submissions at 10 raised the share tested locally first from ~15% to 56% before any training; RL took it to 65–72%. The code being tested stayed greedy.</li>
         <li><a href="#sibling"><strong>The 27B sibling is already across the valley.</strong></a> Untrained, it writes a working search in 75–90% of attempts on held-out problems. That fits prior findings that RL mostly sharpens what a model already samples, while distillation can add what it doesn't.</li>
@@ -271,7 +276,7 @@
   <figure>
     <div class="fig-title">Figure 2 · The valley between greedy code and search</div>
     <div class="scroll">
-      <svg viewBox="0 0 900 172" role="img" aria-label="Search submissions time out 40–46% of the time against 13–15% for greedy, and the best search attempt loses to the model’s own greedy program 67–72% of the time.">
+      <svg viewBox="0 0 900 172" role="img" aria-label="Search submissions time out 40–46% of the time against 13–15% for greedy, and in trials that tried both, the best search failed to beat the best greedy submission 67–72% of the time.">
       <g font-family="var(--mono)" font-size="11" fill="var(--muted)">
       <line x1="330.0" y1="22" x2="330.0" y2="164" stroke="var(--rule)"/>
       <text x="330.0" y="14" text-anchor="middle">0%</text>
@@ -292,17 +297,17 @@
       <line x1="560.0" y1="84" x2="594.5" y2="84" stroke="var(--s2)" stroke-width="12" stroke-linecap="round"/>
       <text x="606.5" y="88" font-family="var(--mono)" font-size="12" fill="var(--ink)">40–46%</text>
       <rect x="330" y="68" width="560" height="30" fill="transparent" tabindex="0" data-tip="Search submissions that time out, scarce-oracle training attempts: 40–46%"/>
-      <text x="316" y="133" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">best search loses to its own greedy</text>
+      <text x="316" y="133" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--ink-soft)">best search fails to beat its own greedy</text>
       <line x1="715.2" y1="128" x2="744.0" y2="128" stroke="var(--s2)" stroke-width="12" stroke-linecap="round"/>
       <text x="756.0" y="132" font-family="var(--mono)" font-size="12" fill="var(--ink)">67–72%</text>
-      <rect x="330" y="112" width="560" height="30" fill="transparent" tabindex="0" data-tip="How often the best search attempt scores below the same model’s greedy program: 67–72%"/>
+      <rect x="330" y="112" width="560" height="30" fill="transparent" tabindex="0" data-tip="Trials with both kinds of submission where the best search score failed to beat the best greedy score: 67–72%"/>
       </svg>
     </div>
-    <figcaption><b>Search attempts score below greedy.</b> In scarce-oracle training attempts, search submissions timed out 40–46% of the time against 13–15% for greedy, and the best search attempt lost to the same model's greedy program 67–72% of the time. Timeouts are inferred from the judge's per-test status, which reports a time limit as Wrong Answer. In a separate single-call run from step 40, where invalid code scored −1, search attempts netted −0.12 to −0.14 against about 0 for greedy.</figcaption>
+    <figcaption><b>Search attempts score below greedy.</b> In scarce-oracle training attempts, search submissions timed out 40–46% of the time against 13–15% for greedy, and in trials that tried both, the best search failed to beat (lost to or tied) the best greedy submission 67–72% of the time. Timeouts are inferred from the judge's per-test status, which reports a time limit as Wrong Answer. In a separate single-call run from step 40, where invalid code scored −1, search attempts netted −0.12 to −0.14 against about +0.01 for greedy; counting only valid programs, the two were about even.</figcaption>
   </figure>
 </div>
 <div class="wrap">
-  <p>A loop with no clock runs out of time. A clock with no cheap way to score a change makes too few moves to beat the greedy start. I didn't score each half-built stage separately, but search attempts as a whole score <em>below</em> the greedy program they were meant to improve. So the expected reward favours greedy, and RL has no reason to move toward search; in these runs the search share stayed flat at 3–19%. Part 2 called this a compile tax. In agent mode it's an execution tax.</p>
+  <p>A loop with no clock runs out of time. A clock with no cheap way to score a change makes too few moves to beat the greedy start. I didn't score each half-built stage separately, but search attempts as a whole score <em>below</em> the greedy program they were meant to improve, and even the valid ones only draw level with it. So the expected reward favours greedy, and RL has no reason to move toward search; in these runs the search share stayed flat at 3–19%. Part 2 called this a compile tax. In agent mode it's an execution tax.</p>
 </div>
 
 <hr class="sec">
@@ -310,24 +315,97 @@
 <div class="sec-head" id="levers"><p class="eyebrow">04 · Eight ways to build a hill</p><h2>Every teacher-free lever I tried</h2></div>
 <div class="wrap">
   <p>Each lever borrows from a line of prior work that climbed from a weak start, and each tries to fix one thing: the slope (reshape the reward), the environment (make checking pay), the foothold (hints and scaffolds), or the sample pool (learn from the model's own best).</p>
-  <p>Each had a check written down before it ran, and most had a kill rule: a stop condition that ends the run early if the first signal isn't there. They start from either the untrained 9B or the step-40 RL checkpoint, and are read on different instruments, noted per row. Avg@5 is the mean over 5 samples per problem; Best@5 the mean of each problem's best.</p>
+  <p>Most had a check written down before they ran, and several had a kill rule: a stop condition that ends the run early if the first signal isn't there. They start from either the untrained 9B or the step-40 RL checkpoint, and are read on different instruments, noted per row. Avg@5 is the mean over 5 samples per problem; Best@5 the mean of each problem's best.</p>
   <div class="scroll"><table class="ledger" aria-label="Eight teacher-free levers">
     <thead><tr><th>Lever</th><th>The idea</th><th>What happened</th></tr></thead>
     <tbody>
       <tr class="fam"><td colspan="3">Fix the slope · <span>reward shaping (<a href="https://mlanthology.org/icml/1999/ng1999icml-policy/">Ng et al., 1999</a>): pay for steps toward the goal</span></td></tr>
-      <tr><td>Rank reward per test case</td><td>Reward being the best on each test, so a rare strong program beats ten safe ones.</td><td>Worse at the top on the 172-problem set: Best@5 −3.19*, Avg@5 −0.78 (n.s.) at step 50, graded on a judge under another job's CPU load (the clean regrade never ran). In a blind read, 6 of 8 of this arm's programs still copied the baseline described in the problem (65% across five runs).<br><span class="src">From step 40, single-call · read on the 172-problem set</span></td></tr>
-      <tr><td>Fixed quality bars</td><td>Pay only for clearing a frozen top-10% or top-30% bar per test.</td><td>No eval result (grading stopped). The design was flawed: a copy of the statement's baseline clears the top-30% bar on 76 of 165 problems. With −1 for invalid code, search nets −0.12 to −0.14 vs ~0 for greedy.<br><span class="src">From step 40, single-call · no eval read</span></td></tr>
-      <tr><td>A kit bonus</td><td>+0.3 reward for a valid, improving search using the kit.</td><td>1 call to the driver in 480 offered attempts; no bonus paid in five steps.<br><span class="src">From step 40 · read on training attempts</span></td></tr>
+      <tr><td><a href="#l-rank">Rank reward per test case</a></td><td>Reward being the best on each test, so a rare strong program beats ten safe ones.</td><td>Validity up, but Best@5 −3.19* at step 50: the top end got worse.<br><span class="src">From step 40, single-call · read on the 172-problem set</span></td></tr>
+      <tr><td><a href="#l-bars">Fixed quality bars</a></td><td>Pay only for clearing a frozen top-10% or top-30% bar per test.</td><td>No eval (grading stopped). The bars barely separated: a copy of the problem's baseline clears the top-30% bar on 76 of 165 problems.<br><span class="src">From step 40, single-call · no eval read</span></td></tr>
+      <tr><td><a href="#l-bonus">A kit bonus</a></td><td>+0.3 reward for a valid, improving search using the kit.</td><td>1 driver call in 480 offered attempts; no bonus paid in five steps.<br><span class="src">From step 40 · read on training attempts</span></td></tr>
       <tr class="fam"><td colspan="3">Make checking pay · <span>o3's self-written brute-force checkers (<a href="https://arxiv.org/abs/2502.06807">El-Kishky et al., 2025</a>)</span></td></tr>
-      <tr><td>Scarce oracle</td><td>Allow 10 judged submissions and only a coarse score band, so checking your own work pays.</td><td>Self-testing rose sharply (Figure 3). Algorithms didn't change; step-10 eval −1.01 [−2.26, +0.14].<br><span class="src">From the untrained 9B, agent mode · read on the 40-problem agent eval</span></td></tr>
+      <tr><td><a href="#l-oracle">Scarce oracle</a></td><td>Allow 10 judged submissions and only a coarse score band, so checking your own work pays.</td><td>Local testing rose sharply (Figure 3); same algorithms; step-10 eval −1.01 [−2.26, +0.14].<br><span class="src">From the untrained 9B, agent mode · read on the 40-problem agent eval</span></td></tr>
       <tr class="fam"><td colspan="3">Give a foothold · <span>hints that are later taken away: STaR's rationalization, reverse curricula (<a href="https://arxiv.org/abs/2402.05808">R3</a>), partial solutions (<a href="https://arxiv.org/abs/2507.13266">QuestA</a>)</span></td></tr>
-      <tr><td>Plan first</td><td>Train with a stated plan before the code.</td><td>91% of the positive advantage went to trials whose code didn't match the stated plan, and stating a plan fell from 56% to 44% by step 20. Held-out score at step 20 was +1.8 [+0.1, +3.7]*, but the run failed 2 of 5 pre-registered gates.<br><span class="src">From the untrained 9B · read on held-out problems</span></td></tr>
-      <tr><td>A search kit</td><td>Offer a small header with a timer and a search driver.</td><td>Used mostly under a strong prompt; time guards vanished once the prompt was neutral (Figure 4). Offered attempts trailed controls in most strong- and neutral-prompt steps; as a plain include they did 4–10 points better for three steps.<br><span class="src">Inside the plan-first run · read on training attempts</span></td></tr>
+      <tr><td><a href="#l-plan">Plan first</a></td><td>Train with a stated plan before the code.</td><td>Held-out +1.8 [+0.1, +3.7]* at step 20, but 2 of 5 gates failed: plans faded, and the code stopped following them.<br><span class="src">From the untrained 9B · read on held-out set A</span></td></tr>
+      <tr><td><a href="#l-kit">A search kit</a></td><td>Offer a small header with a timer and a search driver.</td><td>Used under a strong prompt, dropped under a neutral one (Figure 4); the revert rule fired.<br><span class="src">Inside the plan-first run · read on training attempts</span></td></tr>
       <tr class="fam"><td colspan="3">Amplify its own best · <span>expert iteration (<a href="https://arxiv.org/abs/1705.08439">ExIt</a>, <a href="https://arxiv.org/abs/2203.14465">STaR</a>, <a href="https://arxiv.org/abs/2312.06585">ReST-EM</a>) and program archives (<a href="https://www.nature.com/articles/s41586-023-06924-6">FunSearch</a>, <a href="https://arxiv.org/abs/2506.13131">AlphaEvolve</a>)</span></td></tr>
-      <tr><td>Self-distillation</td><td>Fine-tune on the model's own best samples.</td><td>Validity +8.4 points*, no new algorithms.<br><span class="src">Read on single-call samples</span></td></tr>
-      <tr><td>Archive-seeded expert iteration</td><td>Start from the model's own search programs; pay only for beating them.</td><td>0 of 127 working searches vs 0 of 128 from scratch, and paid gains of 6.8% against a 7% bar. The kill rule fired at step 2 on both counts.<br><span class="src">From step 40 · read on training attempts</span></td></tr>
+      <tr><td><a href="#l-self">Self-distillation</a></td><td>Fine-tune on the model's own best samples.</td><td>Validity +8.4*, no new algorithms; confounded by a gradient bug.<br><span class="src">From step 40, single-call · read on the 172-problem set</span></td></tr>
+      <tr><td><a href="#l-expert">Archive-seeded expert iteration</a></td><td>Start from the model's own search programs; pay only for beating them.</td><td>0 of 127 working searches vs 0 of 128 from scratch; the kill rule fired at step 2.<br><span class="src">From step 40, agent mode · read on training attempts</span></td></tr>
     </tbody>
   </table></div>
+  <p>Each lever in detail, in the same order: the setup, what I wrote down before the run, what happened, and my best reading of why.</p>
+  <h3 id="l-rank">Rank reward per test case</h3>
+  <p class="lv-meta">Fix the slope · after RiVER · from step 40, single-call · 16 samples × 8 problems per step · steps 40–60</p>
+  <dl class="lever">
+    <dt>Setup</dt><dd>Each test case ranks the group's valid samples. A unique winner gets +1, the rest a value that falls with rank from +0.5 to −0.5, and a sample that fails the case gets −1 for it. Tied winners share the average of their ranks' values, so copying the best pays less. A sample's reward is its mean over cases, and invalid code scores −1. Advantages use one batch-wide scale instead of each group's standard deviation.</dd>
+    <dt>Written first</dt><dd>Part 2 (§7) listed what would count: the in-sample curve still rising, search-style share and Best@5 holding, and a paired Avg@5 gain. The stop rule: entropy below 0.3, gradient norm above 3× its trailing median, validity under 70% for 5 steps, or two evals in a row without a paired gain.</dd>
+    <dt>What happened</dt><dd>Validity rose from 72% to 81%, but at step 50 on the 172-problem set Best@5 fell 3.19* against step 40 (Avg@5 −0.78 [−2.20, +0.53]), and it trailed the other runs' step-50 checkpoints too. The algorithm score went from 0.27 to 0.17 (n.s.). A blind read of 40 valid programs from steps 46–52 across five runs found 26 re-implementing the baseline described in the problem (6 of 8 in this arm) and 1 doing something non-trivial. This was graded while another job loaded the grader's CPUs; the clean regrade never ran. Stopped at step 60.</dd>
+    <dt>Why</dt><dd>Rank credit pays for being best in the group, and the group was mostly greedy code and baseline copies, so "best" meant the best greedy program. Search code was invalid about a third of the time, and at −1 per invalid sample it netted below greedy (§3). The reward bought validity, not search, and the top end got worse.</dd>
+  </dl>
+
+  <h3 id="l-bars">Fixed quality bars</h3>
+  <p class="lv-meta">Fix the slope · from step 40, single-call · same batch and advantage as the rank arm</p>
+  <dl class="lever">
+    <dt>Setup</dt><dd>Each test case pays 1.0 at or above a frozen top-10% bar, 0.5 at or above a top-30% bar, and 0 otherwise; invalid code scores −1. The bars came from 17,316 judged training samples of three earlier runs, never from eval problems.</dd>
+    <dt>Written first</dt><dd>The same criteria and stop rule as the rank arm (part 2, §7).</dd>
+    <dt>What happened</dt><dd>On training samples (steps 41–52), validity rose 3.0 points [+0.3, +5.7]* and the non-trivial share didn't move (+0.4 [−1.1, +1.9]). The step-50 eval was stopped at 490 of 860 grades to free compute for the strategy probe and the algorithm score, so there is no eval result.</dd>
+    <dt>Why</dt><dd>The bars barely separated anything. Scores tie so often that half the historical samples clear the "top-10%" bar, and the two bars coincide on 69% of test cases. A copy of the problem's baseline clears the top-30% bar on 76 of 165 problems and earns the full 1.0 on 27. Pooled over this arm's own samples, exact baseline outputs earned more reward (0.59) than above-baseline ones (0.48). And at −1 for invalid code, search netted −0.14 against +0.01 for greedy.</dd>
+  </dl>
+
+  <h3 id="l-bonus">A kit bonus</h3>
+  <p class="lv-meta">Fix the slope · from step 40, agent mode · 25-problem pool · kit and strong prompt offered to 6 of 8 attempts per group</p>
+  <dl class="lever">
+    <dt>Setup</dt><dd>The reward is the raw score plus 0.3 when three checks pass: the program's own code calls the kit's search driver with real move functions (a timer in a loop isn't enough); it is valid on every test; and it scores more than 1.1 points higher at full time budget than in a re-run with the driver's search skipped.</dd>
+    <dt>Written first</dt><dd>A review pause before step 11, with one change allowed in advance: raising the bonus. No kill rule.</dd>
+    <dt>What happened</dt><dd>Over five steps, 1 driver call in 480 offered attempts and no bonus paid. Offered attempts averaged 0.317 reward against 0.332 for 160 controls, and time guards fell from 27 to 14 per 96 kit attempts over steps 1–3.</dd>
+    <dt>Why</dt><dd>RL can only strengthen behaviour that gets rewarded, and a bonus nobody earns sends no signal. Defining the bonus was harder than expected. An earlier design paid when the full-budget score beat a quarter-budget run; checked offline on 315 recorded kit programs, it missed 29 of 45 real searches (real searches converge early) and sent 31% of its payouts to greedy constructions that a timer happened to cut short. The stricter driver-only gate fixed that and then paid nothing.</dd>
+  </dl>
+
+  <h3 id="l-oracle">Scarce oracle</h3>
+  <p class="lv-meta">Make checking pay · from the untrained 9B, agent mode · 8 attempts per group · 60-minute trials · steps 1–31</p>
+  <dl class="lever">
+    <dt>Setup</dt><dd>In training only, each trial gets 10 judged submissions with a visible counter. Feedback is a verdict and a 10-point band, such as "score in [70, 80)", never the exact score or per-test results. Identical resubmissions are free. The reward still uses the exact hidden score, and the eval keeps the benchmark's normal unlimited, exact feedback.</dd>
+    <dt>Written first</dt><dd>Part 2 (§7): the model starting to check its own work. That meant more local runs before judged submissions, brute-force checkers and stress tests appearing, those behaviours predicting higher scores, and the gain showing up in the official eval. There was no outcome kill rule; I stopped the run after step 31.</dd>
+    <dt>What happened</dt><dd>The first criterion was met (Figure 3): local runs per submission rose from about 2 to 3, and trials with a self-written helper script from 22–36% to 39–43%. The rest wasn't. The search-style share stayed at 3–19% with no trend, the step-10 eval was −1.01 [−2.26, +0.14], and a blind read found the same algorithms. The habit didn't carry into the uncapped eval (35.9 vs 36.9 judged submissions per trial).</dd>
+    <dt>Why</dt><dd>Checking only pays when there's something worth checking. When a search timed out, the model deleted the search; it never added a time guard. One caveat: the sampler kept the first 16 of 24 groups to finish and dropped 224 of 696 as slow. The dropped trials scored about the same (0.36 vs 0.40) with the same behaviour markers, so this tilts training toward easy problems rather than demonstrably against search, but the run isn't a clean test of scarcity.</dd>
+  </dl>
+
+  <h3 id="l-plan">Plan first</h3>
+  <p class="lv-meta">Give a foothold · after STaR-style hints · from the untrained 9B, agent mode · 16 groups × 8 trials per step · 10 judged submissions</p>
+  <dl class="lever">
+    <dt>Setup</dt><dd>On its first turn, after reading the problem, about 68 tokens are forced into the model's own thinking. They name a search family (annealing, local search, beam or exact/DP, drawn at random), give generic how-to (delta evaluation, cooling, a time guard), and end with an open stem the model must finish: "the solution state, the move types, and how to compute each move's score delta in O(1) are:". The forced tokens are masked from the loss, and the guided share fades from half the groups to none by step 20. The reward credits only points above each problem's trivial bar.</dd>
+    <dt>Written first</dt><dd>Five gates at step 20, read on 16 unguided trials per held-out problem against the base model. They covered the share of better-class programs, pass@16 and Best@16 not falling, entropy, held-out likelihood, and plan-to-code match of at least 0.70.</dd>
+    <dt>What happened</dt><dd>At step 10 the 40-problem agent eval was −1.05 [−2.33, −0.03]*. By step 20 the held-out score (set A) was up 1.8 [+0.1, +3.7]*, but the run failed two gates. The entropy ratio was 0.874, and the plan-to-code match fell from 0.59 to 0.45 as stating a plan fell from 56% to 44%. The better-class share passed narrowly, +10.9 points [−0.1, +21.4]. Mid-run I changed three things: guidance went only where unguided trials failed, the problem pool was re-picked for headroom, and a contest-style penalty for failed submissions was added. Read the step-20 numbers with that in mind.</dd>
+    <dt>Why</dt><dd>The reward can't see execution. None of 318 credited search programs was sound, only 4 had a time guard, and 65% of the positive push on search went to code that timed out or was wrong. The planning turn carries about 1% of the gradient weight. In training, 91% of positive advantage on guided trials went to code that didn't follow the forced family, though that match comes from an automatic classifier that agrees only weakly with blind readers (κ 0.26).</dd>
+  </dl>
+
+  <h3 id="l-kit">A search kit</h3>
+  <p class="lv-meta">Give a foothold · inside the plan-first run, steps 23–48 · offered to 6 of 8 attempts per group · training only</p>
+  <dl class="lever">
+    <dt>Setup</dt><dd>A 72-line header with a timer set to 85% of the time limit, a best-so-far holder, a random generator, fast I/O, and generic search drivers: propose, score the change, apply or undo, with annealing-style acceptance. It names no algorithm, and the eval never sees it. Over six phases it was offered as a workspace file, then as an include, then with a strong prompt ("start simple and valid, then improve with a time-bounded search"), then with a neutral prompt, then with the strong prompt held, then turned off.</dd>
+    <dt>Written first</dt><dd>Revert if offered attempts trail controls on clearing the bar by more than 5 points for 2 steps.</dd>
+    <dt>What happened</dt><dd>As a file it never reached final code: the model rewrote the whole file dozens of times per trial and dropped the 72 lines each time. As an include it appeared in 20–33% of judged code, but the search driver was never called in 413 submissions. With the strong prompt the kit appeared in 72–82% of code, with time guards in 18–24% and working search in 3–5% (Figure 4). Back on a neutral prompt the guards fell to 5–11%. Holding the strong prompt gave −9, −4, −9 and −13 points against controls, the rule fired, and the kit was off from step 47.</dd>
+    <dt>Why</dt><dd>The reward pays a bar-clearing greedy program as much as a bar-clearing search, so RL had no reason to keep the kit. The best kit program a blind reader found was a naive annealing loop that rescored the whole solution on every move. Attempts never offered the kit never wrote a time guard. "Working search" here is an automatic label (search class, time guard, above the bar, no timeout or crash) and carries the same κ 0.26 caveat. My own process was weak in places too: the fade ran on a timer rather than on evidence, and some decisions rested on one- or two-step windows with about ±10 points of noise.</dd>
+  </dl>
+
+  <h3 id="l-self">Self-distillation</h3>
+  <p class="lv-meta">Amplify its own best · after ReST-EM · from step 40, single-call · 165 examples on 70 training problems</p>
+  <dl class="lever">
+    <dt>Setup</dt><dd>From 21,940 training rollouts of three single-call runs, I kept samples that scored on every test case any rollout scored on, came within 0.02 of the problem's best, beat the trivial programs, sat above the problem's median, and ended their thinking naturally. That left at most 4 per problem: 165 examples on 70 problems, about a quarter of them search. Full fine-tune for 4 epochs.</dd>
+    <dt>Checks</dt><dd>A memorisation gate and a likelihood-ranking probe.</dd>
+    <dt>What happened</dt><dd>At epoch 2 on the 172-problem set, against step 40 regraded on the same judge: validity 72.0% → 80.4% (+8.4 [+4.9, +11.9]*), truncated outputs 16% → 7%, Avg@5 +0.83 (n.s.), Best@5 −0.72, algorithm score +0.06 (n.s.). A blind read of 14 problems found the same algorithm on 7, epoch 2 better on 4 and step 40 better on 5. Epochs 3–4 failed the memorisation gate, and the ranking probe was null throughout.</dd>
+    <dt>Why</dt><dd>Training on its own best samples sharpened the model (entropy −9%) without lifting its ceiling: three-quarters of those samples weren't search to begin with. A caveat: this ran in a trainer setup later found to compute wrong gradients (cosine 0.80–0.88 against a reference), and I haven't rerun it, so treat it as confounded.</dd>
+  </dl>
+
+  <h3 id="l-expert">Archive-seeded expert iteration</h3>
+  <p class="lv-meta">Amplify its own best · after ExIt and FunSearch-style archives · from step 40, agent mode · 8 parent + 8 scratch groups per step</p>
+  <dl class="lever">
+    <dt>Setup</dt><dd>An archive of about 90,000 judged programs from earlier runs, classified statically. Of 33,295 distinct programs on the 30-problem pool, 25,155 were greedy; only 42 archived programs passed the static check for working search. Each parent group starts from an archived program (186 search parents to repair or improve, 21 greedy ones to upgrade), shown as the starting solution with its verdict, score and slowest test. It is paid only for beating both the bar and the parent's verified score by 0.02. Scratch groups start from nothing.</dd>
+    <dt>Written first</dt><dd>Stop if parent groups' working-search yield is below 2× the scratch groups', or if fewer than 7% of repair and upgrade attempts reach a verified above-bar program in the parent's class. The code also required a non-zero yield, which the written rule didn't cover; I wrote down the 0-vs-0 case after step 1, before step 2 was graded.</dd>
+    <dt>What happened</dt><dd>0 working searches in 127 parent attempts, against 0 in 128 from scratch. Conversion was 7 of 103 (6.8%). Upgrades produced 0 search wins in 40 tries; the 5 that were paid all got there with better greedy code. The rule fired at step 2, saving about 8 steps, roughly 150 GPU-hours.</dd>
+    <dt>Why</dt><dd>In 112 diffs the model either patched its own search scaffolding or rewrote it as greedy (18 local searches and 7 annealers became greedy). It never added a timer-guarded loop. Even handed its own search skeleton, it didn't know how to run it, and greedy was what got paid. Caveat: the static classifier mislabelled at least one "search" parent that was really the problem's baseline.</dd>
+  </dl>
+
 </div>
 
 <hr class="sec">
@@ -375,7 +453,7 @@
       <rect x="330" y="200" width="560" height="30" fill="transparent" tabindex="0" data-tip="Search-style share proxy, scarce-oracle steps 1–18: 0.03–0.19, no upward trend"/>
       </svg>
     </div>
-    <figcaption><b>Scarcity changed behaviour at once; training added a little.</b> Capping judged submissions at 10 raised the share run locally first from 15–18% to 56% before any training, and RL took it to 65–72%. Local runs per submission rose from about 2 to 3, and the cap was hit in 92–97% of trials. The share of search-style code (steps 1–18) stayed in a 3–19% band with no trend. The testing wraps the same greedy programs.</figcaption>
+    <figcaption><b>Scarcity changed behaviour at once; training added a little.</b> Capping judged submissions at 10 raised the share run locally first from 15–18% to 56% before any training, and RL took it to 65–72%. Local runs per submission rose from about 2 to 3, and the cap was hit in 90–97% of trials. The share of search-style code (steps 1–18) stayed in a 3–19% band with no trend. The testing wraps the same greedy programs.</figcaption>
   </figure>
 </div>
 <div class="wide">
@@ -419,7 +497,7 @@
       <rect x="330" y="200" width="560" height="30" fill="transparent" tabindex="0" data-tip="Working search in 3–5% of offered code under the strong prompt"/>
       </svg>
     </div>
-    <figcaption><b>A scaffold the model mostly uses under instruction isn't a skill.</b> As a plain include, the kit appeared in 20–33% of offered code; under the strong prompt in 72–82%, but with working search in only 3–5%. Back on a neutral prompt the time-guard habit vanished, and offered attempts trailed controls on clearing the trivial bar by 2–8 points per step. Holding the strong prompt gave −9, −4, −9, −13, +1 and −6 points, and a rule set before the phase reverted it. A single step carries about ±10 points of noise, so read the phases, not single steps. Attempts never offered the kit never wrote time guards.</figcaption>
+    <figcaption><b>A scaffold the model mostly uses under instruction isn't a skill.</b> As a plain include, the kit appeared in 20–33% of offered code; under the strong prompt in 72–82%, but with working search in only 3–5%. Back on a neutral prompt the time-guard habit vanished, and offered attempts trailed controls on clearing the trivial bar by 2–8 points per step. Holding the strong prompt gave −9, −4, −9 and −13 points against controls, and a rule set before the phase turned the kit off. A single step carries about ±10 points of noise, so read the phases, not single steps. Attempts never offered the kit never wrote time guards.</figcaption>
   </figure>
 </div>
 <div class="wrap">
@@ -472,7 +550,7 @@
 <div class="sec-head" id="corrections"><p class="eyebrow">07 · Corrections</p><h2>What this changes in parts 1 and 2</h2></div>
 <div class="wrap">
   <ul>
-    <li><strong>"It knows better than it ships" (part 2, §4).</strong> The model does name better algorithms and ship safe ones. But the gap between the best of 55 samples (29) and a single sample (~12) isn't evidence of a hidden algorithm: algorithmic credit is about 2% of the score at every checkpoint, and the best single-call samples I distilled were mostly greedy.</li>
+    <li><strong>"It knows better than it ships" (part 2, §4).</strong> The model does name better algorithms and ship safe ones. But the gap between the best of 55 samples (29) and a single sample (~12) isn't evidence of a hidden algorithm: algorithmic credit is about 2% of the score at every checkpoint, and about three-quarters of the best training samples I distilled weren't search.</li>
     <li><strong>"Now running" (part 2, §7).</strong> Both experiments have stopped. The rank reward made the top end worse, and the bar reward has no result. The scarce oracle raised self-testing but not algorithms or scores.</li>
     <li><strong>"Agent mode" (part 2, §6).</strong> Step 30 confirms the flat eval: −0.52 [−1.18, +0.08], with mean judged submissions per trial rising from 47 to 77 (part 2 quoted medians).</li>
     <li><strong>Comparing single-call and agent-mode scores.</strong> The 40-problem agent set was hand-picked to be hard, about 3.4× harder than the 172-problem set by one measure: single-call step 40 scores 3.34 on it, against 11.48. On the same 40 problems, the untrained agent (6.77) scores about twice the RL-trained single-call model.</li>
@@ -482,20 +560,7 @@
 
 <hr class="sec">
 
-<div class="sec-head" id="method"><p class="eyebrow">08 · Method lessons</p><h2>What I'd keep doing</h2></div>
-<div class="wrap">
-  <ul>
-    <li><strong>Write the kill rule, and its edge cases, before the run.</strong> Expert iteration's rule fired at step 2 on both counts. I wrote down its 0-vs-0 case after step 1, before step 2 was graded; better to have it from the start. It saved about 8 steps, roughly 150 GPU-hours.</li>
-    <li><strong>Don't keep a group because it finished first.</strong> Keeping the first 16 of 24 groups to finish dropped 32% of groups for being slow, against 8 of 696 for having no signal. That quietly trains toward fast, simple attempts.</li>
-    <li><strong>Watch held-out contamination across restarts.</strong> The single-call run's first 40 steps trained on 10 of 12 problems in held-out set A and 7 of 8 in set B, and the earlier agent runs on all 20. Held-out numbers for models started from those checkpoints are biased. The 172- and 40-problem eval sets were clean, and Figure 5 compares untrained models.</li>
-    <li><strong>Re-anchor the base model whenever the harness changes.</strong> Three harness revisions put the untrained base at 5.78, 7.09 and 6.77 on the same 40 problems.</li>
-    <li><strong>Compaction may quietly cut thinking.</strong> After compactions that stripped old reasoning, the 27B's thinking per call fell about 40% (controls rose about 10%). Heavy thinkers compact first, so I can't yet separate imitation from regression to the mean.</li>
-  </ul>
-</div>
-
-<hr class="sec">
-
-<div class="sec-head" id="next"><p class="eyebrow">09 · Next</p><h2>A teacher, then human code, then teams</h2></div>
+<div class="sec-head" id="next"><p class="eyebrow">08 · Next</p><h2>A teacher, then human code, then teams</h2></div>
 <div class="wrap">
   <div class="status" style="border-left-color:var(--gold)">
     <span class="lbl" style="color:var(--gold)">Running, no results yet</span>

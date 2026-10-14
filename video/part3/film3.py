@@ -164,7 +164,7 @@ class Film3(Scene):
         x0 = -2.2
         rows = [("greedy submissions that time out", 14, GREY, "13–15%"),
                 ("search submissions that time out", 43, CLAY, "40–46%"),
-                ("best search loses to its own greedy", 69.5, CLAY, "67–72%")]
+                ("best search fails to beat its own greedy", 69.5, CLAY, "67–72%")]
         grp = VGroup()
         for i, (lab, v, col, txt) in enumerate(rows):
             y = -0.35 - i * 0.95
