@@ -155,6 +155,46 @@
     .ledger th,.ledger td{padding:.5rem .4rem}
     figure{padding:1.1rem .9rem .9rem}
   }
+.fig-map svg{min-width:620px}
+.mapkey{list-style:none;padding:0;margin:1.1rem 0 .2rem;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem 1.6rem;font-size:.9rem;line-height:1.45;color:var(--ink-soft)}
+.mapkey b{font-family:var(--mono);font-size:.74rem;letter-spacing:.03em;color:var(--ink);font-weight:600}
+.sc{display:grid;grid-template-columns:minmax(9.5rem,1fr) 1.35fr 1.15fr 1fr;min-width:640px;font-size:.9rem}
+.sc-row,.sc-fam{display:contents}
+.sc-head>div{font-family:var(--mono);font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:.1rem .55rem .55rem}
+.sc-fam>div{grid-column:1/-1;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);padding:.85rem .55rem .3rem;border-top:1px solid var(--rule)}
+.sc .nm{padding:.5rem .55rem;line-height:1.3}
+.sc .nm a{color:var(--ink);text-decoration-color:var(--rule)}
+.sc .c{margin:3px;padding:.45rem .6rem;border-radius:6px;line-height:1.35;border-left:4px solid transparent;color:var(--ink)}
+.sc .c b{font-family:var(--mono);margin-right:.45rem;font-weight:600}
+.sc .c.up{background:color-mix(in srgb,var(--s1) 15%,transparent);border-left-color:var(--s1)}
+.sc .c.down{background:color-mix(in srgb,var(--s2) 15%,transparent);border-left-color:var(--s2)}
+.sc .c.mix{background:linear-gradient(90deg,color-mix(in srgb,var(--s2) 15%,transparent),color-mix(in srgb,var(--s1) 15%,transparent));border-left-color:var(--s2)}
+.sc .c.flat{background:color-mix(in srgb,var(--muted) 9%,transparent);border-left-color:var(--muted);color:var(--ink-soft)}
+.sc .c.na{background:none;border:1px dashed var(--rule);border-left:4px dashed var(--rule);color:var(--muted)}
+.sc-key{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;margin-top:.9rem;font-family:var(--mono);font-size:.72rem;color:var(--ink-soft)}
+.sc-key i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:.4rem;vertical-align:-2px}
+.sc-key i.up{background:var(--s1)}.sc-key i.down{background:var(--s2)}.sc-key i.flat{background:var(--muted)}
+.sc-key i.mix{background:linear-gradient(90deg,var(--s2),var(--s1))}.sc-key i.na{border:1px dashed var(--muted)}
+@media (max-width:640px){.mapkey{grid-template-columns:1fr}}
+.anat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem}
+.acard{border:1px solid var(--rule);border-radius:10px;padding:.85rem .9rem .8rem;background:var(--bg);display:flex;flex-direction:column;gap:.55rem;min-width:0}
+.ahead{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;flex-wrap:wrap}
+.ahead a{color:var(--ink);font-weight:600;text-decoration-color:var(--rule)}
+.ahead span{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.strip{display:flex;align-items:center;flex-wrap:wrap;gap:.2rem;font-family:var(--mono);font-size:.66rem}
+.strip .st{padding:.12rem .38rem;border-radius:999px;border:1px solid var(--rule);color:var(--muted)}
+.strip .st.hot{background:var(--gold);border-color:var(--gold);color:var(--surface);font-weight:600}
+.strip .st.warm{border-color:var(--gold);color:var(--gold)}
+.strip .ar{color:var(--rule)}
+.snip{margin:0;padding:.6rem .7rem;border-radius:6px;background:var(--surface);border:1px solid var(--rule);font-family:var(--mono);font-size:.7rem;line-height:1.55;color:var(--ink-soft);white-space:pre-wrap;overflow-wrap:anywhere}
+.snip .inj{background:color-mix(in srgb,var(--gold) 20%,transparent);color:var(--ink);border-radius:2px}
+.snip .mdl{color:var(--s1)}
+.snip .dim{color:var(--muted)}
+.snip .hd{color:var(--ink)}
+.aidea{font-size:.86rem;font-style:italic;color:var(--ink-soft)}
+.sc-key i.hot{background:var(--gold)}.sc-key i.warm{border:1.5px solid var(--gold)}
+.sc-key i.injk{background:color-mix(in srgb,var(--gold) 30%,transparent)}.sc-key i.mdlk{background:var(--s1)}
+@media (max-width:760px){.anat{grid-template-columns:1fr}}
 .src{display:inline-block;margin-top:.35rem;font-family:var(--mono);font-size:.74rem;line-height:1.4;color:var(--muted)}
 .lever{display:grid;grid-template-columns:8.5rem 1fr;gap:.45rem 1.2rem;margin:.5rem 0 2rem}
 .lever dt{font-family:var(--mono);font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding-top:.32rem}
@@ -315,24 +355,202 @@
 <div class="sec-head" id="levers"><p class="eyebrow">04 · Eight ways to build a hill</p><h2>Every teacher-free lever I tried</h2></div>
 <div class="wrap">
   <p>Each lever borrows from a line of prior work that climbed from a weak start, and each tries to fix one thing: the slope (reshape the reward), the environment (make checking pay), the foothold (hints and scaffolds), or the sample pool (learn from the model's own best).</p>
-  <p>Most had a check written down before they ran, and several had a kill rule: a stop condition that ends the run early if the first signal isn't there. They start from either the untrained 9B or the step-40 RL checkpoint, and are read on different instruments, noted per row. Avg@5 is the mean over 5 samples per problem; Best@5 the mean of each problem's best.</p>
-  <div class="scroll"><table class="ledger" aria-label="Eight teacher-free levers">
-    <thead><tr><th>Lever</th><th>The idea</th><th>What happened</th></tr></thead>
-    <tbody>
-      <tr class="fam"><td colspan="3">Fix the slope · <span>reward shaping (<a href="https://mlanthology.org/icml/1999/ng1999icml-policy/">Ng et al., 1999</a>): pay for steps toward the goal</span></td></tr>
-      <tr><td><a href="#l-rank">Rank reward per test case</a></td><td>Reward being the best on each test, so a rare strong program beats ten safe ones.</td><td>Validity up, but Best@5 −3.19* at step 50: the top end got worse.<br><span class="src">From step 40, single-call · read on the 172-problem set</span></td></tr>
-      <tr><td><a href="#l-bars">Fixed quality bars</a></td><td>Pay only for clearing a frozen top-10% or top-30% bar per test.</td><td>No eval (grading stopped). The bars barely separated: a copy of the problem's baseline clears the top-30% bar on 76 of 165 problems.<br><span class="src">From step 40, single-call · no eval read</span></td></tr>
-      <tr><td><a href="#l-bonus">A kit bonus</a></td><td>+0.3 reward for a valid, improving search using the kit.</td><td>1 driver call in 480 offered attempts; no bonus paid in five steps.<br><span class="src">From step 40 · read on training attempts</span></td></tr>
-      <tr class="fam"><td colspan="3">Make checking pay · <span>o3's self-written brute-force checkers (<a href="https://arxiv.org/abs/2502.06807">El-Kishky et al., 2025</a>)</span></td></tr>
-      <tr><td><a href="#l-oracle">Scarce oracle</a></td><td>Allow 10 judged submissions and only a coarse score band, so checking your own work pays.</td><td>Local testing rose sharply (Figure 3); same algorithms; step-10 eval −1.01 [−2.26, +0.14].<br><span class="src">From the untrained 9B, agent mode · read on the 40-problem agent eval</span></td></tr>
-      <tr class="fam"><td colspan="3">Give a foothold · <span>hints that are later taken away: STaR's rationalization, reverse curricula (<a href="https://arxiv.org/abs/2402.05808">R3</a>), partial solutions (<a href="https://arxiv.org/abs/2507.13266">QuestA</a>)</span></td></tr>
-      <tr><td><a href="#l-plan">Plan first</a></td><td>Train with a stated plan before the code.</td><td>Held-out +1.8 [+0.1, +3.7]* at step 20, but 2 of 5 gates failed: plans faded, and the code stopped following them.<br><span class="src">From the untrained 9B · read on held-out set A</span></td></tr>
-      <tr><td><a href="#l-kit">A search kit</a></td><td>Offer a small header with a timer and a search driver.</td><td>Used under a strong prompt, dropped under a neutral one (Figure 4); the revert rule fired.<br><span class="src">Inside the plan-first run · read on training attempts</span></td></tr>
-      <tr class="fam"><td colspan="3">Amplify its own best · <span>expert iteration (<a href="https://arxiv.org/abs/1705.08439">ExIt</a>, <a href="https://arxiv.org/abs/2203.14465">STaR</a>, <a href="https://arxiv.org/abs/2312.06585">ReST-EM</a>) and program archives (<a href="https://www.nature.com/articles/s41586-023-06924-6">FunSearch</a>, <a href="https://arxiv.org/abs/2506.13131">AlphaEvolve</a>)</span></td></tr>
-      <tr><td><a href="#l-self">Self-distillation</a></td><td>Fine-tune on the model's own best samples.</td><td>Validity +8.4*, no new algorithms; confounded by a gradient bug.<br><span class="src">From step 40, single-call · read on the 172-problem set</span></td></tr>
-      <tr><td><a href="#l-expert">Archive-seeded expert iteration</a></td><td>Start from the model's own search programs; pay only for beating them.</td><td>0 of 127 working searches vs 0 of 128 from scratch; the kill rule fired at step 2.<br><span class="src">From step 40, agent mode · read on training attempts</span></td></tr>
-    </tbody>
-  </table></div>
+  <p>Most had a check written down before they ran, and several had a kill rule: a stop condition that ends the run early if the first signal isn't there. They start from either the untrained 9B or the step-40 RL checkpoint, and are read on different instruments, noted in each write-up. Avg@5 is the mean over 5 samples per problem; Best@5 the mean of each problem's best.</p>
+</div>
+<div class="wide">
+  <figure class="fig-map">
+    <div class="fig-title">Figure 3 · Four ways across the valley</div>
+    <div class="scroll">
+      <svg viewBox="0 0 900 384" role="img" aria-label="Schematic reward landscape. Trivial programs score lowest, greedy programs sit on a plateau where the 9B is, half-built searches fall into a valley, and working search, where the 27B sibling is, scores highest. Four families of levers: 1 lift the far side of the valley, 2 make checking pay, 3 start the model partway up, 4 resample its own best.">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"/></marker>
+  </defs>
+  <text x="44" y="40" font-family="var(--mono)" font-size="12" fill="var(--muted)">reward ↑</text>
+  <line x1="40" y1="330" x2="870" y2="330" stroke="var(--rule)"/>
+  <path d="M60,290 C120,290 150,170 250,165 C330,162 380,265 480,265 C580,265 650,70 780,70 C820,70 845,80 860,90 L860,330 L60,330 Z" fill="var(--rule)" opacity=".5"/>
+  <path d="M60,290 C120,290 150,170 250,165 C330,162 380,265 480,265 C580,265 650,70 780,70 C820,70 845,80 860,90" fill="none" stroke="var(--ink)" stroke-width="2.2"/>
+  <text x="480" y="302" text-anchor="middle" font-family="var(--serif)" font-style="italic" font-size="15" fill="var(--ink-soft)">the valley</text>
+  <g font-family="var(--mono)" text-anchor="middle">
+    <text x="78" y="354" font-size="12.5" fill="var(--ink-soft)">trivial</text>
+    <text x="250" y="354" font-size="12.5" fill="var(--ink-soft)">greedy</text>
+    <text x="480" y="354" font-size="12.5" fill="var(--ink-soft)">half-built search</text>
+    <text x="780" y="354" font-size="12.5" fill="var(--ink-soft)">working search</text>
+    <text x="78" y="372" font-size="11" fill="var(--muted)">any valid answer</text>
+    <text x="250" y="372" font-size="11" fill="var(--muted)">one valid pass</text>
+    <text x="480" y="372" font-size="11" fill="var(--muted)">times out, or loses to greedy</text>
+    <text x="780" y="372" font-size="11" fill="var(--muted)">clock + cheap delta + memory</text>
+  </g>
+  <!-- 3: foothold arc -->
+  <path d="M268,150 Q455,22 640,126" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ah)"/>
+  <!-- 1: lift the far side -->
+  <line x1="578" y1="279" x2="578" y2="226" stroke="var(--ink-soft)" stroke-width="1.8" marker-end="url(#ah)"/>
+  <!-- 4: resample loop -->
+  <path d="M232,180 A20,20 0 1 0 268,180" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#ah)"/>
+  <!-- models -->
+  <g tabindex="0" data-tip="The 9B: on the greedy plateau before training, and still there after every one of the eight levers.">
+    <circle cx="250" cy="163" r="14" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+    <text x="250" y="167" text-anchor="middle" font-family="var(--mono)" font-size="10.5" font-weight="600" fill="var(--surface)">9B</text>
+  </g>
+  <g tabindex="0" data-tip="The 27B sibling, untrained: a working search in 75–90% of attempts on held-out problems (Figure 8).">
+    <circle cx="780" cy="68" r="16" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/>
+    <text x="780" y="72" text-anchor="middle" font-family="var(--mono)" font-size="10.5" font-weight="600" fill="var(--surface)">27B</text>
+  </g>
+  <!-- numbered family markers -->
+  <g font-family="var(--mono)" font-size="12">
+    <g tabindex="0" data-tip="Fix the slope: rank reward per test, fixed quality bars, a kit bonus. Pay more for the far side of the valley.">
+      <circle cx="578" cy="293" r="11" fill="var(--surface)" stroke="var(--ink-soft)" stroke-width="1.4"/><text x="578" y="297" text-anchor="middle" fill="var(--ink)">1</text>
+      <text x="596" y="297" fill="var(--ink-soft)">lift the far side</text>
+    </g>
+    <g tabindex="0" data-tip="Make checking pay: the scarce oracle. Ten judged submissions, so testing locally before submitting is worth it.">
+      <circle cx="204" cy="126" r="11" fill="var(--surface)" stroke="var(--ink-soft)" stroke-width="1.4"/><text x="204" y="130" text-anchor="middle" fill="var(--ink)">2</text>
+      <text x="188" y="130" text-anchor="end" fill="var(--ink-soft)">make checking pay</text>
+    </g>
+    <g tabindex="0" data-tip="Give a foothold: plan first, a search kit. Start the model partway up the far slope, then take the help away.">
+      <circle cx="453" cy="80" r="11" fill="var(--surface)" stroke="var(--ink-soft)" stroke-width="1.4"/><text x="453" y="84" text-anchor="middle" fill="var(--ink)">3</text>
+      <text x="453" y="58" text-anchor="middle" fill="var(--ink-soft)">start it partway up</text>
+    </g>
+    <g tabindex="0" data-tip="Amplify its own best: self-distillation, archive-seeded expert iteration. Resample around the model's best programs, which were greedy.">
+      <circle cx="250" cy="226" r="11" fill="var(--surface)" stroke="var(--ink-soft)" stroke-width="1.4"/><text x="250" y="230" text-anchor="middle" fill="var(--ink)">4</text>
+      <text x="250" y="254" text-anchor="middle" fill="var(--ink-soft)">resample its best</text>
+    </g>
+  </g>
+</svg>
+
+    </div>
+    <ol class="mapkey">
+      <li><b>1 · Fix the slope.</b> Pay more for the far side: <a href="#l-rank">rank reward</a>, <a href="#l-bars">quality bars</a>, <a href="#l-bonus">kit bonus</a>.</li>
+      <li><b>2 · Make checking pay.</b> Scarce judged submissions, so testing first is worth it: <a href="#l-oracle">scarce oracle</a>.</li>
+      <li><b>3 · Give a foothold.</b> Start it partway up, then take the help away: <a href="#l-plan">plan first</a>, <a href="#l-kit">search kit</a>.</li>
+      <li><b>4 · Amplify its own best.</b> Resample around its best programs: <a href="#l-self">self-distillation</a>, <a href="#l-expert">expert iteration</a>.</li>
+    </ol>
+    <figcaption><b>Every lever tried a different way off the greedy plateau; none moved the 9B.</b> Schematic, not to scale; Figure 2 is the measured version. The 9B sits on a plateau of greedy programs. Working search, where its 27B sibling already is, lies across a valley of half-built searches that time out or lose to greedy. Hover the numbers for each family.</figcaption>
+  </figure>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 4 · How each lever works</div>
+    <div class="anat">
+  <div class="acard">
+    <div class="ahead"><a href="#l-rank">Rank reward per test case</a><span>1 · fix the slope</span></div>
+    <div class="strip" aria-label="Stages changed: reward"><span class="st ">task</span><span class="ar" aria-hidden="true">→</span><span class="st ">think</span><span class="ar" aria-hidden="true">→</span><span class="st ">code</span><span class="ar" aria-hidden="true">→</span><span class="st ">judge</span><span class="ar" aria-hidden="true">→</span><span class="st hot">reward</span><span class="ar" aria-hidden="true">→</span><span class="st ">update</span></div>
+    <pre class="snip"><span class="hd">per test case, rank the group's 16 samples</span>
+<span>  1st          +1</span>
+<span>  2nd          +0.5</span>
+<span class="dim">  …            falls with rank</span>
+<span>  15th–16th    −0.5</span>
+<span>  fails case   −1</span>
+<span>reward = mean over test cases</span>
+<span>invalid program = −1</span></pre>
+    <div class="aidea">A rare strong program should beat ten safe ones.</div>
+  </div>
+  <div class="acard">
+    <div class="ahead"><a href="#l-bars">Fixed quality bars</a><span>1 · fix the slope</span></div>
+    <div class="strip" aria-label="Stages changed: reward"><span class="st ">task</span><span class="ar" aria-hidden="true">→</span><span class="st ">think</span><span class="ar" aria-hidden="true">→</span><span class="st ">code</span><span class="ar" aria-hidden="true">→</span><span class="st ">judge</span><span class="ar" aria-hidden="true">→</span><span class="st hot">reward</span><span class="ar" aria-hidden="true">→</span><span class="st ">update</span></div>
+    <pre class="snip"><span class="hd">per test case, against bars frozen</span>
+<span class="hd">from 17,316 past training samples</span>
+<span>  ≥ top-10% bar   1.0</span>
+<span>  ≥ top-30% bar   0.5</span>
+<span>  below           0</span>
+<span>invalid program = −1</span></pre>
+    <div class="aidea">Pay for quality, not just validity.</div>
+  </div>
+  <div class="acard">
+    <div class="ahead"><a href="#l-bonus">A kit bonus</a><span>1 · fix the slope</span></div>
+    <div class="strip" aria-label="Stages changed: reward, code"><span class="st ">task</span><span class="ar" aria-hidden="true">→</span><span class="st ">think</span><span class="ar" aria-hidden="true">→</span><span class="st warm">code</span><span class="ar" aria-hidden="true">→</span><span class="st ">judge</span><span class="ar" aria-hidden="true">→</span><span class="st hot">reward</span><span class="ar" aria-hidden="true">→</span><span class="st ">update</span></div>
+    <pre class="snip"><span class="hd">reward = score + 0.3 if all three:</span>
+<span class="inj">  ✓ its own code calls the kit's driver</span>
+<span class="inj">  ✓ valid on every test</span>
+<span class="inj">  ✓ full budget beats a run with</span>
+<span class="inj">    the search skipped by > 1.1</span>
+<span class="dim">a timer in a loop doesn't count</span></pre>
+    <div class="aidea">Pay directly for the behaviour you want.</div>
+  </div>
+  <div class="acard">
+    <div class="ahead"><a href="#l-oracle">Scarce oracle</a><span>2 · make checking pay</span></div>
+    <div class="strip" aria-label="Stages changed: judge"><span class="st ">task</span><span class="ar" aria-hidden="true">→</span><span class="st ">think</span><span class="ar" aria-hidden="true">→</span><span class="st ">code</span><span class="ar" aria-hidden="true">→</span><span class="st hot">judge</span><span class="ar" aria-hidden="true">→</span><span class="st ">reward</span><span class="ar" aria-hidden="true">→</span><span class="st ">update</span></div>
+    <pre class="snip"><span class="mdl">$ submit solution.cpp</span>
+<span>  verdict   accepted, partial</span>
+<span class="inj">  score     in [70, 80)</span>
+<span class="inj">  left      3 / 10</span>
+<span class="dim">exact score and per-test results hidden;</span>
+<span class="dim">the reward still uses the exact score</span></pre>
+    <div class="aidea">When judged looks are scarce, testing first should pay.</div>
+  </div>
+  <div class="acard">
+    <div class="ahead"><a href="#l-plan">Plan first</a><span>3 · give a foothold</span></div>
+    <div class="strip" aria-label="Stages changed: think, reward"><span class="st ">task</span><span class="ar" aria-hidden="true">→</span><span class="st hot">think</span><span class="ar" aria-hidden="true">→</span><span class="st ">code</span><span class="ar" aria-hidden="true">→</span><span class="st ">judge</span><span class="ar" aria-hidden="true">→</span><span class="st warm">reward</span><span class="ar" aria-hidden="true">→</span><span class="st ">update</span></div>
+    <pre class="snip"><span class="dim">&lt;think&gt;</span>
+<span class="inj">I'll use simulated annealing: score each</span>
+<span class="inj">move by its delta, cool over time, stop</span>
+<span class="inj">before the time limit. The solution state,</span>
+<span class="inj">the move types, and how to compute each</span>
+<span class="inj">move's score delta in O(1) are:</span>
+<span class="mdl">▌ the model finishes the sentence</span>
+<span class="dim">~68 forced tokens, masked from the loss;</span>
+<span class="dim">reward only counts points above the trivial bar</span></pre>
+    <div class="aidea">Put the plan in its head; let it write the code.</div>
+  </div>
+  <div class="acard">
+    <div class="ahead"><a href="#l-kit">A search kit</a><span>3 · give a foothold</span></div>
+    <div class="strip" aria-label="Stages changed: code, task"><span class="st warm">task</span><span class="ar" aria-hidden="true">→</span><span class="st ">think</span><span class="ar" aria-hidden="true">→</span><span class="st hot">code</span><span class="ar" aria-hidden="true">→</span><span class="st ">judge</span><span class="ar" aria-hidden="true">→</span><span class="st ">reward</span><span class="ar" aria-hidden="true">→</span><span class="st ">update</span></div>
+    <pre class="snip"><span class="inj">#include "kit.h"   // 72 lines, training only</span>
+<span class="inj">  deadline = 0.85 × time limit</span>
+<span class="inj">  drive(propose, delta, apply, undo)</span>
+<span class="inj">  anneal(...)  best_so_far  rng  fast_io</span>
+<span class="dim">prompt: start simple and valid, then</span>
+<span class="dim">improve with a time-bounded search</span></pre>
+    <div class="aidea">Hand it the scaffolding; it only fills in the moves.</div>
+  </div>
+  <div class="acard">
+    <div class="ahead"><a href="#l-self">Self-distillation</a><span>4 · amplify its best</span></div>
+    <div class="strip" aria-label="Stages changed: update"><span class="st ">task</span><span class="ar" aria-hidden="true">→</span><span class="st ">think</span><span class="ar" aria-hidden="true">→</span><span class="st ">code</span><span class="ar" aria-hidden="true">→</span><span class="st ">judge</span><span class="ar" aria-hidden="true">→</span><span class="st ">reward</span><span class="ar" aria-hidden="true">→</span><span class="st hot">update</span></div>
+    <pre class="snip"><span class="hd">21,940 training rollouts → keep a sample if it</span>
+<span>  scores wherever any rollout scored</span>
+<span>  is within 0.02 of the problem's best</span>
+<span>  beats trivial, sits above the median</span>
+<span class="inj">165 examples on 70 problems</span>
+<span class="inj">→ full fine-tune, 4 epochs</span></pre>
+    <div class="aidea">Train on its own best work.</div>
+  </div>
+  <div class="acard">
+    <div class="ahead"><a href="#l-expert">Archive-seeded expert iteration</a><span>4 · amplify its best</span></div>
+    <div class="strip" aria-label="Stages changed: task, reward"><span class="st hot">task</span><span class="ar" aria-hidden="true">→</span><span class="st ">think</span><span class="ar" aria-hidden="true">→</span><span class="st ">code</span><span class="ar" aria-hidden="true">→</span><span class="st ">judge</span><span class="ar" aria-hidden="true">→</span><span class="st warm">reward</span><span class="ar" aria-hidden="true">→</span><span class="st ">update</span></div>
+    <pre class="snip"><span class="hd">start from one of its own archived programs:</span>
+<span class="inj">  [its own archived program]</span>
+<span class="inj">  + its verdict, score and slowest test</span>
+<span>task: repair · improve · upgrade it</span>
+<span class="inj">paid only above max(bar, parent) + 0.02</span>
+<span class="dim">8 parent groups + 8 from-scratch groups</span></pre>
+    <div class="aidea">Start from its best; pay only for beating it.</div>
+  </div>
+</div>
+<div class="sc-key"><span><i class="hot"></i>stage the lever changes</span><span><i class="warm"></i>also changed</span><span><i class="injk"></i>what the lever adds</span><span><i class="mdlk"></i>what the model writes</span></div>
+    <figcaption><b>Where each lever touches the training loop.</b> Every rollout runs task → thinking → code → judge → reward → update; gold marks the stage a lever changes. Snippets show the shape of what each lever added, not verbatim prompts; the plan stem's last sentence is quoted. The plan-first run and expert iteration also paid only for points above each problem's trivial bar.</figcaption>
+  </figure>
+</div>
+<div class="wide">
+  <figure>
+    <div class="fig-title">Figure 5 · What each lever moved</div>
+    <div class="scroll"><div class="sc" role="table" aria-label="What each lever moved: habit, algorithm, score">
+  <div class="sc-row sc-head" role="row"><div role="columnheader">Lever</div><div role="columnheader">Habit it moved</div><div role="columnheader">Better algorithms</div><div role="columnheader">Score</div></div>
+  <div class="sc-fam" role="row"><div role="cell">1 · fix the slope</div></div>
+  <div class="sc-row" role="row"><div role="rowheader" class="nm"><a href="#l-rank">Rank reward per test case</a></div><div role="cell" class="c up" tabindex="0" data-tip="Valid programs on the 172-problem set, step 40 → step 50."><b aria-hidden="true">↑</b>valid code 72 → 81%</div><div role="cell" class="c flat" tabindex="0" data-tip="Non-trivial share of training samples vs the original run, steps 41–52: +0.8 pt [−0.6, +2.2]."><b aria-hidden="true">–</b>+0.8 pt (n.s.)</div><div role="cell" class="c down" tabindex="0" data-tip="172-problem set, step 50 vs step 40: Best@5 −3.19 [−6.05, −0.60]*, Avg@5 −0.78 (n.s.)."><b aria-hidden="true">↓</b>Best@5 −3.19*</div></div>
+  <div class="sc-row" role="row"><div role="rowheader" class="nm"><a href="#l-bars">Fixed quality bars</a></div><div role="cell" class="c up" tabindex="0" data-tip="Training samples, steps 41–52 vs the original run: validity +3.0 [+0.3, +5.7]*."><b aria-hidden="true">↑</b>valid code +3.0 pt*</div><div role="cell" class="c flat" tabindex="0" data-tip="Non-trivial share of training samples: +0.4 pt [−1.1, +1.9]."><b aria-hidden="true">–</b>+0.4 pt (n.s.)</div><div role="cell" class="c na" tabindex="0" data-tip="The step-50 eval was stopped at 490 of 860 grades."><b aria-hidden="true">·</b>not graded</div></div>
+  <div class="sc-row" role="row"><div role="rowheader" class="nm"><a href="#l-bonus">A kit bonus</a></div><div role="cell" class="c down" tabindex="0" data-tip="Time guards in kit attempts, steps 1–3: 27 → 21 → 14 of 96. The search driver was called once in 480 offered attempts."><b aria-hidden="true">↓</b>time guards 28 → 15%</div><div role="cell" class="c flat" tabindex="0" data-tip="No attempt qualified for the search bonus in five steps."><b aria-hidden="true">–</b>0 bonuses paid</div><div role="cell" class="c flat" tabindex="0" data-tip="Mean training reward, offered attempts vs 160 controls."><b aria-hidden="true">–</b>0.317 vs 0.332</div></div>
+  <div class="sc-fam" role="row"><div role="cell">2 · make checking pay</div></div>
+  <div class="sc-row" role="row"><div role="rowheader" class="nm"><a href="#l-oracle">Scarce oracle</a></div><div role="cell" class="c up" tabindex="0" data-tip="Judged submissions run locally first: ~15–18% with an unlimited judge, 56% at step 1 under the cap (untrained), 65–72% by steps 13–18."><b aria-hidden="true">↑</b>tests before submitting 15 → 56 → 65–72%</div><div role="cell" class="c flat" tabindex="0" data-tip="Search-style share (keyword proxy), steps 1–18. A blind read found the same algorithms."><b aria-hidden="true">–</b>search share 3–19%, no trend</div><div role="cell" class="c flat" tabindex="0" data-tip="40-problem agent eval at step 10: −1.01 [−2.26, +0.14]."><b aria-hidden="true">–</b>−1.01 (n.s.)</div></div>
+  <div class="sc-fam" role="row"><div role="cell">3 · give a foothold</div></div>
+  <div class="sc-row" role="row"><div role="rowheader" class="nm"><a href="#l-plan">Plan first</a></div><div role="cell" class="c down" tabindex="0" data-tip="Held-out trials stating a plan, base → step 20. Plan-to-code match fell from 0.59 to 0.45."><b aria-hidden="true">↓</b>states a plan 56 → 44%</div><div role="cell" class="c flat" tabindex="0" data-tip="Better-class share by blind read, base → step 20: +10.9 [−0.1, +21.4]. None of 318 credited search programs in training was sound."><b aria-hidden="true">–</b>+10.9 pt (n.s.)</div><div role="cell" class="c mix" tabindex="0" data-tip="Step 10, 40-problem agent eval: −1.05 [−2.33, −0.03]*. Step 20, held-out set A: +1.8 [+0.1, +3.7]*."><b aria-hidden="true">↕</b>−1.05* then +1.8*</div></div>
+  <div class="sc-row" role="row"><div role="rowheader" class="nm"><a href="#l-kit">A search kit</a></div><div role="cell" class="c up" tabindex="0" data-tip="Share of offered code using the kit: 0% as a file, 20–33% as an include, 72–82% under a strong prompt. Under a neutral prompt, time guards fell back to 5–11%."><b aria-hidden="true">↑</b>uses the kit 72–82%, only when told</div><div role="cell" class="c flat" tabindex="0" data-tip="Working search (automatic label) in offered code: 3–5% under the strong prompt, 0–2% under a neutral one."><b aria-hidden="true">–</b>working search 3–5%, only when told</div><div role="cell" class="c down" tabindex="0" data-tip="Offered attempts vs controls on clearing the trivial bar, neutral and hold-strong phases."><b aria-hidden="true">↓</b>−2 to −13 pts vs controls</div></div>
+  <div class="sc-fam" role="row"><div role="cell">4 · amplify its best</div></div>
+  <div class="sc-row" role="row"><div role="rowheader" class="nm"><a href="#l-self">Self-distillation</a></div><div role="cell" class="c up" tabindex="0" data-tip="172-problem set, epoch 2 vs step 40: validity 72.0 → 80.4%, +8.4 [+4.9, +11.9]*. Confounded by a trainer gradient bug."><b aria-hidden="true">↑</b>valid code +8.4 pt*</div><div role="cell" class="c flat" tabindex="0" data-tip="Blind read of 14 problems: same algorithm on 7, epoch 2 better on 4, step 40 better on 5. Algorithm score +0.06 (n.s.)."><b aria-hidden="true">–</b>same algorithm on 7 of 14</div><div role="cell" class="c flat" tabindex="0" data-tip="172-problem set: Avg@5 +0.83 (n.s.), Best@5 −0.72."><b aria-hidden="true">–</b>Avg@5 +0.83 (n.s.)</div></div>
+  <div class="sc-row" role="row"><div role="rowheader" class="nm"><a href="#l-expert">Archive-seeded expert iteration</a></div><div role="cell" class="c down" tabindex="0" data-tip="In 112 diffs, 18 local searches and 7 annealers were rewritten as greedy; none gained a timer-guarded loop."><b aria-hidden="true">↓</b>rewrites search as greedy</div><div role="cell" class="c flat" tabindex="0" data-tip="Static check: 0 of 127 from archived parents, against 0 of 128 from scratch."><b aria-hidden="true">–</b>0 of 127 working searches</div><div role="cell" class="c na" tabindex="0" data-tip="The kill rule fired at step 2; no eval."><b aria-hidden="true">·</b>stopped at step 2</div></div>
+</div></div>
+<div class="sc-key"><span><i class="up"></i>moved the intended way</span><span><i class="down"></i>moved the other way</span><span><i class="mix"></i>mixed</span><span><i class="flat"></i>no clear change</span><span><i class="na"></i>not measured</span></div>
+    <figcaption><b>Habits moved; algorithms didn't.</b> For each lever: the habit it moved most, what happened to the algorithms it wrote, and its score, each read on the instrument named in its write-up. Hover a cell for numbers and intervals. Every lever moved some habit, three of them away from the goal. None clearly moved the middle column.</figcaption>
+  </figure>
+</div>
+<div class="wrap">
   <p>Each lever in detail, in the same order: the setup, what I wrote down before the run, what happened, and my best reading of why.</p>
   <h3 id="l-rank">Rank reward per test case</h3>
   <p class="lv-meta">Fix the slope · after RiVER · from step 40, single-call · 16 samples × 8 problems per step · steps 40–60</p>
@@ -366,7 +584,7 @@
   <dl class="lever">
     <dt>Setup</dt><dd>In training only, each trial gets 10 judged submissions with a visible counter. Feedback is a verdict and a 10-point band, such as "score in [70, 80)", never the exact score or per-test results. Identical resubmissions are free. The reward still uses the exact hidden score, and the eval keeps the benchmark's normal unlimited, exact feedback.</dd>
     <dt>Written first</dt><dd>Part 2 (§7): the model starting to check its own work. That meant more local runs before judged submissions, brute-force checkers and stress tests appearing, those behaviours predicting higher scores, and the gain showing up in the official eval. There was no outcome kill rule; I stopped the run after step 31.</dd>
-    <dt>What happened</dt><dd>The first criterion was met (Figure 3): local runs per submission rose from about 2 to 3, and trials with a self-written helper script from 22–36% to 39–43%. The rest wasn't. The search-style share stayed at 3–19% with no trend, the step-10 eval was −1.01 [−2.26, +0.14], and a blind read found the same algorithms. The habit didn't carry into the uncapped eval (35.9 vs 36.9 judged submissions per trial).</dd>
+    <dt>What happened</dt><dd>The first criterion was met (Figure 6): local runs per submission rose from about 2 to 3, and trials with a self-written helper script from 22–36% to 39–43%. The rest wasn't. The search-style share stayed at 3–19% with no trend, the step-10 eval was −1.01 [−2.26, +0.14], and a blind read found the same algorithms. The habit didn't carry into the uncapped eval (35.9 vs 36.9 judged submissions per trial).</dd>
     <dt>Why</dt><dd>Checking only pays when there's something worth checking. When a search timed out, the model deleted the search; it never added a time guard. One caveat: the sampler kept the first 16 of 24 groups to finish and dropped 224 of 696 as slow. The dropped trials scored about the same (0.36 vs 0.40) with the same behaviour markers, so this tilts training toward easy problems rather than demonstrably against search, but the run isn't a clean test of scarcity.</dd>
   </dl>
 
@@ -384,7 +602,7 @@
   <dl class="lever">
     <dt>Setup</dt><dd>A 72-line header with a timer set to 85% of the time limit, a best-so-far holder, a random generator, fast I/O, and generic search drivers: propose, score the change, apply or undo, with annealing-style acceptance. It names no algorithm, and the eval never sees it. Over six phases it was offered as a workspace file, then as an include, then with a strong prompt ("start simple and valid, then improve with a time-bounded search"), then with a neutral prompt, then with the strong prompt held, then turned off.</dd>
     <dt>Written first</dt><dd>Revert if offered attempts trail controls on clearing the bar by more than 5 points for 2 steps.</dd>
-    <dt>What happened</dt><dd>As a file it never reached final code: the model rewrote the whole file dozens of times per trial and dropped the 72 lines each time. As an include it appeared in 20–33% of judged code, but the search driver was never called in 413 submissions. With the strong prompt the kit appeared in 72–82% of code, with time guards in 18–24% and working search in 3–5% (Figure 4). Back on a neutral prompt the guards fell to 5–11%. Holding the strong prompt gave −9, −4, −9 and −13 points against controls, the rule fired, and the kit was off from step 47.</dd>
+    <dt>What happened</dt><dd>As a file it never reached final code: the model rewrote the whole file dozens of times per trial and dropped the 72 lines each time. As an include it appeared in 20–33% of judged code, but the search driver was never called in 413 submissions. With the strong prompt the kit appeared in 72–82% of code, with time guards in 18–24% and working search in 3–5% (Figure 7). Back on a neutral prompt the guards fell to 5–11%. Holding the strong prompt gave −9, −4, −9 and −13 points against controls, the rule fired, and the kit was off from step 47.</dd>
     <dt>Why</dt><dd>The reward pays a bar-clearing greedy program as much as a bar-clearing search, so RL had no reason to keep the kit. The best kit program a blind reader found was a naive annealing loop that rescored the whole solution on every move. Attempts never offered the kit never wrote a time guard. "Working search" here is an automatic label (search class, time guard, above the bar, no timeout or crash) and carries the same κ 0.26 caveat. My own process was weak in places too: the fade ran on a timer rather than on evidence, and some decisions rested on one- or two-step windows with about ±10 points of noise.</dd>
   </dl>
 
@@ -416,7 +634,7 @@
 </div>
 <div class="wide">
   <figure>
-    <div class="fig-title">Figure 3 · Scarce oracle: verification rose, algorithms didn't</div>
+    <div class="fig-title">Figure 6 · Scarce oracle: verification rose, algorithms didn't</div>
     <div class="scroll">
       <svg viewBox="0 0 900 260" role="img" aria-label="With an unlimited judge, 15–18% of submissions were run locally first. Capping submissions at 10 raised that to 56% before any training; training took it to 65–72%. Search-style code stayed at 3–19% with no trend.">
       <g font-family="var(--mono)" font-size="11" fill="var(--muted)">
@@ -458,7 +676,7 @@
 </div>
 <div class="wide">
   <figure>
-    <div class="fig-title">Figure 4 · Search kit: used when told, dropped when not</div>
+    <div class="fig-title">Figure 7 · Search kit: used when told, dropped when not</div>
     <div class="scroll">
       <svg viewBox="0 0 900 260" role="img" aria-label="Search kit use by phase: 0% as a file, 20–33% as an include, 72–82% with a strong prompt; under the strong prompt, time guards appeared in 18–24% and working search in 3–5% of offered code.">
       <g font-family="var(--mono)" font-size="11" fill="var(--muted)">
@@ -510,7 +728,7 @@
 <div class="sec-head" id="sibling"><p class="eyebrow">06 · The 27B sibling</p><h2>The skill is already in the bigger sibling</h2></div>
 <div class="wide">
   <figure>
-    <div class="fig-title">Figure 5 · 9B vs its 27B sibling, both untrained</div>
+    <div class="fig-title">Figure 8 · 9B vs its 27B sibling, both untrained</div>
     <div style="margin:-.3rem 0 .6rem"><span class="key"><i style="background:var(--s1)"></i>9B base, untrained</span><span class="key"><i style="background:var(--s2)"></i>27B sibling, untrained</span></div>
     <div class="scroll">
       <svg viewBox="0 0 900 222" role="img" aria-label="27B vs 9B, both untrained: attempts with a working search on held-out sets 75.5% vs 3.7% and 89.8% vs 3.1%; 40-problem agent-eval tasks with algorithmic credit 29 of 40 vs 1 of 39.">
@@ -579,7 +797,7 @@
   <div class="wrap">
     <p class="eyebrow" style="color:var(--accent)">Notes</p>
     <h2>How the numbers were made</h2>
-    <p>The task is the statistical unit. Comparisons are paired over the same problems with task-level bootstrap intervals; * marks an interval that excludes zero. "Working search" is defined where it's used (a static check in §3, a blind-read label in Figure 5); "search-style" is a code-keyword proxy. The algorithm score credits points more than 1 above the best trivial program per problem. Single-call means one model call per attempt; agent mode is a multi-turn loop with tools and judged submissions. Held-out sets A and B are 12 and 8 FrontierSmith problems; the 9B and 27B rows in Figure 5 are both untrained, while the step-40 checkpoint and earlier agent runs did train on them. Blind reads were done by LLM readers given the program and the problem. Infrastructure failures are masked, never scored as zero.</p>
+    <p>The task is the statistical unit. Comparisons are paired over the same problems with task-level bootstrap intervals; * marks an interval that excludes zero. "Working search" is defined where it's used (a static check in §3, a blind-read label in Figure 8); "search-style" is a code-keyword proxy. The algorithm score credits points more than 1 above the best trivial program per problem. Single-call means one model call per attempt; agent mode is a multi-turn loop with tools and judged submissions. Held-out sets A and B are 12 and 8 FrontierSmith problems; the 9B and 27B rows in Figure 8 are both untrained, while the step-40 checkpoint and earlier agent runs did train on them. Blind reads were done by LLM readers given the program and the problem. Infrastructure failures are masked, never scored as zero.</p>
     <p>References: Li et al., <a href="https://arxiv.org/abs/2203.07814">Competition-Level Code Generation with AlphaCode</a> (Science, 2022); El-Kishky et al., <a href="https://arxiv.org/abs/2502.06807">Competitive Programming with Large Reasoning Models</a> (2025); DeepSeek-AI, <a href="https://arxiv.org/abs/2501.12948">DeepSeek-R1</a> (2025); Yue et al., <a href="https://arxiv.org/abs/2504.13837">Does Reinforcement Learning Really Incentivize Reasoning Capacity in LLMs Beyond the Base Model?</a> (2025); Liu et al., <a href="https://arxiv.org/abs/2505.24864">ProRL</a> (2025); Gandhi et al., <a href="https://arxiv.org/abs/2503.01307">Cognitive Behaviors that Enable Self-Improving Reasoners</a> (2025); Yu et al., <a href="https://arxiv.org/abs/2503.14476">DAPO</a> (2025); Ng, Harada and Russell, <a href="https://mlanthology.org/icml/1999/ng1999icml-policy/">Policy Invariance Under Reward Transformations</a> (ICML, 1999); Zelikman et al., <a href="https://arxiv.org/abs/2203.14465">STaR</a> (2022); Xi et al., <a href="https://arxiv.org/abs/2402.05808">Reverse Curriculum RL (R3)</a> (2024); Li et al., <a href="https://arxiv.org/abs/2507.13266">QuestA</a> (2025); Anthony, Tian and Barber, <a href="https://arxiv.org/abs/1705.08439">Thinking Fast and Slow with Deep Learning and Tree Search</a> (2017); Singh et al., <a href="https://arxiv.org/abs/2312.06585">Beyond Human Data (ReST-EM)</a> (2023); Romera-Paredes et al., <a href="https://www.nature.com/articles/s41586-023-06924-6">FunSearch</a> (Nature, 2024); Novikov et al., <a href="https://arxiv.org/abs/2506.13131">AlphaEvolve</a> (2025); Agarwal et al., <a href="https://arxiv.org/abs/2306.13649">On-Policy Distillation of Language Models (GKD)</a> (2023).</p>
     <p>The summary video was animated with <a href="https://www.manim.community/">Manim</a>, with an AI-generated narration voice from <a href="https://platform.openai.com/docs/guides/text-to-speech">OpenAI text-to-speech</a>.</p>
     <div class="foot-links">
