@@ -13,3 +13,10 @@ No team has been trained yet.
 **→ Read the essay: [macoredroid.github.io/collective-intelligence](https://macoredroid.github.io/collective-intelligence/)**
 
 The page is a single static file in [`docs/index.html`](docs/index.html), served by GitHub Pages from `/docs`. A 97-second narrated summary is embedded on the page ([MP4](docs/media/the-harness-is-part-of-the-model.mp4)); its Manim source and narration script are in [`video/`](video/). Narration voice: ElevenLabs.
+
+## The series
+
+- [Part 1 · The Harness Is Part of the Model](https://macoredroid.github.io/collective-intelligence/)
+- [Part 2 · The Wall, the Compile Tax, and the Oracle](https://macoredroid.github.io/collective-intelligence/part-2/)
+- [Part 3 · Climbing From Zero Without a Teacher](https://macoredroid.github.io/collective-intelligence/part-3/)
+- [Part 4 · Borrowing a Foothold: Distilling Simulated Annealing into a 9B Agent](https://macoredroid.github.io/collective-intelligence/part-4/)
