@@ -8,7 +8,7 @@
 4. **Agentic RL used about 8× the GPU-hours per step; only ~1.4× of that is extra work.** The rest is idle or underfilled GPUs. Problem → fix → effect tables cover serving, rollout/training, and evaluation.
 5. **The dangerous failures are silent.**
 
-No team has been trained yet.
+At the Part 1 snapshot, no team had been trained. [Part 6](https://macoredroid.github.io/collective-intelligence/part-6/) covers the first team-training attempt.
 
 **→ Read the essay: [macoredroid.github.io/collective-intelligence](https://macoredroid.github.io/collective-intelligence/)**
 
@@ -20,3 +20,5 @@ The page is a single static file in [`docs/index.html`](docs/index.html), served
 - [Part 2 · The Wall, the Compile Tax, and the Oracle](https://macoredroid.github.io/collective-intelligence/part-2/)
 - [Part 3 · Climbing From Zero Without a Teacher](https://macoredroid.github.io/collective-intelligence/part-3/)
 - [Part 4 · Borrowing a Foothold: Distilling Simulated Annealing into a 9B Agent](https://macoredroid.github.io/collective-intelligence/part-4/)
+- [Part 5 · When the Reward Misses the Algorithm](https://macoredroid.github.io/collective-intelligence/part-5/)
+- [Part 6 · Fork, Talk, Submit](https://macoredroid.github.io/collective-intelligence/part-6/)

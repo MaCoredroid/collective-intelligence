@@ -1,0 +1,351 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>When the Reward Misses the Algorithm: Adding an LLM Judge to Verifiable RL</title><meta name="description" content="An experiment in adding code-grounded LLM judgment to executable rewards for a small coding policy: advantage reshaping, judge influence, fresh-instance validation and algorithmic headroom."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-5/"><meta property="og:type" content="article"><meta property="og:title" content="When the Reward Misses the Algorithm: Adding an LLM Judge to Verifiable RL"><meta property="og:description" content="An experiment in adding code-grounded LLM judgment to executable rewards for a small coding policy: advantage reshaping, judge influence, fresh-instance validation and algorithmic headroom."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-5/"><meta property="og:site_name" content="Collective Intelligence, Part 5"><meta name="twitter:card" content="summary"><style>
+  :root{
+    --bg:#f7f8f9; --surface:#ffffff; --surface-2:#f0f2f4;
+    --ink:#1a1c1f; --ink-soft:#474d54; --muted:#7c848b; --rule:#dee2e6;
+    --accent:#3a5f8a; --accent-soft:#e4ebf3;
+    --gold:#a9781f; --gold-soft:#f2e9d5;
+    --pos:#3f7d5b; --neg:#b3543f; --grey:#b7bec4;
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+    --serif:Georgia,"Iowan Old Style",Charter,"Palatino Linotype",Palatino,"Book Antiqua",serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+    --measure:41rem;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#131518; --surface:#1b1e22; --surface-2:#22262b;
+      --ink:#e7e9ec; --ink-soft:#b6bbc1; --muted:#838a91; --rule:#2b3036;
+      --accent:#7ea6dc; --accent-soft:#1e2a38;
+      --gold:#d8b365; --gold-soft:#2c2617;
+      --pos:#6bbf8f; --neg:#e08a72; --grey:#4a5158;
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#131518; --surface:#1b1e22; --surface-2:#22262b;
+    --ink:#e7e9ec; --ink-soft:#b6bbc1; --muted:#838a91; --rule:#2b3036;
+    --accent:#7ea6dc; --accent-soft:#1e2a38;
+    --gold:#d8b365; --gold-soft:#2c2617;
+    --pos:#6bbf8f; --neg:#e08a72; --grey:#4a5158;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--serif); font-size:19px; line-height:1.66;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:var(--measure); margin:0 auto; padding:0 1.4rem}
+  .wide{max-width:60rem; margin:0 auto; padding:0 1.4rem}
+  p{margin:1.1em 0; color:var(--ink-soft)}
+  li{color:var(--ink-soft); margin:.45em 0}
+  strong{color:var(--ink); font-weight:600}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+  a:hover{border-bottom-color:var(--accent)}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+  .eyebrow{font-family:var(--mono); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin:0 0 .9rem}
+  h1{font-size:clamp(2.2rem,6vw,3.35rem); line-height:1.06; letter-spacing:-.015em; margin:.2em 0 .3em; color:var(--ink); text-wrap:balance; font-weight:600}
+  h2{font-size:clamp(1.5rem,3.6vw,2rem); line-height:1.12; letter-spacing:-.01em; margin:0 0 .1em; color:var(--ink); text-wrap:balance; font-weight:600}
+  h3{font-size:1.12rem; margin:2em 0 .2em; color:var(--ink); font-weight:600}
+  .dek{font-size:1.28rem; line-height:1.5; color:var(--ink-soft); font-style:italic; text-wrap:balance}
+  .num{font-family:var(--mono); font-variant-numeric:tabular-nums; font-style:normal; letter-spacing:-.01em; font-size:.92em}
+  code{font-family:var(--mono); font-size:.85em; background:var(--surface-2); padding:.1em .35em; border-radius:4px}
+  hr.sec{border:0; border-top:1px solid var(--rule); max-width:60rem; margin:4.2rem auto}
+  header.masthead{padding:4.5rem 0 1rem}
+  .meta-row{display:flex; flex-wrap:wrap; gap:.5rem 1.4rem; font-family:var(--mono); font-size:.76rem; color:var(--muted); margin-top:1.8rem; padding-top:1.4rem; border-top:1px solid var(--rule)}
+  .meta-row span{white-space:normal}
+  .toggle{position:fixed; top:1rem; right:1rem; z-index:10; font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; background:var(--surface); color:var(--ink-soft); border:1px solid var(--rule); border-radius:20px; padding:.4rem .8rem; cursor:pointer}
+  .toggle:hover{color:var(--ink); border-color:var(--muted)}
+  .status{background:var(--surface); border:1px solid var(--rule);  border-radius:8px; padding:1.2rem 1.4rem; margin:2.4rem auto; font-size:.98rem; line-height:1.6}
+  .status .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:.5rem}
+  .status p{margin:.4em 0; color:var(--ink-soft); font-size:1rem}
+  .film{margin:2rem 0 0}
+  .film video{display:block; width:100%; height:auto; border-radius:10px; border:1px solid var(--rule); background:#F4F1EA}
+  .film .cap{font-family:var(--mono); font-size:.74rem; color:var(--muted); margin-top:.55rem}
+  .findings{background:var(--surface); border:1px solid var(--rule);  border-radius:8px; padding:1.2rem 1.4rem .6rem; margin:2.4rem auto 0; font-size:1rem; line-height:1.6}
+  .findings .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:.4rem}
+  .findings ol{margin:.2rem 0; padding-left:1.3rem}
+  .findings li{margin:.7em 0; font-size:1rem}
+  .findings a{border-bottom:0}
+  .findings a strong{color:var(--ink)}
+  .findings a:hover strong{color:var(--accent)}
+  .sec-head{margin:0 auto 1.6rem; max-width:var(--measure); padding:0 1.4rem}
+  .sec-head .eyebrow{color:var(--accent)}
+  figure{margin:2.6rem 0; background:var(--surface); border:1px solid var(--rule); border-radius:12px; padding:1.6rem 1.5rem 1.2rem; position:relative}
+  figure svg{display:block; width:100%; height:auto; overflow:visible}
+  figcaption{font-family:var(--mono); font-size:.78rem; line-height:1.55; color:var(--muted); margin-top:1.1rem; padding-top:.9rem; border-top:1px solid var(--rule)}
+  figcaption b{color:var(--ink-soft); font-weight:600}
+  .fig-title{font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem}
+  .scroll{overflow-x:auto}
+  .take{ padding:.2rem 0 .2rem 1.2rem; margin:2rem 0; font-family:var(--serif); font-size:1.16rem; line-height:1.5; color:var(--ink); font-style:italic}
+  details{margin:1.6rem 0; border:1px solid var(--rule); border-radius:8px; background:var(--surface); overflow:hidden}
+  details>summary{cursor:pointer; padding:.85rem 1.1rem; font-family:var(--mono); font-size:.78rem; letter-spacing:.06em; color:var(--accent); list-style:none; display:flex; align-items:center; gap:.6rem}
+  details>summary::-webkit-details-marker{display:none}
+  details>summary::before{content:"+"; font-size:1rem; color:var(--muted)}
+  details[open]>summary::before{content:"−"}
+  details>summary:hover{background:var(--surface-2)}
+  details .body{padding:.2rem 1.2rem 1.1rem; font-size:.94rem; line-height:1.6; color:var(--ink-soft); border-top:1px solid var(--rule)}
+  details .body p,details .body li{font-size:.94rem}
+  .pill{font-family:var(--mono); font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; padding:.18em .55em; border-radius:20px; white-space:nowrap; font-weight:600}
+  .pill.pos{background:color-mix(in srgb,var(--pos) 16%,transparent); color:var(--pos)}
+  .pill.neg{background:color-mix(in srgb,var(--neg) 16%,transparent); color:var(--neg)}
+  .pill.null{background:var(--surface-2); color:var(--muted)}
+  .ledger{width:100%; border-collapse:collapse; font-size:.9rem; margin:1.4rem 0}
+  .ledger th,.ledger td{text-align:left; padding:.6rem .7rem; border-bottom:1px solid var(--rule); vertical-align:top; color:var(--ink-soft)}
+  .ledger th{font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:400}
+  .ledger td:first-child{font-family:var(--serif); color:var(--ink)}
+  .ledger td{overflow-wrap:anywhere}
+  .ledger code{overflow-wrap:anywhere}
+  .ledger td.r,.ledger th.r{white-space:nowrap; overflow-wrap:normal}
+  .ledger td.r,.ledger th.r{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums}
+  .eq{font-family:var(--mono); font-size:.9rem; background:var(--surface); border:1px solid var(--rule); border-radius:8px; padding:1rem 1.2rem; color:var(--ink); overflow-x:auto; white-space:pre; margin:1.4rem 0; line-height:1.7}
+  .key{display:inline-flex; align-items:center; gap:.4rem; font-family:var(--mono); font-size:.74rem; color:var(--ink-soft); margin-right:1.2rem}
+  .key i{display:inline-block; width:10px; height:10px; border-radius:50%}
+  .tip{position:absolute; pointer-events:none; background:var(--ink); color:var(--bg); font-family:var(--mono); font-size:.74rem; line-height:1.45; padding:.45rem .6rem; border-radius:6px; max-width:18rem; opacity:0; transition:opacity .12s; z-index:5}
+  .tip.on{opacity:1}
+  [data-tip]{cursor:default}
+  [data-tip]:focus{outline:none}
+  /* desktop: wider column and figures, larger type */
+  @media (min-width:1100px){
+    :root{--measure:44rem}
+    body{font-size:20px}
+    .wide{max-width:min(78rem, 94vw)}
+    hr.sec{max-width:min(78rem, 94vw)}
+  }
+  /* very wide screens: section menu in the left margin */
+  .toc{display:none}
+  @media (min-width:1760px){
+    .toc{display:block; position:fixed; top:6.5rem; left:1.5rem; width:13rem; font-family:var(--mono); font-size:.72rem; line-height:1.5; z-index:5}
+    .toc .lbl{letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:.8rem}
+    .toc a{display:block; border:0; border-left:2px solid var(--rule); padding:.32rem 0 .32rem .8rem; color:var(--muted)}
+    .toc a:hover{color:var(--ink); border-left-color:var(--muted)}
+    .toc a.on{color:var(--accent); border-left-color:var(--accent)}
+  }
+  footer{margin-top:5rem; padding:3rem 0 4rem; border-top:1px solid var(--rule); background:var(--surface-2)}
+  footer .wrap{color:var(--muted)}
+  footer h2{font-size:1.4rem}
+  .foot-links{display:flex; flex-wrap:wrap; gap:.6rem 1.6rem; font-family:var(--mono); font-size:.8rem; margin-top:1.4rem}
+  @media (max-width:640px){
+    body{font-size:17px}
+    .ledger{font-size:.82rem}
+    .ledger th,.ledger td{padding:.5rem .4rem}
+    figure{padding:1.1rem .9rem .9rem}
+  }
+
+:root{--muted:#606a73}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--muted:#a0a8b0}}
+:root[data-theme="dark"]{--muted:#a0a8b0}
+.status,.findings{border-left-width:1px}
+.sec-head .eyebrow{letter-spacing:.04em;text-transform:none}
+.fig-title{letter-spacing:.035em;text-transform:none;font-size:.82rem}
+.plot-scroll{overflow-x:auto;padding:2px}
+.plot-scroll svg{min-width:820px}
+.plot-label{font-family:var(--mono);fill:var(--ink-soft);font-size:14px}
+.plot-small{font-family:var(--mono);fill:var(--muted);font-size:12px}
+.plot-value{font-family:var(--mono);fill:var(--ink);font-size:15px;font-weight:600}
+.plot-rule{stroke:var(--rule);stroke-width:1}
+[data-tip]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.reading-note{font-size:.88rem;color:var(--muted);margin:.6rem 0}
+.method-table{min-width:600px}
+figure .data-note{font-size:.82rem;line-height:1.5;margin-top:.9rem;color:var(--ink-soft)}
+.route-tabs{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.route-tabs button{font-family:var(--mono);font-size:.78rem;padding:.6rem .8rem;border:1px solid var(--rule);border-radius:5px;background:var(--bg);color:var(--ink-soft);cursor:pointer}
+.route-tabs button[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.route-panel{padding:.2rem .2rem .5rem}
+.route-panel h3{margin:.4rem 0}
+.route-panel p{font-size:.95rem;margin:.65rem 0}
+.route-flow{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-family:var(--mono);font-size:.8rem;margin:1.2rem 0}
+.route-flow span{padding:.6rem .7rem;border:1px solid var(--rule);border-radius:5px;background:var(--bg)}
+.route-flow .teacher{border-color:var(--gold);background:var(--gold-soft)}
+.route-flow .student{border-color:var(--accent);background:var(--accent-soft)}
+.route-flow i{font-style:normal;color:var(--muted)}
+.route-panel[hidden]{display:none}
+.curriculum-step{padding:1rem 0 1.2rem;border-top:1px solid var(--rule)}
+.curriculum-step h3{margin:.3rem 0 .8rem}
+.curriculum-step p{font-size:1rem;max-width:68ch}
+.curriculum-gate{font-size:.9rem!important;color:var(--ink-soft)}
+.curriculum-end{border-top:1px solid var(--rule);padding:1rem 0 .4rem;font-size:1rem;color:var(--ink);max-width:70ch}
+.ledger caption{text-align:left;font-size:.88rem;color:var(--ink-soft);margin:.6rem 0}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip{position:absolute;left:1rem;top:-5rem;z-index:20;background:var(--surface);padding:.6rem}
+.skip:focus{top:1rem}
+.status .lbl,.findings .lbl{letter-spacing:.05em}
+.take{border:1px solid var(--rule);border-radius:6px;padding:1rem 1.2rem}
+@media(max-width:640px){header.masthead{padding-top:4rem}.dek{font-size:1.12rem}.meta-row{font-size:.72rem}.route-flow{gap:.35rem}.route-flow span{padding:.45rem}.status,.findings{padding:1rem}.plot-scroll svg{min-width:820px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+@media print{.toggle,.toc,.route-tabs{display:none}.route-panel[hidden]{display:block}body{background:white;color:black}figure{break-inside:avoid}}
+
+h1,h2,h3{text-wrap:balance}p,li{text-wrap:pretty}
+.subtitle{font-size:1.06rem;line-height:1.5;margin:1.1rem 0 1.5rem;color:var(--accent);font-style:normal}
+.signal-lane{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;padding:1.15rem 0;border-top:1px solid var(--rule)}
+.signal-lane:first-child{border-top:0}.signal-lane strong{font-family:var(--mono);font-size:.83rem;flex:0 0 8rem}
+.signal-lane span{font-size:.95rem;padding:.6rem .7rem;background:var(--surface-2);border:1px solid var(--rule);border-radius:5px}
+.signal-lane i{font-style:normal;color:var(--muted)}.signal-end{margin:.7rem 0;font-size:.95rem!important}
+.demo-controls{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1.3rem;margin:1rem 0;font-family:var(--mono);font-size:.8rem}
+.demo-controls label{display:flex;align-items:center;gap:.6rem;color:var(--ink-soft)}
+.demo-controls input[type=range]{width:11rem;accent-color:var(--accent)}input[type=checkbox]{accent-color:var(--accent)}
+.demo-controls output{min-width:3ch;color:var(--ink)}
+.demo-table{min-width:640px}.demo-table td,.demo-table th{padding:.5rem .7rem}.demo-table td:first-child{white-space:nowrap}
+.demo-table .barcell{min-width:12rem}.adv-track{display:flex;align-items:center;gap:.4rem}.adv-mark{display:inline-block;height:9px;border-radius:2px;width:calc(var(--v)*120px);background:var(--accent)}
+.adv-mark.negative{background:var(--gold)}.adv-num{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft)}
+.demo-mass{font-family:var(--mono);font-size:.83rem;margin-top:1rem;line-height:1.7;color:var(--ink)}
+.example{padding:1rem 0;border-top:1px solid var(--rule)}.example h3{margin:.3rem 0 .65rem}.example p{font-size:.93rem}
+pre{font-family:var(--mono);font-size:.8rem;line-height:1.65;background:var(--surface-2);border:1px solid var(--rule);padding:.9rem 1rem;border-radius:5px;overflow:auto;color:var(--ink);margin:.8rem 0}
+pre code{font-size:inherit;background:transparent;padding:0;white-space:pre}.class-label{font-family:var(--mono);font-size:.8rem;color:var(--accent)}
+.audit-row{display:flex;flex-wrap:wrap;gap:.6rem 1rem;padding:1.15rem 0;border-top:1px solid var(--rule)}
+.audit-row strong{flex:0 0 13rem;font-size:1rem}.audit-row p{flex:1 1 20rem;margin:0;font-size:.96rem}
+.audit-row .fraction{font-family:var(--mono);font-size:1.1rem;color:var(--accent)}
+.coverage-key{margin:.6rem 0 1rem;font-size:.9rem;color:var(--ink-soft)}
+.plot-scroll{scrollbar-width:thin}.scroll{scrollbar-width:thin}
+@media(max-width:640px){.subtitle{font-size:.95rem}.signal-lane{gap:.45rem}.signal-lane strong{flex-basis:100%}.demo-controls{gap:.8rem}.demo-controls label{flex-wrap:wrap}.demo-table .barcell{min-width:9rem}.audit-row strong{flex-basis:100%}figure{padding:1.2rem 1rem 1rem}}
+</style></head><body><a class="skip" href="#objective">Skip to article</a><button class="toggle" id="tgl" aria-label="Toggle color theme">◐ Theme</button><nav class="toc" aria-label="Sections"><div class="lbl">Contents</div><a href="#objective">01 · The objective gap</a><a href="#judge">02 · A second signal</a><a href="#credit">03 · The learning rule</a><a href="#influence">04 · Check the signal</a><a href="#outcomes">05 · Keep the readouts separate</a><a href="#meaning">06 · Read the program</a><a href="#validation">07 · Judge the judge</a><a href="#headroom">08 · Check the target</a><a href="#next">09 · The next conclusion</a></nav><main>
+<header class="masthead"><div class="wrap">
+<p class="eyebrow">Collective intelligence &nbsp;·&nbsp; Part 5 &nbsp;·&nbsp; <a href="../">Part 1</a> &nbsp;·&nbsp; <a href="../part-2/">Part 2</a> &nbsp;·&nbsp; <a href="../part-3/">Part 3</a> &nbsp;·&nbsp; <a href="../part-4/">Part 4</a> &nbsp;·&nbsp; <a href="../part-6/">Part 6 →</a></p>
+<h1>When the Reward Misses the Algorithm</h1>
+<p class="subtitle">Adding an LLM judge to verifiable reinforcement learning</p>
+<p class="dek">I want a small coding model to acquire useful optimisation algorithms, including simulated annealing, and improve its FrontierCS performance. A precisely computed reward may still leave that capability weakly supervised: strong greedy code can beat fragile search, and a finite score does not identify how a program works. I tried adding an LLM judge to the executable reward for one-shot training, using code-grounded judgments to shape credit. The early checklist judge often agreed with itself while barely changing the update. Richer rankings supplied a stronger signal, whose value needs a separate test. Benchmark scores rose before that stronger intervention; that rise cannot establish its benefit. A fresh-instance audit and a search-headroom probe make the remaining question concrete: does semantic judgment encourage better algorithms, or another appearance of progress?</p>
+<div class="meta-row"><span>Policy · Qwen3.5-9B</span><span>Train → eval · FrontierSmith → FrontierCS</span><span>Mode · One-shot code generation</span><span>Signals · Executable outcome + score-blind code judgment</span><span>Source snapshot · October 23, 2026 · 12:50 Pacific</span></div>
+<div class="findings"><span class="lbl">Findings</span><ol>
+<li><a href="#objective"><strong>Verifiability does not complete the objective.</strong></a> A correct score calculation can still provide weak guidance about the algorithmic behaviour I want to teach.</li>
+<li><a href="#influence"><strong>Coverage and influence are different.</strong></a> One update ranked 15 of 16 kept groups, yet the reshaping displaced only 0.05% of absolute advantage mass.</li>
+<li><a href="#meaning"><strong>A clock read was a misleading search signal.</strong></a> The inspected clocks seeded random generators. Fixed-iteration local search existed and must be counted separately.</li>
+<li><a href="#validation"><strong>The judge needs an independent outcome test.</strong></a> Its first fresh-instance disagreement audit reached just three pairs from one task.</li>
+<li><a href="#headroom"><strong>The target skill had useful headroom.</strong></a> A separate coding-agent probe improved over the policy’s best available programs on 16 of 20 selected training tasks. This was not a judge-training result.</li>
+</ol></div>
+<div class="status"><span class="lbl">Experiment snapshot · preliminary evidence</span><p>This article combines saved experiment readouts with inspection of the training objective. Protocols changed during the run. I distinguish the judge’s intended role, its measured update influence and its unproven causal benefit. The fresh-instance audit is incomplete; later matched checkpoint evaluations were still pending at this snapshot. The figures include explicitly labelled mechanism illustrations.</p></div>
+</div></header>
+<hr class="sec"><section id="objective"><div class="sec-head"><p class="eyebrow">01 · The objective gap</p><h2>What did the higher score teach?</h2></div><div class="wrap">
+<p>A higher test score leaves a second question open: what capability did the policy actually acquire? I wanted an agent that could write a working search, then improve it through feedback. A score on a set of optimisation instances tells me how its program performed there. It does not, by itself, tell me whether the program used simulated annealing, a sharper greedy construction, a fixed-work local search, or an assumption that will fail on a different input.</p>
+<p>That distinction mattered in <a href="../part-3/">Part 3</a>. Search was rare and often less reliable than the student’s greedy code. An outcome objective could favour the competence the model already had. In <a href="../part-4/">Part 4</a>, I tried to borrow a foothold from a 27B teacher through long agent traces. The student learned a way of spending time more readily than a reliable search algorithm. I proposed separating construction from feedback-driven improvement.</p>
+<p>The next experiments returned to the first stage: produce one complete program in a single response, with thinking before the code. That removed the tool-using episode, but it did not automatically make the teacher easy to imitate. The first one-shot SFT set still had a median response near 89K tokens. Its clean development read regressed sharply, and an OPD continuation drifted further toward the length cap. One response can still contain a very long dependency.</p>
+<details><summary>The short-demonstration bridge from Part 4</summary><div class="body"><p>Reducing the teacher’s reasoning effort shortened its responses but also reduced its search. A generic teacher-only search hint at medium effort supplied shorter, more search-oriented demonstrations. The student did not receive that hint. A filtered set of 459 demonstrations covered 130 problems and produced a promising development read. Length, prompting and data selection changed together, so this is not a controlled demonstration that shorter reasoning alone fixed transfer.</p><p>That development read is not a held-out capability verdict. The later hybrid RL arm discussed here started from the earlier single-call RL checkpoint, rather than forming a clean SFT → OPD → hybrid-RL chain from that development result. I keep those lineages separate.</p></div></details>
+<h3>Analysis · A correct measurement can leave a weak teaching signal</h3>
+<p>The verifier’s calculation can be entirely correct while its task distribution gives little advantage to the behaviour I want. If a sound search wins only on larger or different instances, the current cases may not reveal that benefit. If the student’s attempted search is simply broken, the low score is appropriate. Those possibilities demand different responses: improve coverage in the first case, acquire the missing construction in the second.</p>
+<p>I also need to separate this from reward hacking. A valid greedy solver that performs well is not cheating. Copying a baseline may be a rational response to a weak policy and the available reward. A claim of exploitation needs a specific loophole and evidence that the intended objective failed. The more modest problem is already enough to motivate another signal: the measured outcome may not distinguish the kind of progress I am trying to teach.</p>
+</div></section><hr class="sec"><section id="judge"><div class="sec-head"><p class="eyebrow">02 · A second signal</p><h2>Ask about the implemented program</h2></div><div class="wrap">
+<p>I added an LLM judge to inspect the task and candidate programs. The intended contribution was a semantic judgment: does the implementation contain a substantive improvement, does its claimed search affect the returned solution, and are there obvious brittle assumptions or broken mechanisms that the sampled score leaves unclear?</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 1 · Two signals about the same programs</div>
+<div class="signal-lane"><strong>Verifier</strong><span>Compile and execute</span><i>→</i><span>Scores on the tested instances</span><i>→</i><span>Outcome-based advantages</span></div>
+<div class="signal-lane"><strong>LLM judge</strong><span>Task + anonymous code</span><i>→</i><span>Code-grounded relative judgment</span><i>→</i><span>Guarded credit reshaping</span></div>
+<p class="signal-end">The resulting credit enters the policy update. Executable validity stays with the verifier. The judge does not see the candidates’ verifier scores.</p>
+<figcaption><b>Conceptual view of the later hybrid recipe.</b> The judge supplies another inductive bias about the implemented programs. Its consistency, actual influence on training and predictive value are three separate measurements. Teacher and other auxiliary channels are omitted from this diagram.</figcaption></figure></div><div class="wrap">
+<p>The judge saw anonymous programs without their verifier scores. That matters because copying the observed score order would merely repackage the existing reward. The role was to add information from the code. Compilation, actual execution and trustworthy validity facts remained with the host verifier. A judge’s claim that a program is hardcoded was not sufficient evidence to authenticate that accusation or alter an executable result.</p>
+<p>The earlier checklist asked about baseline copying, hardcoding to tests, whether an improvement loop existed and changed the output, and failures on independently executed shared tests. The later quality-ranking version retained those checks and asked for relative judgments among programs. Each group was shown in two orders, with agreement rules before rankings could affect training.</p>
+<p>The criteria had to remain method-neutral. A strong direct, constructive or greedy solution should beat a weak annealer. Merely mentioning “simulated annealing,” adding a dead loop or writing more complex code should not earn credit. The capability I want is a useful algorithm, not membership in a prestigious algorithm family.</p>
+<h3>Analysis · Semantic supervision is a hypothesis about future performance</h3>
+<p>Some of these properties can be tested directly: compare an incremental score against full recomputation, instrument a loop, check feasibility and termination, or execute on fresh valid instances. I am not claiming that unit tests can never capture them. The practical gap is what the current reward captures, at the current cost and coverage. The judge can suggest distinctions worth testing before I have a complete executable specification for every one.</p>
+<p>That makes the judge another proxy. It may confuse familiar code with sound code, favour confident explanations, or penalise an unconventional but correct method. Anonymous presentation and two-order agreement check consistency; they do not establish truth. The experiment needs to show that the distinctions the judge introduces predict useful outcomes the original score missed.</p>
+</div></section><hr class="sec"><section id="credit"><div class="sec-head"><p class="eyebrow">03 · The learning rule</p><h2>How judgment entered the update</h2></div><div class="wrap">
+<p>The recipe evolved. An early design combined verifier reward and judge preferences directly. The later version used the judge to reshape group-relative training advantages among eligible student programs. Those are different interventions. A fixed mixture coefficient from an early plan is not an accurate description of the later run.</p>
+<p>For the later reshaping component, take the outcome-based advantages after the host’s validity and masking rules. The judge supplies quality tiers. Within the eligible positive advantages, multiply by tier factors and renormalize to preserve their total. Do the analogous operation separately for negative advantages, using inverse factors so that a better-ranked negative candidate receives a smaller penalty.</p>
+<div class="eq" role="math" aria-label="Positive advantages are multiplied by judge factors and normalized within the positive set">For Aᵢ &gt; 0:
+A′ᵢ = Aᵢ fᵢ · (Σⱼ Aⱼ) / (Σⱼ Aⱼ fⱼ)
+                j ranges over eligible positive advantages</div>
+<p>In the pinned stronger contract, positive tier factors range from 1 to 0.1. Negative factors use the inverse ordering, with their own normalization. The point is to change the allocation of learning credit while preserving the positive and negative totals separately. This conservation applies after host masking and only to the reshaping component. Separate teacher, repair and non-baseline channels are not included in that statement.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 2 · What reshaping can change—and what it preserves</div>
+<p class="reading-note">Illustrative eight-program group · synthetic advantages and judge ordering, not experiment data.</p>
+<div class="demo-controls"><label for="judge-strength">Tier contrast <input id="judge-strength" type="range" min="0" max="100" step="1" value="100"><output id="strength-value" for="judge-strength">100%</output></label><label><input type="checkbox" id="flat-group"> Flat group: all base advantages are zero</label></div>
+<div class="scroll"><table class="ledger demo-table"><caption>Judge prefers C, E, B, F, D, G, A, H, in that order.</caption><thead><tr><th>Program</th><th class="r">Judge tier</th><th>Before</th><th>After reshaping</th></tr></thead><tbody id="adv-rows"></tbody></table></div>
+<p class="demo-mass" id="mass-summary" aria-live="polite"></p>
+<p class="reading-note" id="demo-reading"></p><noscript><p>This illustration needs JavaScript. The method preserves positive and negative advantage totals separately. A zero-advantage program stays zero; a flat group supplies no signal through this channel alone.</p></noscript>
+<figcaption><b>A mechanism illustration, not a proposed tuning knob for the live run.</b> At full contrast, tier factors range from 1 to 0.1, with inverse factors on negative advantages and separate normalization for each sign. The slider interpolates toward equal factors to explain the mechanism. All candidates here are assumed eligible; host masks, teacher, repair and separate bonuses are excluded. E remains negatively advantaged even though the judge ranks it highly.</figcaption></figure></div><div class="wrap">
+<h3>Analysis · It can redirect reinforcement without creating every missing lesson</h3>
+<p>A highly ranked candidate can receive more positive credit than before. A promising candidate with a negative advantage can be penalized less. But this component preserves its sign: a negative advantage does not become positive, and zero stays zero. When the entire base-advantage group is flat, there is no signal for this component to redistribute, even if the judge has a strong preference.</p>
+<p>This is a useful limit to make visible. The judge can influence which already sampled behaviours are reinforced most strongly; the rule does not guarantee a foothold for a capability the student never produces. A separate additive signal would have different power and different exposure to judge error. The curriculum question therefore survives: does the policy sample enough executable constructions for this feedback to act on?</p>
+<p>The source also supports judge-proposed extra inputs that are checked against task constraints and executed through the real verifier. Turning a semantic suspicion into a reproducible test is particularly attractive. I do not have usage evidence sufficient to credit that path with the run’s improvement, so it remains a supported mechanism rather than a measured explanation.</p>
+</div></section><hr class="sec"><section id="influence"><div class="sec-head"><p class="eyebrow">04 · Check the signal</p><h2>The judge must reach the loss</h2></div><div class="wrap">
+<p>Calling an experiment “verifier plus judge” is not enough. First I need to establish that the judge’s answers were accepted in time, distinguished the candidates and changed the learning signal. Otherwise an apparent hybrid run may be behaving almost like the outcome-only recipe.</p>
+<p>One update made the distinction unusually clear. It accepted a ranking for <strong>15 of 16 kept groups</strong>, yet the reshaping’s absolute advantage displacement was just <strong>0.05%</strong> of final absolute advantage mass. Many candidates received identical checklist flags. The judge could agree consistently and still provide almost no relative guidance within a group.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 3 · Receiving judgments is not the same as learning from them</div><div class="key"><i style="background:var(--accent)"></i>Kept groups with an accepted ranking</div><div class="key"><i style="background:var(--gold)"></i>Advantage displacement share</div><div class="plot-scroll" role="region" tabindex="0" aria-label="Chart; scroll horizontally on small screens"><svg viewBox="0 0 820 407" role="img" aria-label="Judge coverage and advantage displacement: update 51 zero and zero percent; 52 12.5 and zero; 53 93.75 and 0.05; 63 100 and 11.8 percent. Different protocols and task draws."><title>Judge coverage and advantage displacement: update 51 zero and zero percent; 52 12.5 and zero; 53 93.75 and 0.05; 63 100 and 11.8 percent. Different protocols and task draws.</title><text x="8" y="46" class="plot-label">Update 51</text><text x="8" y="66" class="plot-small">Checklist</text><g tabindex="0" data-tip="Update 51, Kept groups ranked: 0%"><rect x="205" y="30" width="0.00" height="14" rx="2" fill="var(--accent)"/><text x="216.0" y="42" class="plot-value">0%</text><rect x="200" y="27" width="580" height="22" fill="transparent"/></g><g tabindex="0" data-tip="Update 51, Advantage displacement share: 0%"><rect x="205" y="56" width="0.00" height="14" rx="2" fill="var(--gold)"/><text x="216.0" y="68" class="plot-value">0%</text><rect x="200" y="53" width="580" height="22" fill="transparent"/></g><text x="8" y="132" class="plot-label">Update 52</text><text x="8" y="152" class="plot-small">Checklist</text><g tabindex="0" data-tip="Update 52, Kept groups ranked: 12.5%"><rect x="205" y="116" width="60.00" height="14" rx="2" fill="var(--accent)"/><text x="275.0" y="128" class="plot-value">12.5%</text><rect x="200" y="113" width="580" height="22" fill="transparent"/></g><g tabindex="0" data-tip="Update 52, Advantage displacement share: 0%"><rect x="205" y="142" width="0.00" height="14" rx="2" fill="var(--gold)"/><text x="216.0" y="154" class="plot-value">0%</text><rect x="200" y="139" width="580" height="22" fill="transparent"/></g><text x="8" y="218" class="plot-label">Update 53</text><text x="8" y="238" class="plot-small">Checklist</text><g tabindex="0" data-tip="Update 53, Kept groups ranked: 93.75%"><rect x="205" y="202" width="450.00" height="14" rx="2" fill="var(--accent)"/><text x="665.0" y="214" class="plot-value">93.75%</text><rect x="200" y="199" width="580" height="22" fill="transparent"/></g><g tabindex="0" data-tip="Update 53, Advantage displacement share: 0.05%"><rect x="205" y="228" width="2.00" height="14" rx="2" fill="var(--gold)"/><text x="216.0" y="240" class="plot-value">0.05%</text><rect x="200" y="225" width="580" height="22" fill="transparent"/></g><text x="8" y="304" class="plot-label">Update 63</text><text x="8" y="324" class="plot-small">Quality ranking</text><g tabindex="0" data-tip="Update 63, Kept groups ranked: 100%"><rect x="205" y="288" width="480.00" height="14" rx="2" fill="var(--accent)"/><text x="695.0" y="300" class="plot-value">100%</text><rect x="200" y="285" width="580" height="22" fill="transparent"/></g><g tabindex="0" data-tip="Update 63, Advantage displacement share: 11.8%"><rect x="205" y="314" width="56.64" height="14" rx="2" fill="var(--gold)"/><text x="271.6" y="326" class="plot-value">11.8%</text><rect x="200" y="311" width="580" height="22" fill="transparent"/></g><text x="205" y="388" class="plot-small">Different task draws and judge versions · descriptive update diagnostics</text></svg></div><figcaption><b>Selected updates from the same evolving run, 16 kept groups per update.</b> Coverage is a group fraction. Displacement is Σ|A′−A| / Σ|A′| for the reshaping component, with A measured after host masking. These have different denominators. It is not a reward-mixture coefficient, a fraction of gradients, or a measure of judge correctness. Task draws and the judging protocol changed.</figcaption></figure></div><div class="wrap">
+<p>Earlier updates had another failure mode: judgments were rejected or arrived after the update deadline, leaving little effective coverage. That is an implementation and measurement lesson, not evidence against semantic supervision. Once coverage improved, the checklist’s inability to distinguish candidates became visible. The later protocol added score-blind quality ranking beyond the checklist.</p>
+<p>By update 63, all 16 kept groups had accepted rankings, and the same displacement diagnostic was 11.8%. That establishes a more substantial intervention in the recorded advantages. It does not establish that the judge was correct or that the resulting parameter update improved search.</p>
+<h3>Analysis · Consistency, influence and value are three different gates</h3>
+<p>The first gate is whether repeated presentations produce a usable judgment. The second is whether that judgment changes the learning signal. The third is whether that change helps on an independent target. Passing one gate does not imply the next. A high agreement rate can conceal uniform tiers; a high displacement rate can amplify a mistaken preference.</p>
+<p>The recorded share is also easy to overread. It measures Σ|A′−A| divided by Σ|A′|, not the fraction of the parameter gradient attributable to the judge. Candidate sequence lengths, token likelihoods and optimizer state intervene between an advantage and an update. The plots describe a changing run with changing task draws, not an ablation isolating the ranking protocol.</p>
+</div></section><hr class="sec"><section id="outcomes"><div class="sec-head"><p class="eyebrow">05 · Keep the readouts separate</p><h2>The score rose before the stronger judge</h2></div><div class="wrap">
+<p>The one-shot FrontierCS read improved in absolute score. On 172 problems with five attempts per problem, Avg@5 was 12.56 for the historical start, 13.72 at checkpoint 24 and 14.54 at checkpoint 50. Avg@5 is the mean score across those attempts and problems, not pass@5 and not the best of five.</p>
+<div class="scroll"><table class="ledger method-table"><caption>FCS172 one-shot evaluation · score on a 0–100 scale</caption><thead><tr><th>Checkpoint</th><th class="r">Avg@5</th><th class="r">Best@5</th><th class="r">Compile</th><th class="r">Forced or truncated</th></tr></thead><tbody>
+<tr><td>Historical start*</td><td class="r">12.56</td><td class="r">20.61</td><td class="r">87.1%</td><td class="r">1.4%</td></tr>
+<tr><td>24</td><td class="r">13.72</td><td class="r">24.61</td><td class="r">90.7%</td><td class="r">8.0%</td></tr>
+<tr><td>50</td><td class="r">14.54</td><td class="r">23.15</td><td class="r">91.6%</td><td class="r">15.9%</td></tr>
+</tbody></table></div>
+<p class="reading-note">*Historical reference has eight answers beyond the later strict answer cap. Best@5 is the mean of each problem’s best attempt. The last column combines forced thinking closure or truncation; these events can overlap.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 4 · A score gain is not an attribution to the judge</div><div class="plot-scroll" role="region" tabindex="0" aria-label="Chart; scroll horizontally on small screens"><svg viewBox="0 0 820 288" role="img" aria-label="Checkpoint 50 − 24 +0.82, interval [-0.75, +2.41] points; Checkpoint 50 − start +1.98, interval [+0.54, +3.45] points"><title>Checkpoint 50 − 24 +0.82, interval [-0.75, +2.41] points; Checkpoint 50 − start +1.98, interval [+0.54, +3.45] points</title><line x1="275.00" x2="275.00" y1="28" y2="204" class="plot-rule"/><text x="275.00" y="228" text-anchor="middle" class="plot-small">-2</text><line x1="354.17" x2="354.17" y1="28" y2="204" class="plot-rule"/><text x="354.17" y="228" text-anchor="middle" class="plot-small">-1</text><line x1="433.33" x2="433.33" y1="28" y2="204" class="plot-rule"/><text x="433.33" y="228" text-anchor="middle" class="plot-small">+0</text><line x1="512.50" x2="512.50" y1="28" y2="204" class="plot-rule"/><text x="512.50" y="228" text-anchor="middle" class="plot-small">+1</text><line x1="591.67" x2="591.67" y1="28" y2="204" class="plot-rule"/><text x="591.67" y="228" text-anchor="middle" class="plot-small">+2</text><line x1="670.83" x2="670.83" y1="28" y2="204" class="plot-rule"/><text x="670.83" y="228" text-anchor="middle" class="plot-small">+3</text><line x1="750.00" x2="750.00" y1="28" y2="204" class="plot-rule"/><text x="750.00" y="228" text-anchor="middle" class="plot-small">+4</text><line x1="433.33" x2="433.33" y1="20" y2="206" stroke="var(--ink-soft)" stroke-dasharray="4 4"/><text x="8" y="61" class="plot-label">Checkpoint 50 − 24</text><text x="8" y="83" class="plot-small">Matched strict response packet</text><g tabindex="0" data-tip="Checkpoint 50 − 24: +0.82 points, 95% interval [-0.75, +2.41]"><line x1="373.96" x2="624.12" y1="61" y2="61" stroke="var(--accent)" stroke-width="3"/><circle cx="498.25" cy="61" r="6" fill="var(--accent)"/><text x="498.25" y="44" class="plot-value" text-anchor="middle">+0.82 [-0.75, +2.41]</text><rect x="268" y="25" width="500" height="70" fill="transparent"/></g><text x="8" y="159" class="plot-label">Checkpoint 50 − start</text><text x="8" y="181" class="plot-small">Historical reference · cap mismatch</text><g tabindex="0" data-tip="Checkpoint 50 − start: +1.98 points, 95% interval [+0.54, +3.45]"><line x1="476.08" x2="706.46" y1="159" y2="159" stroke="var(--gold)" stroke-width="3"/><circle cx="590.08" cy="159" r="6" fill="var(--gold)"/><text x="590.08" y="142" class="plot-value" text-anchor="middle">+1.98 [+0.54, +3.45]</text><rect x="268" y="123" width="500" height="70" fill="transparent"/></g><text x="510" y="268" text-anchor="middle" class="plot-label">Avg@5 difference (points)</text></svg></div><figcaption><b>FCS172: paired per-problem bootstrap, 95% intervals.</b> Checkpoints 24 and 50 use the same strict packet. Eight historical-reference answers exceeded the later answer cap, so the second comparison is qualified. The stronger judge intervention began after checkpoint 50. Neither interval estimates its causal effect.</figcaption></figure></div><div class="wrap">
+<p>Checkpoint 50 minus checkpoint 24 was <strong>+0.82 points [−0.75, +2.41]</strong> under the same strict response packet. The historical comparison was +1.98 [+0.54, +3.45], with the cap qualification above. The stronger judge intervention began after checkpoint 50. Its later influence cannot explain that earlier gain.</p>
+<h3>Analysis · Neither a score trend nor a behaviour tag is an attribution</h3>
+<p>The result is worth recording, with its limits. Compilation improved. Best@5 fell between checkpoints 24 and 50 while the mean rose. Forced or truncated responses also became more common. These are different aspects of the policy; no single number establishes that it acquired the targeted search capability.</p>
+<p>Nor does this sequence isolate the judge from outcome learning or the other changes in the recipe. A matched verifier-only control would be needed for that attribution. The later matched checkpoint read, following the stronger ranking protocol, was still pending at the source snapshot. I do not fill that gap with the already available checkpoint-50 score.</p>
+</div></section><hr class="sec"><section id="meaning"><div class="sec-head"><p class="eyebrow">06 · Read the program</p><h2>The clock was only a seed</h2></div><div class="wrap">
+<p>An apparent search signal exposed a second measurement problem. Some programs read a clock, and a broad heuristic treated them as time-bounded search. A stricter inspection found that the clock reads seeded random-number generators. That is a use of randomness, but it does not establish a loop that keeps improving a solution until its time budget expires.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 5 · Three different uses of randomness and work</div>
+<p class="reading-note">Illustrations only · these snippets are not copied from an observed rollout.</p>
+<div class="example"><h3>Read a clock to seed an RNG</h3><pre><code>rng.seed(clock_now());
+construct_solution(rng);</code></pre><p class="class-label">A clock read; no time-budgeted search is established.</p></div>
+<div class="example"><h3>Improve for a fixed number of moves</h3><pre><code>for (int i = 0; i &lt; moves; ++i)
+    try_improving_move(solution, rng);</code></pre><p class="class-label">Can be genuine local search; a wall-clock budget is not required.</p></div>
+<div class="example"><h3>Improve until the time budget expires</h3><pre><code>while (clock_now() - start &lt; budget)
+    try_improving_move(solution, rng);</code></pre><p class="class-label">A time-budgeted loop; correctness and useful improvement still need execution checks.</p></div>
+<figcaption><b>Separate algorithm semantics from a surface feature.</b> The snippets classify a control structure. They do not prove a working solver, a sound objective update or simulated annealing. In particular, annealing also requires an acceptance rule and temperature schedule; a timer alone establishes neither.</figcaption></figure></div><div class="wrap">
+<p>The stricter read covered 960 training programs from updates 55–59 and 860 answers at each of checkpoints 24 and 50. It found no clock-budget-controlled loop in those sets, including a broader check for a clock-based break. Fixed-work local search did exist: one inspected program performed a fixed million-swap pass. “No timed loop” is therefore not equivalent to “no search,” and it is certainly not a proof that the model cannot learn search.</p>
+<p>The same audit found no detectable judge preference or penalty for local-search programs against similar-score alternatives. On the selected search-pays tasks the estimated rank gap was +0.094 with an interval [−0.341, +0.500], from 53 pairs in 16 groups. That is not evidence that the judge suppressed search, nor strong evidence that it encouraged it.</p>
+<h3>Analysis · A semantic reward still needs a definition of the behaviour</h3>
+<p>This is where the judge can be useful and where it needs scrutiny. It should inspect reachable operations, the score update, the acceptance rule and the connection to the returned result. A keyword or a timer is an inexpensive proxy. Reading code adds semantic information, but a judge can still be fooled by a plausible scaffold whose useful path never runs.</p>
+<p>I now separate greedy construction, fixed-work local search, time-budgeted search and working annealing. They are related but different categories. The final check should execute the claimed mechanism and test its invariants. This is artifact-level supervision about code quality; it should not be described as step-level supervision of the model’s reasoning unless those intermediate labels are actually present.</p>
+</div></section><hr class="sec"><section id="validation"><div class="sec-head"><p class="eyebrow">07 · Judge the judge</p><h2>Disagreement is where the hypothesis gets tested</h2></div><div class="wrap">
+<p>A judge that disagrees with the observed verifier score might see something valuable: a general algorithm that suffered on the sampled cases, a brittle higher-scoring alternative, or an implementation that should scale better. It might also be wrong. Disagreement is the important audit cohort because repeating the existing score order adds little evidence of complementary information.</p>
+<p>I selected pairs where the host-accepted judge preferred a program whose normalized verifier score was at least 0.05 lower. The test is to run both programs on fresh, judge-unseen inputs under the same execution rules. New sizes are useful only where the task’s stated domain permits them. The judge must not become the authority that certifies its own preference.</p>
+<p>Across updates 56–63, the judge agreed with the verifier’s order on 52.4–66.3% of clear-gap pairs per update. Ties accounted for another 7.1–33.3%. Those ties are not reversals. Nor is disagreement itself a failure: the reason for adding the judge was to supply information beyond the current score. The useful question is whether its departures from that score predict something independently valuable.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 6 · The first judge audit covered only a small part of the question</div>
+<div class="audit-row"><strong>Disagreement cohort</strong><p><span class="fraction">3 / 296 pairs graded</span><br>All three came from one group on one task. The judge’s preferred program lost in all three. This is too little coverage for a general judge-quality conclusion.</p></div>
+<div class="audit-row"><strong>Agreement controls</strong><p><span class="fraction">49 / 1,947 pairs graded</span><br>Five groups on three tasks: 44 wins, five ties, no losses for the jointly preferred program.</p></div>
+<div class="audit-row"><strong>Fresh inputs</strong><p>Twelve fresh cases per task, using three available official generators. Released generators were unavailable for most candidate tasks.</p></div>
+<figcaption><b>First-round audit through October 23, 12:37 Pacific.</b> A disagreement requires a verifier gap of at least 0.05 on the normalized 0–1 scale and an opposite host-accepted judge preference. Pairs within a group or task are correlated. All primary disagreement pairs came from one task; a bootstrap interval on that one cluster is not useful population-level uncertainty. Do not interpret 0/3 as a general zero win rate.</figcaption></figure></div><div class="wrap">
+<p>The first round found 296 disagreement pairs across the recorded updates, but available official generators allowed only three primary pairs from one task to be tested. All three judge picks lost. That is evidence about those programs on those fresh cases. It is too narrow to determine whether the judge generally sees useful quality or merely rewards appearance.</p>
+<p>The controls were more encouraging as an execution check: 44 of 49 pairs preserved the jointly preferred program’s win, with five ties and no losses. But they cover only three tasks and a different selected cohort. Their rate cannot repair the disagreement cohort’s missing coverage or be treated as a matched estimate of the effect of disagreement.</p>
+<p>The recorded baseline-copy flags also remained common, ranging from 17.9% to 31.5% of judged programs across those updates. Those are model-assigned flags, not independently verified exploits. They show why a rubric’s intention is not an outcome: placing copies low in a ranking did not by itself establish that the policy stopped producing them.</p>
+<h3>Analysis · Missing coverage is part of the result</h3>
+<p>Most candidate tasks lacked a released instance generator. A broader second round was being built with constraint-checked inputs. Such generators need their own validation: legal inputs and correct checker handling, plausible coverage of the task domain, and separation from the judge that made the ranking. Passing a checker with a baseline program is useful evidence, not a guarantee of representative coverage.</p>
+<p>When that read is complete, I want wins, ties, losses and score margins, with uncertainty grouped by task. Many correlated pairs from one problem must not masquerade as many independent problems. I also want failure cases inspected directly: did the judge favour a better general mechanism, or a familiar algorithm name over a stronger implementation?</p>
+<p>Independent evaluation matters because both reward channels can be gamed. <a href="https://arxiv.org/abs/2306.05685">Zheng et al.</a> document position, verbosity and self-enhancement biases in LLM evaluation. In a different mathematical setting, <a href="https://arxiv.org/abs/2608.17776">Kenton et al.</a> observe policies exploiting an AI judge and study debate as a mitigation. They also report a smaller train–validation reward gap with LLM judging than with verifiable reward in their setting. That supports investigating complementary judgment, not a universal ordering of which reward is safer.</p>
+</div></section><hr class="sec"><section id="headroom"><div class="sec-head"><p class="eyebrow">08 · Check the target</p><h2>Could useful search beat the policy here?</h2></div><div class="wrap">
+<p>The last question is whether the intended capability has room to help on the training tasks. A stronger preference for search would be misguided if sound search could not improve the objective. I commissioned a separate coding-agent probe to build time-budgeted annealing or local-search programs for 20 selected tasks from the search-pays pool.</p>
+<p>The tasks were selected by repeated occurrence in recent updates, with a decoded statement and native grader available, rather than by observed headroom. The probe’s programs scored an average of 58.33, against 51.63 for the policy’s best available whole program per task and 31.36 for its mean. The policy comparison used 520 scored samples across those tasks from updates 56–63, including compile failures and truncated outputs.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 7 · There was useful search headroom on the selected tasks</div><div class="plot-scroll" role="region" tabindex="0" aria-label="Chart; scroll horizontally on small screens"><svg viewBox="0 0 820 288" role="img" aria-label="Search probe − policy best +6.70, interval [+3.61, +9.95] points; Search probe − policy mean +26.96, interval [+21.10, +33.22] points"><title>Search probe − policy best +6.70, interval [+3.61, +9.95] points; Search probe − policy mean +26.96, interval [+21.10, +33.22] points</title><line x1="275.00" x2="275.00" y1="28" y2="204" class="plot-rule"/><text x="275.00" y="228" text-anchor="middle" class="plot-small">-5</text><line x1="327.78" x2="327.78" y1="28" y2="204" class="plot-rule"/><text x="327.78" y="228" text-anchor="middle" class="plot-small">+0</text><line x1="433.33" x2="433.33" y1="28" y2="204" class="plot-rule"/><text x="433.33" y="228" text-anchor="middle" class="plot-small">+10</text><line x1="538.89" x2="538.89" y1="28" y2="204" class="plot-rule"/><text x="538.89" y="228" text-anchor="middle" class="plot-small">+20</text><line x1="644.44" x2="644.44" y1="28" y2="204" class="plot-rule"/><text x="644.44" y="228" text-anchor="middle" class="plot-small">+30</text><line x1="750.00" x2="750.00" y1="28" y2="204" class="plot-rule"/><text x="750.00" y="228" text-anchor="middle" class="plot-small">+40</text><line x1="327.78" x2="327.78" y1="20" y2="206" stroke="var(--ink-soft)" stroke-dasharray="4 4"/><text x="8" y="61" class="plot-label">Search probe − policy best</text><text x="8" y="83" class="plot-small">20 selected training tasks</text><g tabindex="0" data-tip="Search probe − policy best: +6.70 points, 95% interval [+3.61, +9.95]"><line x1="365.86" x2="432.79" y1="61" y2="61" stroke="var(--accent)" stroke-width="3"/><circle cx="398.50" cy="61" r="6" fill="var(--accent)"/><text x="398.50" y="44" class="plot-value" text-anchor="middle">+6.70 [+3.61, +9.95]</text><rect x="268" y="25" width="500" height="70" fill="transparent"/></g><text x="8" y="159" class="plot-label">Search probe − policy mean</text><text x="8" y="181" class="plot-small">Includes unsuccessful policy samples</text><g tabindex="0" data-tip="Search probe − policy mean: +26.96 points, 95% interval [+21.10, +33.22]"><line x1="550.48" x2="678.42" y1="159" y2="159" stroke="var(--gold)" stroke-width="3"/><circle cx="612.40" cy="159" r="6" fill="var(--gold)"/><text x="612.40" y="142" class="plot-value" text-anchor="middle">+26.96 [+21.10, +33.22]</text><rect x="268" y="123" width="500" height="70" fill="transparent"/></g><text x="510" y="268" text-anchor="middle" class="plot-label">Native score difference (points)</text></svg></div><figcaption><b>Separate coding-agent probe; 95% paired-task bootstrap intervals.</b> The agent authored time-budgeted search programs and used the existing native cases. Policy best is the best available whole program per task across updates 56–63; the mean includes failures. Tasks came from a preselected search-pays subset. This is in-task headroom, not a matched-compute policy comparison, held-out generalization, or a judge-training effect. Excluding one task with a checker issue leaves +6.81 [3.58, 10.23] versus policy best over 19 tasks.</figcaption></figure></div><div class="wrap">
+<p>The gap against the policy’s best was <strong>+6.70 points [3.61, 9.95]</strong>. The probe won on 16 of 20 tasks, tied on one and lost on three. Removing one task affected by a checker issue produced a similar estimate. This supplies concrete evidence that useful algorithmic headroom existed on the selected cases.</p>
+<h3>Analysis · Headroom is a target, not proof of transfer</h3>
+<p>A separate coding agent with iterative authoring is not the same policy operating under the same generation budget. The probe also used existing training cases, not new held-out problems. The programs differed in more than the presence of a timed loop. I cannot attribute the entire gain to annealing, claim a fair model comparison, or treat it as evidence that the LLM judge taught the student that capability.</p>
+<p>The student-facing wrapper asked for a competitive-programming solution in C++ and only code. Scoring objectives lived inside individual statements, while a separate prompt audit found missing time limits in many evaluation prompts. That is a concrete specification issue to inspect. It does not establish that changing the prompt would create the skill. The gap could involve instruction framing, constructions the policy rarely samples, or the training signal acting on those constructions.</p>
+<p>The result does sharpen the next comparison. If the target programs exist and improve the actual objective, does verifier-plus-judge training make such working constructions more frequent than matched verifier-only training? Does that improvement survive fresh inputs? A higher judge score is not sufficient evidence for either question.</p>
+</div></section><hr class="sec"><section id="next"><div class="sec-head"><p class="eyebrow">09 · The next conclusion</p><h2>Two proxies, one independent target</h2></div><div class="wrap">
+<p>The attempt has already changed how I think about supervision. A verifiable reward is precise about the test it implements. An LLM judge can express distinctions the current test leaves implicit. Its flexibility can supply a useful inductive bias, but it also introduces another surface for mistakes and optimization.</p>
+<p>The immediate lesson is to measure all three links: whether the judge distinguishes the programs, whether those distinctions reach the update, and whether the resulting policy improves on an independent target. The present record establishes the first two in parts of the run. It does not yet establish a causal benefit from the stronger judge, or a reduction in reward hacking.</p>
+<p>That returns me to the curriculum from Part 4. First acquire enough correct algorithmic constructions to give feedback something to work with. Then train improvement explicitly, using executable outcomes and carefully validated semantic guidance. Finally ask whether those skills compose across a longer agent episode.</p>
+<p>The unresolved question is now narrower than “can an LLM judge replace the reward?” I want to know whether it adds useful information about algorithmic progress—and whether the student can turn that information into programs that work beyond the cases that trained it.</p>
+</div></section></main><footer><div class="wrap"><p class="eyebrow">Notes</p><h2>How to read this experiment</h2>
+<p>This is a one-shot coding study on a 9B policy, with FrontierSmith training tasks and FCS172 evaluation. Later reshaping used groups of eight student programs. Checkpoints 24 and 50 share the strict response packet: about 96K thinking tokens plus 32K answer tokens, with injected-control accounting inside the total response budget. The historical start has the answer-cap mismatch noted above. Avg@5 averages five attempts per task; Best@5 averages each task’s maximum. Neither is algorithmic pass@k.</p>
+<p>Intervals are 95% and come from saved reports; no training or grading computation was rerun to author this article. The checkpoint comparisons use paired per-problem bootstraps. The headroom probe uses paired task gaps on a selected training subset. The fresh-instance judge cohort was too narrow for a population-level conclusion. Code inspection supports the reshaping mechanism; deployment and influence are reported separately. Source snapshot: October 23, 2026, approximately 12:50 Pacific. Later results are not implied.</p>
+<p>Research context: Zheng et al., <a href="https://arxiv.org/abs/2306.05685">Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena</a>; Kenton et al., <a href="https://arxiv.org/abs/2608.17776">Debate Training Reduces Reward Hacking in RLAIF</a>; Lightman et al., <a href="https://arxiv.org/abs/2305.20050">Let’s Verify Step by Step</a>. The latter studies intermediate-step supervision; the code judgments here are not a replication of that method. Off-policy teacher guidance and diversity were separate motivations in this evolving recipe: <a href="https://arxiv.org/abs/2504.14945">LUFFY</a> and <a href="https://arxiv.org/abs/2509.02534">DARLING</a>. Their results do not establish the effectiveness of this combined coding recipe.</p>
+<div class="foot-links"><a href="../">Part 1 · The Harness Is Part of the Model</a><a href="../part-2/">Part 2 · The Wall, the Compile Tax, and the Oracle</a><a href="../part-3/">Part 3 · Climbing From Zero Without a Teacher</a><a href="../part-4/">Part 4 · Borrowing a Foothold</a><a href="../part-6/">Part 6 · Fork, Talk, Submit →</a><a href="https://github.com/MaCoredroid/collective-intelligence">Repository</a></div>
+<p class="reading-note">When the Reward Misses the Algorithm. Collective intelligence, part 5: a snapshot of work through October 23, 2026.</p></div></footer><script>
+(function(){
+ const root=document.documentElement,tgl=document.getElementById('tgl');
+ try{const t=localStorage.getItem('ci-theme');if(t==='dark'||t==='light')root.dataset.theme=t}catch(e){}
+ tgl.addEventListener('click',()=>{const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('ci-theme',root.dataset.theme)}catch(e){}});
+ const strength=document.getElementById('judge-strength'),flat=document.getElementById('flat-group');
+ const ids=['A','B','C','D','E','F','G','H'],base=[.6,.3,.1,0,-.1,-.2,-.3,-.4],rank=[6,2,0,4,1,3,5,7];
+ const fmt=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(3);
+ function demo(){
+  const t=Number(strength.value)/100,a=flat.checked?base.map(()=>0):base.slice(),f=rank.map(r=>1-.9*t*r/7),g=f.map(v=>1.1-v),b=a.slice();
+  for(const sign of [1,-1]){const ii=a.map((v,i)=>v*sign>0?i:-1).filter(i=>i>=0),w=sign>0?f:g,m=ii.reduce((s,i)=>s+Math.abs(a[i]),0),z=ii.reduce((s,i)=>s+Math.abs(a[i])*w[i],0);if(z>0)ii.forEach(i=>b[i]=a[i]*w[i]*m/z)}
+  document.getElementById('strength-value').textContent=strength.value+'%';
+  document.getElementById('adv-rows').innerHTML=ids.map((id,i)=>'<tr><td>Program '+id+'</td><td class="r">'+(rank[i]+1)+'</td><td class="barcell"><span class="adv-track"><span class="adv-mark '+(a[i]<0?'negative':'')+'" style="--v:'+Math.abs(a[i])+'"></span><span class="adv-num">'+fmt(a[i])+'</span></span></td><td class="barcell"><span class="adv-track"><span class="adv-mark '+(b[i]<0?'negative':'')+'" style="--v:'+Math.abs(b[i])+'"></span><span class="adv-num">'+fmt(b[i])+'</span></span></td></tr>').join('');
+  const mass=(v,s)=>v.reduce((n,x)=>n+(x*s>0?Math.abs(x):0),0).toFixed(3);
+  document.getElementById('mass-summary').textContent='Positive total: '+mass(a,1)+' → '+mass(b,1)+' · Negative magnitude: '+mass(a,-1)+' → '+mass(b,-1);
+  document.getElementById('demo-reading').textContent=flat.checked?'The judge ordering is unchanged. Every base advantage is zero, so this channel alone supplies no learning signal.':'Program E is ranked highly, but its advantage stays negative. Program D stays at zero. The totals are preserved even when relative credit changes.';
+ }
+ strength.addEventListener('input',demo);flat.addEventListener('change',demo);demo();
+ document.querySelectorAll('figure').forEach(fig=>{const tt=document.createElement('div');tt.className='tip';tt.setAttribute('aria-hidden','true');fig.append(tt);fig.querySelectorAll('[data-tip]').forEach(el=>{function show(){tt.textContent=el.dataset.tip;const a=el.getBoundingClientRect(),b=fig.getBoundingClientRect();tt.style.left=Math.max(8,Math.min(a.left-b.left,fig.clientWidth-280))+'px';tt.style.top=Math.max(8,a.top-b.top-54)+'px';tt.classList.add('on')}function hide(){tt.classList.remove('on')}el.addEventListener('mouseenter',show);el.addEventListener('focus',show);el.addEventListener('mouseleave',hide);el.addEventListener('blur',hide)})});
+ const links=[...document.querySelectorAll('.toc a')];if('IntersectionObserver' in window){const ob=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('on',a.hash==='#'+e.target.id))})},{rootMargin:'-8% 0px -65% 0px'});document.querySelectorAll('main section').forEach(s=>ob.observe(s))}
+})();
+</script></body></html>

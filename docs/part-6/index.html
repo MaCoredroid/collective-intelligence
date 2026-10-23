@@ -1,0 +1,392 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fork, Talk, Submit: Building and Training an Agent Team</title><meta name="description" content="Our team harness and its first RL experiment: context forks, messages, team submission, executable reward, LLM judging, results and the problem of preserving useful work."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-6/"><meta property="og:type" content="article"><meta property="og:title" content="Fork, Talk, Submit: Building and Training an Agent Team"><meta property="og:description" content="Our team harness and its first RL experiment: context forks, messages, team submission, executable reward, LLM judging, results and the problem of preserving useful work."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-6/"><meta property="og:site_name" content="Collective Intelligence, Part 6"><meta name="twitter:card" content="summary"><style>
+  :root{
+    --bg:#f7f8f9; --surface:#ffffff; --surface-2:#f0f2f4;
+    --ink:#1a1c1f; --ink-soft:#474d54; --muted:#7c848b; --rule:#dee2e6;
+    --accent:#3a5f8a; --accent-soft:#e4ebf3;
+    --gold:#a9781f; --gold-soft:#f2e9d5;
+    --pos:#3f7d5b; --neg:#b3543f; --grey:#b7bec4;
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+    --serif:Georgia,"Iowan Old Style",Charter,"Palatino Linotype",Palatino,"Book Antiqua",serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+    --measure:41rem;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#131518; --surface:#1b1e22; --surface-2:#22262b;
+      --ink:#e7e9ec; --ink-soft:#b6bbc1; --muted:#838a91; --rule:#2b3036;
+      --accent:#7ea6dc; --accent-soft:#1e2a38;
+      --gold:#d8b365; --gold-soft:#2c2617;
+      --pos:#6bbf8f; --neg:#e08a72; --grey:#4a5158;
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#131518; --surface:#1b1e22; --surface-2:#22262b;
+    --ink:#e7e9ec; --ink-soft:#b6bbc1; --muted:#838a91; --rule:#2b3036;
+    --accent:#7ea6dc; --accent-soft:#1e2a38;
+    --gold:#d8b365; --gold-soft:#2c2617;
+    --pos:#6bbf8f; --neg:#e08a72; --grey:#4a5158;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--serif); font-size:19px; line-height:1.66;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:var(--measure); margin:0 auto; padding:0 1.4rem}
+  .wide{max-width:60rem; margin:0 auto; padding:0 1.4rem}
+  p{margin:1.1em 0; color:var(--ink-soft)}
+  li{color:var(--ink-soft); margin:.45em 0}
+  strong{color:var(--ink); font-weight:600}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+  a:hover{border-bottom-color:var(--accent)}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+  .eyebrow{font-family:var(--mono); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin:0 0 .9rem}
+  h1{font-size:clamp(2.2rem,6vw,3.35rem); line-height:1.06; letter-spacing:-.015em; margin:.2em 0 .3em; color:var(--ink); text-wrap:balance; font-weight:600}
+  h2{font-size:clamp(1.5rem,3.6vw,2rem); line-height:1.12; letter-spacing:-.01em; margin:0 0 .1em; color:var(--ink); text-wrap:balance; font-weight:600}
+  h3{font-size:1.12rem; margin:2em 0 .2em; color:var(--ink); font-weight:600}
+  .dek{font-size:1.28rem; line-height:1.5; color:var(--ink-soft); font-style:italic; text-wrap:balance}
+  .num{font-family:var(--mono); font-variant-numeric:tabular-nums; font-style:normal; letter-spacing:-.01em; font-size:.92em}
+  code{font-family:var(--mono); font-size:.85em; background:var(--surface-2); padding:.1em .35em; border-radius:4px}
+  hr.sec{border:0; border-top:1px solid var(--rule); max-width:60rem; margin:4.2rem auto}
+  header.masthead{padding:4.5rem 0 1rem}
+  .meta-row{display:flex; flex-wrap:wrap; gap:.5rem 1.4rem; font-family:var(--mono); font-size:.76rem; color:var(--muted); margin-top:1.8rem; padding-top:1.4rem; border-top:1px solid var(--rule)}
+  .meta-row span{white-space:normal}
+  .toggle{position:fixed; top:1rem; right:1rem; z-index:10; font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; background:var(--surface); color:var(--ink-soft); border:1px solid var(--rule); border-radius:20px; padding:.4rem .8rem; cursor:pointer}
+  .toggle:hover{color:var(--ink); border-color:var(--muted)}
+  .status{background:var(--surface); border:1px solid var(--rule);  border-radius:8px; padding:1.2rem 1.4rem; margin:2.4rem auto; font-size:.98rem; line-height:1.6}
+  .status .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:.5rem}
+  .status p{margin:.4em 0; color:var(--ink-soft); font-size:1rem}
+  .film{margin:2rem 0 0}
+  .film video{display:block; width:100%; height:auto; border-radius:10px; border:1px solid var(--rule); background:#F4F1EA}
+  .film .cap{font-family:var(--mono); font-size:.74rem; color:var(--muted); margin-top:.55rem}
+  .findings{background:var(--surface); border:1px solid var(--rule);  border-radius:8px; padding:1.2rem 1.4rem .6rem; margin:2.4rem auto 0; font-size:1rem; line-height:1.6}
+  .findings .lbl{font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:.4rem}
+  .findings ol{margin:.2rem 0; padding-left:1.3rem}
+  .findings li{margin:.7em 0; font-size:1rem}
+  .findings a{border-bottom:0}
+  .findings a strong{color:var(--ink)}
+  .findings a:hover strong{color:var(--accent)}
+  .sec-head{margin:0 auto 1.6rem; max-width:var(--measure); padding:0 1.4rem}
+  .sec-head .eyebrow{color:var(--accent)}
+  figure{margin:2.6rem 0; background:var(--surface); border:1px solid var(--rule); border-radius:12px; padding:1.6rem 1.5rem 1.2rem; position:relative}
+  figure svg{display:block; width:100%; height:auto; overflow:visible}
+  figcaption{font-family:var(--mono); font-size:.78rem; line-height:1.55; color:var(--muted); margin-top:1.1rem; padding-top:.9rem; border-top:1px solid var(--rule)}
+  figcaption b{color:var(--ink-soft); font-weight:600}
+  .fig-title{font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem}
+  .scroll{overflow-x:auto}
+  .take{ padding:.2rem 0 .2rem 1.2rem; margin:2rem 0; font-family:var(--serif); font-size:1.16rem; line-height:1.5; color:var(--ink); font-style:italic}
+  details{margin:1.6rem 0; border:1px solid var(--rule); border-radius:8px; background:var(--surface); overflow:hidden}
+  details>summary{cursor:pointer; padding:.85rem 1.1rem; font-family:var(--mono); font-size:.78rem; letter-spacing:.06em; color:var(--accent); list-style:none; display:flex; align-items:center; gap:.6rem}
+  details>summary::-webkit-details-marker{display:none}
+  details>summary::before{content:"+"; font-size:1rem; color:var(--muted)}
+  details[open]>summary::before{content:"−"}
+  details>summary:hover{background:var(--surface-2)}
+  details .body{padding:.2rem 1.2rem 1.1rem; font-size:.94rem; line-height:1.6; color:var(--ink-soft); border-top:1px solid var(--rule)}
+  details .body p,details .body li{font-size:.94rem}
+  .pill{font-family:var(--mono); font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; padding:.18em .55em; border-radius:20px; white-space:nowrap; font-weight:600}
+  .pill.pos{background:color-mix(in srgb,var(--pos) 16%,transparent); color:var(--pos)}
+  .pill.neg{background:color-mix(in srgb,var(--neg) 16%,transparent); color:var(--neg)}
+  .pill.null{background:var(--surface-2); color:var(--muted)}
+  .ledger{width:100%; border-collapse:collapse; font-size:.9rem; margin:1.4rem 0}
+  .ledger th,.ledger td{text-align:left; padding:.6rem .7rem; border-bottom:1px solid var(--rule); vertical-align:top; color:var(--ink-soft)}
+  .ledger th{font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:400}
+  .ledger td:first-child{font-family:var(--serif); color:var(--ink)}
+  .ledger td{overflow-wrap:anywhere}
+  .ledger code{overflow-wrap:anywhere}
+  .ledger td.r,.ledger th.r{white-space:nowrap; overflow-wrap:normal}
+  .ledger td.r,.ledger th.r{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums}
+  .eq{font-family:var(--mono); font-size:.9rem; background:var(--surface); border:1px solid var(--rule); border-radius:8px; padding:1rem 1.2rem; color:var(--ink); overflow-x:auto; white-space:pre; margin:1.4rem 0; line-height:1.7}
+  .key{display:inline-flex; align-items:center; gap:.4rem; font-family:var(--mono); font-size:.74rem; color:var(--ink-soft); margin-right:1.2rem}
+  .key i{display:inline-block; width:10px; height:10px; border-radius:50%}
+  .tip{position:absolute; pointer-events:none; background:var(--ink); color:var(--bg); font-family:var(--mono); font-size:.74rem; line-height:1.45; padding:.45rem .6rem; border-radius:6px; max-width:18rem; opacity:0; transition:opacity .12s; z-index:5}
+  .tip.on{opacity:1}
+  [data-tip]{cursor:default}
+  [data-tip]:focus{outline:none}
+  /* desktop: wider column and figures, larger type */
+  @media (min-width:1100px){
+    :root{--measure:44rem}
+    body{font-size:20px}
+    .wide{max-width:min(78rem, 94vw)}
+    hr.sec{max-width:min(78rem, 94vw)}
+  }
+  /* very wide screens: section menu in the left margin */
+  .toc{display:none}
+  @media (min-width:1760px){
+    .toc{display:block; position:fixed; top:6.5rem; left:1.5rem; width:13rem; font-family:var(--mono); font-size:.72rem; line-height:1.5; z-index:5}
+    .toc .lbl{letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:.8rem}
+    .toc a{display:block; border:0; border-left:2px solid var(--rule); padding:.32rem 0 .32rem .8rem; color:var(--muted)}
+    .toc a:hover{color:var(--ink); border-left-color:var(--muted)}
+    .toc a.on{color:var(--accent); border-left-color:var(--accent)}
+  }
+  footer{margin-top:5rem; padding:3rem 0 4rem; border-top:1px solid var(--rule); background:var(--surface-2)}
+  footer .wrap{color:var(--muted)}
+  footer h2{font-size:1.4rem}
+  .foot-links{display:flex; flex-wrap:wrap; gap:.6rem 1.6rem; font-family:var(--mono); font-size:.8rem; margin-top:1.4rem}
+  @media (max-width:640px){
+    body{font-size:17px}
+    .ledger{font-size:.82rem}
+    .ledger th,.ledger td{padding:.5rem .4rem}
+    figure{padding:1.1rem .9rem .9rem}
+  }
+
+:root{--muted:#606a73}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--muted:#a0a8b0}}
+:root[data-theme="dark"]{--muted:#a0a8b0}
+.status,.findings{border-left-width:1px}
+.sec-head .eyebrow{letter-spacing:.04em;text-transform:none}
+.fig-title{letter-spacing:.035em;text-transform:none;font-size:.82rem}
+.plot-scroll{overflow-x:auto;padding:2px}
+.plot-scroll svg{min-width:820px}
+.plot-label{font-family:var(--mono);fill:var(--ink-soft);font-size:14px}
+.plot-small{font-family:var(--mono);fill:var(--muted);font-size:12px}
+.plot-value{font-family:var(--mono);fill:var(--ink);font-size:15px;font-weight:600}
+.plot-rule{stroke:var(--rule);stroke-width:1}
+[data-tip]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.reading-note{font-size:.88rem;color:var(--muted);margin:.6rem 0}
+.method-table{min-width:600px}
+figure .data-note{font-size:.82rem;line-height:1.5;margin-top:.9rem;color:var(--ink-soft)}
+.route-tabs{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.route-tabs button{font-family:var(--mono);font-size:.78rem;padding:.6rem .8rem;border:1px solid var(--rule);border-radius:5px;background:var(--bg);color:var(--ink-soft);cursor:pointer}
+.route-tabs button[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.route-panel{padding:.2rem .2rem .5rem}
+.route-panel h3{margin:.4rem 0}
+.route-panel p{font-size:.95rem;margin:.65rem 0}
+.route-flow{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-family:var(--mono);font-size:.8rem;margin:1.2rem 0}
+.route-flow span{padding:.6rem .7rem;border:1px solid var(--rule);border-radius:5px;background:var(--bg)}
+.route-flow .teacher{border-color:var(--gold);background:var(--gold-soft)}
+.route-flow .student{border-color:var(--accent);background:var(--accent-soft)}
+.route-flow i{font-style:normal;color:var(--muted)}
+.route-panel[hidden]{display:none}
+.curriculum-step{padding:1rem 0 1.2rem;border-top:1px solid var(--rule)}
+.curriculum-step h3{margin:.3rem 0 .8rem}
+.curriculum-step p{font-size:1rem;max-width:68ch}
+.curriculum-gate{font-size:.9rem!important;color:var(--ink-soft)}
+.curriculum-end{border-top:1px solid var(--rule);padding:1rem 0 .4rem;font-size:1rem;color:var(--ink);max-width:70ch}
+.ledger caption{text-align:left;font-size:.88rem;color:var(--ink-soft);margin:.6rem 0}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip{position:absolute;left:1rem;top:-5rem;z-index:20;background:var(--surface);padding:.6rem}
+.skip:focus{top:1rem}
+.status .lbl,.findings .lbl{letter-spacing:.05em}
+.take{border:1px solid var(--rule);border-radius:6px;padding:1rem 1.2rem}
+@media(max-width:640px){header.masthead{padding-top:4rem}.dek{font-size:1.12rem}.meta-row{font-size:.72rem}.route-flow{gap:.35rem}.route-flow span{padding:.45rem}.status,.findings{padding:1rem}.plot-scroll svg{min-width:820px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+@media print{.toggle,.toc,.route-tabs{display:none}.route-panel[hidden]{display:block}body{background:white;color:black}figure{break-inside:avoid}}
+
+h1,h2,h3{text-wrap:balance}p,li{text-wrap:pretty}
+.subtitle{font-size:1.06rem;line-height:1.5;margin:1.1rem 0 1.5rem;color:var(--accent)}
+.plot-scroll{overflow-x:auto;scrollbar-width:thin;padding:.4rem 0}.plot-scroll svg{min-width:780px}
+.chart-label{font:13px var(--mono);fill:var(--ink-soft)}.chart-small{font:11px var(--mono);fill:var(--ink-soft)}
+.chart-value{font:600 14px var(--mono);fill:var(--ink)}.chart-rule{stroke:var(--rule);stroke-width:1}
+.replay-control{display:flex;flex-wrap:wrap;align-items:center;gap:.7rem;font:.82rem var(--mono);margin:.8rem 0 1rem;color:var(--ink-soft)}
+.replay-control input{width:15rem;max-width:100%;accent-color:var(--accent)}
+.replay-readout{font:.86rem/1.8 var(--mono);color:var(--ink);margin:.7rem 0}
+.process-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem 1rem;padding:1rem 0;border-top:1px solid var(--rule)}
+.process-row:first-child{border-top:0}.process-row strong{flex:0 0 10rem;font-size:.95rem}
+.process-row p{flex:1 1 24rem;font-size:.98rem;margin:0}
+.metric-row{display:flex;align-items:baseline;flex-wrap:wrap;gap:.4rem 1.2rem;padding:1rem 0;border-top:1px solid var(--rule)}
+.metric-row:first-child{border-top:0}.metric-row .fraction{font:600 1.1rem var(--mono);color:var(--accent);flex:0 0 9rem}
+.metric-row p{margin:0;flex:1 1 26rem;font-size:.96rem}
+.method-table{min-width:600px}.protocol-table{min-width:690px}.protocol-table th:first-child{width:21%}.protocol-table td{font-size:.92rem}
+.reading-note{font-size:.9rem;color:var(--ink-soft);line-height:1.6}
+.status-line{display:flex;gap:1rem;flex-wrap:wrap;padding:1rem 0;border-top:1px solid var(--rule)}
+.status-line strong{flex:0 0 13rem;font-family:var(--mono);font-size:.84rem}.status-line p{flex:1 1 24rem;margin:0;font-size:.95rem}
+.status-line .done{color:var(--pos)}.status-line .open{color:var(--ink-soft)}.scroll{scrollbar-width:thin}
+.meta-row,.eyebrow,.ledger th,figcaption,.findings .lbl{color:var(--ink-soft)}
+input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:640px){.subtitle{font-size:.96rem}figure{padding:1.2rem 1rem 1rem}.process-row strong,.status-line strong{flex-basis:100%}.replay-control input{width:100%}.metric-row .fraction{flex-basis:100%}}
+
+.harness-lane{padding:1.1rem 0;border-top:1px solid var(--rule)}
+.harness-lane:first-child{border-top:0}.harness-lane h3{margin:0 0 .6rem;font-size:1rem}
+.harness-lane p{margin:.5rem 0;font-size:.98rem}
+.state-list{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.7rem 0}
+.state-list span{padding:.4rem .6rem;border:1px solid var(--rule);background:var(--surface-2);border-radius:4px;font:.8rem/1.5 var(--mono);color:var(--ink-soft)}
+.state-list i{font-style:normal;color:var(--ink-soft)}
+.channel-table{min-width:650px}.walk-controls{display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin:1rem 0 1.4rem}
+.walk-controls button{font:.82rem/1.6 var(--mono);padding:.4rem .1rem;color:var(--ink-soft);background:transparent;border:0;border-bottom:2px solid transparent;cursor:pointer}
+.walk-controls button[aria-pressed=true]{color:var(--accent);border-bottom-color:var(--accent)}
+.walk-controls button:hover{color:var(--ink)}.walk-controls button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.walk-agents{display:flex;flex-wrap:wrap;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);gap:1rem;padding:1.1rem 0}
+.walk-agent{flex:1 1 16rem}.walk-agent strong{font:.85rem var(--mono);color:var(--accent)}
+.walk-agent p{font-size:.98rem;margin:.6rem 0}.walk-record{font:.86rem/1.7 var(--mono);color:var(--ink);padding:.9rem 0}
+.walk-reading{font-size:.98rem;margin:.5rem 0}.appendix{margin:2.5rem 0}.appendix>.body{padding-bottom:1rem}
+.appendix .wide{padding:0}.appendix figure{margin:1.2rem 0}.appendix .ledger{min-width:530px}
+@media(max-width:640px){.walk-controls{gap:.4rem .8rem}.walk-controls button{font-size:.76rem}}
+</style></head><body><a class="skip" href="#harness">Skip to article</a><button class="toggle" id="tgl" aria-label="Toggle color theme">◐ Theme</button><nav class="toc" aria-label="Sections"><div class="lbl">Contents</div><a href="#harness">01 · The organising idea</a><a href="#fork">02 · Creating a branch</a><a href="#communication">03 · Moving information</a><a href="#integration">04 · Turning a finding into work</a><a href="#submission">05 · Ending together</a><a href="#learning">06 · The training experiment</a><a href="#reward">07 · The reward design</a><a href="#results">08 · The measured result</a><a href="#findings">09 · What the traces revealed</a><a href="#next">10 · What changes next</a></nav><main><header class="masthead"><div class="wrap"><p class="eyebrow">Collective intelligence · Part 6 · <a href="../part-4/">Part 4</a> · <a href="../part-5/">Part 5</a></p>
+<h1>Fork, Talk, Submit</h1><p class="subtitle">A team harness, its first RL experiment, and what the failures taught us</p>
+<p class="dek">What does it mean for a language-model agent to become a team—and can reinforcement learning teach it to cooperate? Our harness lets a shared 9B policy fork its current state, exchange evidence, inspect and adopt peer work, and deliver one final artifact. I first explain those mechanics, then examine our first team-training experiment: whole-episode outcome and cost rewards, with an attempted score-blind LLM judge for collaboration quality. The checkpoint read did not establish a team gain, and judge feedback rarely reached the update. Trace analysis exposed a more concrete gap: teams could find a better program yet lose it through exhausted testing budgets, weak artifact boundaries and final selection. Those findings motivate a revised harness and reward, whose learning benefit remains to be tested.</p>
+<div class="meta-row"><span>Policy · Shared 9B checkpoint</span><span>Actions · Fork · Message · Inspect · Adopt · Submit</span><span>Training · Whole-team RL + guarded judge feedback</span><span>Evidence snapshot · October 23, 2026</span></div>
+<div class="findings"><span class="lbl">From harness to experiment</span><ol>
+<li><a href="#fork"><strong>Fork the current state.</strong></a> A child inherits context and working files, then takes a separate path.</li>
+<li><a href="#communication"><strong>Move evidence while work is still running.</strong></a> Messages, a whiteboard and peer inspection let findings change teammates’ next decisions.</li>
+<li><a href="#submission"><strong>Deliver one exact artifact.</strong></a> Team submission connects distributed exploration to a concrete result and a shared learning signal.</li>
+<li><a href="#reward"><strong>Judge feedback must reach learning.</strong></a> The attempted semantic signal affected few training groups.</li>
+<li><a href="#results"><strong>The first results did not establish a team gain.</strong></a> The traces explain why preserving and selecting improvements became the next target.</li>
+</ol></div>
+<div class="status"><span class="lbl">Experiment snapshot · preliminary findings</span><p>The original pilot, judge continuation and later redesign are kept separate. This lane overlapped with Part 5’s one-shot judge experiment.</p></div>
+</div></header><hr class="sec"><section id="harness"><div class="sec-head"><p class="eyebrow">01 · The organising idea</p><h2>Let a finding change the rest of the computation</h2></div><div class="wrap">
+<p>Several agents answering the same question do not automatically form a cooperating team. Independent sampling can produce several completed solutions and select the best afterward. I wanted to study a different possibility: a useful discovery in one branch could change what the other branches do while they are still working.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 1 · A team can change work that is still in progress</div>
+<div class="harness-lane"><h3>Independent attempts</h3><div class="state-list"><span>Start several solvers</span><i>→</i><span>Finish separately</span><i>→</i><span>Select at the end</span></div><p>A discovery in one attempt cannot redirect another while it is running.</p></div>
+<div class="harness-lane"><h3>Our collective harness</h3><div class="state-list"><span>Work</span><i>→</i><span>Fork a branch</span><i>→</i><span>Exchange evidence</span><i>→</i><span>Inspect / adopt / continue</span><i>→</i><span>Submit together</span></div><p>Agents can change one another’s next decisions before the episode is over.</p></div>
+<figcaption><b>Conceptual comparison.</b> Both approaches spend test-time compute. The hypothesis is that a learned policy can allocate and connect that work more effectively. Communication supplies an opportunity for useful propagation; it also creates opportunities for duplicated work and shared mistakes.</figcaption></figure></div><div class="wrap">
+<p>The harness therefore exposes collaboration as actions available during the episode. An agent can continue alone, fork another agent, send a finding, inspect a peer’s work and choose what to integrate. There is a starting agent, which I call the root, but no separately trained manager or permanent cast of experts. Every agent uses the same checkpoint and can make collaboration decisions within the configured limits.</p>
+<h3>Analysis · The object being learned is a sequence of decisions</h3>
+<p>The interesting question is not how much the agents talk. It is whether the right information reaches the right branch early enough to improve what happens next. An incorrect claim can redirect the whole team just as easily as a useful discovery. The harness supplies communication and integration opportunities; training must learn when they are worth using.</p>
+</div></section><hr class="sec"><section id="fork"><div class="sec-head"><p class="eyebrow">02 · Creating a branch</p><h2>A fork begins from where the parent is now</h2></div><div class="wrap">
+<p>A fork starts another instance of the policy from the caller’s current conversation and a copy of its working files. The caller also supplies a task message: what the new agent should investigate. This lets the child begin with the existing problem context, failed attempts and draft implementation, rather than receiving only a short description of the original task.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 2 · A fork copies a state, then creates two futures</div>
+<div class="process-row"><strong>Conversation</strong><p>The parent’s current conversation at the fork point: task context, prior interaction and tool feedback available in that state.</p></div>
+<div class="process-row"><strong>Working files</strong><p>A copy of the parent’s current working tree, including uncommitted changes.</p></div>
+<div class="process-row"><strong>Assignment</strong><p>A new task message specifying what the child should investigate.</p></div>
+<div class="process-row"><strong>After the fork</strong><p>Parent and child continue concurrently with the same model and tools, separate conversations and separate working trees.</p></div>
+<figcaption><b>Mechanism illustration, not an observed episode.</b> “Current conversation” means the state retained at that point, including any earlier compaction; it does not resurrect discarded history. A child can fork again within the configured team limits. Separate working directories in the original harness were not a permission barrier against writing a peer’s files.</figcaption></figure></div><div class="wrap">
+<p>After the copy, the two agents have separate conversations and working trees. The parent can keep improving its candidate while the child explores an alternative or checks an assumption. Either can fork again if capacity allows. The root is the starting point of this changing graph, not a special model with privileged reasoning ability.</p>
+<p>A fork does not merge its eventual work back automatically. The parent receives the child’s first final reply as a message, but a report and a code change are different objects. Someone must inspect the result and decide whether to use it.</p>
+<h3>Analysis · Inherited context buys continuity, not diversity</h3>
+<p>Copying the state saves repeated explanation, but also copies assumptions. Two agents can share the same mistaken premise or reproduce the same approach. A useful assignment should create a meaningful difference in work: verify an invariant, try a different neighbourhood, investigate a bottleneck. Fork count alone says little about how much independent information the team gained.</p>
+<p>The original working directories also provided a weaker boundary than their names suggested. A child had its own branch but could still write another agent’s files. The redesign makes the root’s files read-only to children and provides explicit adoption. That turns an accidental overwrite into a deliberate integration decision.</p>
+</div></section><hr class="sec"><section id="communication"><div class="sec-head"><p class="eyebrow">03 · Moving information</p><h2>A message arrives at the next decision</h2></div><div class="wrap">
+<p>Agents can address one peer, a named group or all other eligible agents. Delivery is asynchronous. The recipient finishes its current tool work, then sees pending messages at its next turn boundary. The sender can continue instead of waiting for a synchronous conversation.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 3 · Sending, receiving and using a message are different events</div>
+<div class="state-list"><span>Agent B sends a finding</span><i>→</i><span>Message enters A’s inbox</span><i>→</i><span>A reaches its next turn boundary</span><i>→</i><span>A sees the message</span><i>→</i><span>A chooses a response</span></div>
+<div class="scroll"><table class="ledger channel-table"><caption>Three ways information can move</caption><thead><tr><th>Channel</th><th>What it provides</th><th>What the recipient still decides</th></tr></thead><tbody>
+<tr><td>Direct, group or broadcast message</td><td>A report delivered to the addressed recipients at their next step.</td><td>Verify it, act on it, ask a question or ignore it.</td></tr>
+<tr><td>Shared whiteboard</td><td>An append-only record that teammates can read later.</td><td>Read the relevant entries and reconcile them with local evidence.</td></tr>
+<tr><td>Peer inspection</td><td>Bounded search or recent excerpts of recorded actions, tool results and visible replies.</td><td>Inspect the underlying work rather than rely only on a summary.</td></tr>
+</tbody></table></div>
+<figcaption><b>Asynchronous communication.</b> Delivery occurs between turns, after the recipient’s current tool work. A directed message can resume an idle agent while the episode is open and capacity permits. Peer inspection does not expose hidden reasoning. A sent message is not proof of delivery, adoption or benefit.</figcaption></figure></div><div class="wrap">
+<p>This timing matters. Sending a warning does not interrupt code already being executed. A direct message can wake an idle agent while the team remains active and a slot is available; it cannot revive an episode that has already ended. The child’s first final reply is also sent back to its parent, so completing a branch produces a natural handoff.</p>
+<p>The shared whiteboard serves a different purpose. Entries are append-only, and agents receive notice of unread material that they can choose to read. A broadcast addresses current recipients; a board entry remains available for later inspection. Neither creates a single shared mind: each agent still decides what to read, trust and retain in its own context.</p>
+<p>Peer search and recent-action views let an agent inspect recorded work behind a summary: tool calls, tool results and visible replies. They do not expose a peer’s hidden reasoning. This is useful when a message says “the fix works” but the recipient needs to see what was actually changed or tested.</p>
+<h3>Analysis · A report should carry evidence that another branch can use</h3>
+<p>A useful handoff identifies the candidate, the checks performed and the limits of the claim. “I found a better method” leaves the recipient to reconstruct everything. A specific artifact plus a reproducible check gives the recipient something to verify and adopt. In the traces, I distinguish a message being sent, being delivered and being followed by a relevant action; those are separate links in the proposed benefit.</p>
+</div></section><hr class="sec"><section id="integration"><div class="sec-head"><p class="eyebrow">04 · Turning a finding into work</p><h2>A message does not merge code</h2></div><div class="wrap">
+<p>Communication changes what an agent knows. Integration changes the program it will deliver. The original harness let agents inspect files and branches, commit their own work and merge peer changes. It did not automatically combine every child’s output or decide which branch was better.</p>
+<p>The revised harness makes that choice more explicit. A child develops a candidate in its own writable workspace; another agent can adopt exact bytes, including a candidate identified by its graded version. Isolation protects the current solution, while adoption provides the route for useful work to enter it.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 4 · Follow one finding through the revised harness</div><p class="reading-note">Illustrative walkthrough · no scores or experimental outcomes are simulated.</p><div class="walk-controls" role="group" aria-label="Walkthrough stage"><button type="button" data-step="0" aria-pressed="true">1 · Fork</button><button type="button" data-step="1" aria-pressed="false">2 · Message</button><button type="button" data-step="2" aria-pressed="false">3 · Adopt</button><button type="button" data-step="3" aria-pressed="false">4 · Propose</button><button type="button" data-step="4" aria-pressed="false">5 · Finalize</button></div>
+<div id="walk-view" aria-live="polite"><div class="walk-agents"><div class="walk-agent"><strong>Agent A</strong><p id="walk-a"></p></div><div class="walk-agent"><strong>Agent B</strong><p id="walk-b"></p></div></div><p class="walk-record" id="walk-record"></p><p class="walk-reading" id="walk-reading"></p></div>
+<noscript><p>A forks B; B tests and reports a candidate; A inspects and adopts it; a graded version is proposed, reviewed and finalized for the team.</p></noscript>
+<figcaption><b>The harness connects five decisions.</b> Creating a branch, communicating evidence, adopting code, choosing an artifact and ending the episode are distinct actions. The same shared policy makes them; the host enforces the allowed transitions.</figcaption></figure></div><div class="wrap">
+<h3>Analysis · Preserve the connection between evidence and artifact</h3>
+<p>A score belongs to the program that was tested. If code changes afterward, the old score does not certify the new version. A content hash is simply a fingerprint of the exact bytes: it makes “use the tested program” precise. It does not prove correctness or make a test representative, but it prevents a mutable filename from silently changing the object under discussion.</p>
+<p>The walkthrough is illustrative. It shows one sensible path through the revised harness, not a required script for every episode. The policy can reject a suggestion, keep working independently or decide that another branch is not worth creating.</p>
+</div></section><hr class="sec"><section id="submission"><div class="sec-head"><p class="eyebrow">05 · Ending together</p><h2>One team submits one concrete result</h2></div><div class="wrap">
+<p>Testing a candidate and finishing the team are different actions. An online grading call returns feedback and consumes testing opportunity. Team submission chooses what the whole episode will deliver.</p>
+<p>In the original pilot, any agent could call <code>team_submit</code>. The harness took a snapshot of that agent’s current working tree, including uncommitted changes, stopped work across the team and used that snapshot as the final artifact. It did not require a majority vote or automatically select the highest earlier grade. If no agent submitted, the original fallback used the root’s files.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 5 · Two versions of “submit as a team”</div>
+<div class="harness-lane"><h3>Original pilot: one agent ends the episode</h3><div class="state-list"><span>Any agent calls team_submit</span><i>→</i><span>Snapshot its current files</span><i>→</i><span>Stop the team</span><i>→</i><span>Grade that artifact</span></div><p>No automatic vote or best-candidate selection was required. If nobody submitted, the original fallback used the starting agent’s working tree.</p></div>
+<div class="harness-lane"><h3>Revised protocol: select an exact graded version</h3><div class="state-list"><span>Grade a candidate</span><i>→</i><span>Propose its content hash</span><i>→</i><span>Acknowledge or object</span><i>→</i><span>Resolve the choice</span><i>→</i><span>Finalize exact bytes</span></div><p>Peer review is tied to a specific artifact and verified feedback. Explicit rules handle no-peer cases, deadlines and missing proposals.</p></div>
+<figcaption><b>Keep the versions separate.</b> The first team-training results used the original submission behavior. Graded proposals and stronger artifact protection belong to the redesign. Agreement is an artifact-selection rule, not a proof that the algorithm is correct or that it generalizes.</figcaption></figure></div><div class="wrap">
+<p>The revised protocol starts with a graded proposal. An agent cites a real candidate’s content hash and verified online feedback. An eligible peer can acknowledge that specific proposal or object with a different graded artifact whose score is at least as good. A qualifying unresolved objection blocks the affected proposal; it is not a vague veto over every possible submission.</p>
+<p>Review attaches to the named version. Editing a working file after an acknowledgment does not change the bytes that acknowledgment referred to. The host checks the identity and grading record, resolves the eligible choice and installs the selected bytes as the final artifact for everyone.</p>
+<p>A team can also end without a living peer available to acknowledge. Hard deadlines can arrive before agents finish their conversation. The protocol therefore includes no-living-peer and deadline routes, plus a graded-artifact fallback when a valid proposal was not completed. Normal stopping is guarded so that silently abandoning the proposal process is not the easy path. A rescued fallback can still receive a protocol-related charge.</p>
+<h3>Analysis · Peer agreement and outcome quality answer different questions</h3>
+<p>The protocol establishes what was proposed, what evidence supported it and which artifact was selected. It does not establish that the program is the best possible solver. In the redesign, agents see online scores on public cases while hidden cases determine the final outcome. A strong public grade remains evidence for the choice, not advance knowledge of its hidden performance.</p>
+<p>Automatic fallback is also a real intervention. If it preserves a good program that the agents would have lost, that improves the system. To claim learned cooperation, I still need controls that receive the same preservation and submission safeguards.</p>
+</div></section><hr class="sec"><section id="learning"><div class="sec-head"><p class="eyebrow">06 · The training experiment</p><h2>Train the whole episode, including its decisions</h2></div><div class="wrap">
+<p>The action space above made collaboration possible. The next question was whether reinforcement learning could teach the shared policy to use it well. The first experiment trained the original pilot harness: any agent could submit its current files for the whole team. The graded-proposal protocol was a later response to the failures, not a mechanism already present in those training results.</p>
+<p>I began with an already trained 9B checkpoint. All agents shared its weights, and the update used group-relative policy optimisation (GRPO) over complete team attempts. The initial training pool had 139 update-eligible tasks; six collaboration-evaluation tasks were excluded from updates. This was a FrontierSmith-centred optimisation study, not the FCS172 one-shot evaluation from Part 5.</p>
+<div class="scroll"><table class="ledger method-table"><caption>The first team-training recipe</caption><thead><tr><th>Element</th><th>What was trained or compared</th></tr></thead><tbody>
+<tr><td>One attempt</td><td>A complete episode: work, forks, messages, inspection, integration and final submission.</td></tr>
+<tr><td>One task group</td><td>Eight attempts with shuffled agent caps 1, 1, 2, 2, 4, 4, 6, 6; bounded time, tokens and grading.</td></tr>
+<tr><td>One update</td><td>Two task groups. Agent and compaction chains share their episode’s team advantage.</td></tr>
+<tr><td>Training sequence</td><td>Ten updates with outcome and costs, then ten more from that policy with a fresh optimizer and an attempted LLM-judge intervention.</td></tr>
+<tr><td>Checkpoint read</td><td>The starting, ten-update and twenty-update policies, each evaluated in solo and team modes on six held-out tasks × two seeds.</td></tr>
+</tbody></table></div>
+<p>A larger cap allowed delegation; it did not force an agent to create teammates. The first recipe offered no positive reward simply for forking, messaging, reading peers or merging branches. An efficient decision to stay solo could be the right outcome.</p>
+<h3>Analysis · Whole-team credit is a starting point, not an attribution</h3>
+<p>The group consists of repeated episodes on a task, not the agents inside one episode. A stronger team return can reinforce the sequences that produced it, but all of those sequences inherit the same team advantage. That does not identify which fork, message or adoption decision created the gain.</p>
+<p>The planned same-prefix counterfactual comparison—continue a saved state with and without a particular collaboration decision—was not part of this first recipe. Voluntary forks also happen in states selected by the policy, so forked-versus-solo outcomes are observational. Finally, the continuation’s optimizer resets and evolving judge rules make this a pilot sequence rather than a clean ablation of one reward change.</p>
+</div></section><hr class="sec"><section id="reward"><div class="sec-head"><p class="eyebrow">07 · The reward design</p><h2>Reward useful work, then audit the judge’s influence</h2></div><div class="wrap">
+<p>The base objective combined the native score of the submitted program with costs for aggregate work and estimated critical-path latency. Work includes the computation across agents and their tool use. The latency term concerns the dependency path through the episode, rather than adding parallel work as if it all ran sequentially.</p>
+<div class="eq" role="math" aria-label="Team return is the native score minus budget-normalized work and critical-path costs">R_team = Q_native
+       − λ_work · (team work / work budget)
+       − λ_path · (critical-path estimate / time budget)</div>
+<p>Q_native is the normalized verifier score; the result tables later rescale it to 0–100. The budget multipliers balance outcome quality against resource use. They are not rewards for visible activity. A longer conversation or an extra branch has to earn its cost through a better result or a more efficient route to one.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 6 · Executable outcome and semantic judgment enter at different points</div>
+<div class="harness-lane"><h3>Base return: what the team delivered and spent</h3><div class="state-list"><span>Exact final artifact</span><i>→</i><span>Native executable score</span><i>−</i><span>Work and critical-path cost terms</span><i>→</i><span>Group-relative advantages</span></div></div>
+<div class="harness-lane"><h3>Judge intervention: how credit was allocated</h3><div class="state-list"><span>Task + score-blind team traces</span><i>→</i><span>Evidence-grounded rubric</span><i>→</i><span>Agreement and host checks</span><i>→</i><span>Guarded advantage reshaping</span></div></div>
+<p class="reading-note">The executable result remains the outcome target. A judge ranking can change eligible training credit; it does not certify a new program score.</p>
+<figcaption><b>The team recipe, not Part 5’s one-shot code-judging recipe.</b> This intervention rescales eligible positive advantages and renormalizes their total; nonpositive advantages stay unchanged. Agreement failures, invalid evidence and trainer guards can leave the base advantages intact. Calling a judge and changing a policy update are separate events.</figcaption></figure></div><div class="wrap">
+<p>I then tried an LLM judge for distinctions the final score leaves implicit. The judge inspected the task and recorded team behavior without the final native score or hidden reasoning. It ranked attempts within the same task-and-budget group, with evidence references for its judgments. Peer-specific criteria were inapplicable to a genuinely solo trace, so the rubric was not supposed to reward ceremonial collaboration.</p>
+<div class="scroll"><table class="ledger channel-table"><caption>What the team rubric tried to recognize</caption><thead><tr><th>Theme</th><th>Question posed by the rubric</th></tr></thead><tbody>
+<tr><td>Exploration</td><td>Did branches pursue meaningfully distinct approaches, while allowing productive independent work?</td></tr>
+<tr><td>Information and validation</td><td>Was shared information actually used? Was there evidence before adoption, and were disagreements tested?</td></tr>
+<tr><td>Selection and discipline</td><td>Did the final choice match the available evidence? Was work productive and safe, with proportionate coordination?</td></tr>
+</tbody></table></div>
+<p>This was advantage reshaping, not a fixed scalar “collaboration bonus” added for each behavior. In the team contract, factors between 0.5 and 1 rescaled eligible positive advantages, followed by renormalization to preserve their total. Nonpositive advantages stayed unchanged. Further trainer guards could reject changes that reversed the return-based ordering. A judge preference could therefore adjust some credit without turning a negatively advantaged episode into a positively reinforced one.</p>
+<h3>Analysis · A judge signal must survive the path to learning</h3>
+<p>The early agreement rule required two shuffled presentations to return the same complete tiered order. Across updates 11–16, <strong>none of 94 judged teams</strong> received shaping. The judge’s real ranking validation had used pairs; exact agreement became much harder on eight-team training groups. A larger output allowance addressed truncation but did not resolve that disagreement.</p>
+<p>A later rule used only pairwise preferences that agreed across both presentations. That increased potential coverage in replay, but potential coverage was not the final intervention. After the trainer’s guards and fallbacks, <strong>only three of twenty task groups</strong> in the ten-update continuation actually applied judge shaping. Those two counts use different units: early teams versus task groups across the whole continuation.</p>
+<p>The evidence audit also flagged mistakes in decision grounding and causal timing. A message delivered after an edit cannot explain that earlier edit; a reported grade must belong to the selected version. Hashes and grading receipts make part of this host-checkable. The harder claim—that a message improved what would otherwise have happened—still needs a counterfactual test. More agreement can make a judgment usable without making it true.</p>
+<p>This limits the conclusion sharply. The run tests the evolving system that actually trained, but it does not isolate the effect of a strong, consistently applied LLM collaboration reward. The judge’s intended rubric, accepted feedback and measured learning influence must be reported separately.</p>
+</div></section><hr class="sec"><section id="results"><div class="sec-head"><p class="eyebrow">08 · The measured result</p><h2>The first sequence did not establish a team gain</h2></div><div class="wrap">
+<p>The checkpoint read used the same six FrontierSmith tasks held out from team updates, with two seeds per arm. These are native final scores on a 0–100 scale, not the cost-shaped return used for training. “Solo” and “team” mean evaluation modes of each checkpoint; they are not separately trained control policies.</p>
+<div class="scroll"><table class="ledger method-table"><caption>Mean final native score / 100 · six tasks × two seeds</caption><thead><tr><th>Checkpoint</th><th class="r">Solo</th><th class="r">Team</th></tr></thead><tbody>
+<tr><td>Before team RL</td><td class="r">18.06</td><td class="r">22.87</td></tr>
+<tr><td>After 10 updates</td><td class="r">14.51</td><td class="r">20.70</td></tr>
+<tr><td>After 20 updates</td><td class="r">22.56</td><td class="r">14.21</td></tr>
+</tbody></table></div>
+</div><div class="wide"><figure><div class="fig-title">Figure 7 · The first training sequence did not establish a team gain</div><div class="key"><i style="background:var(--accent)"></i>Solo evaluation</div><div class="key"><i style="background:var(--gold)"></i>Team evaluation</div><div class="plot-scroll" role="region" tabindex="0" aria-label="Chart; scroll horizontally on small screens"><svg viewBox="0 0 820 330" role="img" aria-label="Mean final score out of 100: before team RL, solo 18.06 and team 22.87; after ten updates, solo 14.51 and team 20.70; after twenty, solo 22.56 and team 14.21."><title>Mean final score out of 100: before team RL, solo 18.06 and team 22.87; after ten updates, solo 14.51 and team 20.70; after twenty, solo 22.56 and team 14.21.</title><line x1="90" x2="740" y1="270" y2="270" class="chart-rule"/><text x="72" y="274" class="chart-small" text-anchor="end">0</text><line x1="90" x2="740" y1="200" y2="200" class="chart-rule"/><text x="72" y="204" class="chart-small" text-anchor="end">10</text><line x1="90" x2="740" y1="130" y2="130" class="chart-rule"/><text x="72" y="134" class="chart-small" text-anchor="end">20</text><line x1="90" x2="740" y1="60" y2="60" class="chart-rule"/><text x="72" y="64" class="chart-small" text-anchor="end">30</text><polyline points="155,143.6073 410,168.46429999999998 665,112.0856" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="155" cy="143.6073" r="6" fill="var(--accent)"/><text x="155" y="166.6073" text-anchor="middle" class="chart-value">18.06</text><circle cx="410" cy="168.46429999999998" r="6" fill="var(--accent)"/><text x="410" y="191.46429999999998" text-anchor="middle" class="chart-value">14.51</text><circle cx="665" cy="112.0856" r="6" fill="var(--accent)"/><text x="665" y="96.0856" text-anchor="middle" class="chart-value">22.56</text><polyline points="155,109.93450000000001 410,125.12450000000001 665,170.55450000000002" fill="none" stroke="var(--gold)" stroke-width="2.5"/><circle cx="155" cy="109.93450000000001" r="6" fill="var(--gold)"/><text x="155" y="93.93450000000001" text-anchor="middle" class="chart-value">22.87</text><circle cx="410" cy="125.12450000000001" r="6" fill="var(--gold)"/><text x="410" y="109.12450000000001" text-anchor="middle" class="chart-value">20.70</text><circle cx="665" cy="170.55450000000002" r="6" fill="var(--gold)"/><text x="665" y="193.55450000000002" text-anchor="middle" class="chart-value">14.21</text><text x="155" y="305" text-anchor="middle" class="chart-label">Before team RL</text><text x="410" y="305" text-anchor="middle" class="chart-label">After 10 updates</text><text x="665" y="305" text-anchor="middle" class="chart-label">After 20 updates</text><text x="90" y="32" class="chart-label">Mean final native score / 100</text></svg></div><figcaption><b>Six held-out FrontierSmith tasks × two seeds per arm and checkpoint.</b> These are final native scores, not the cost-shaped training reward. At the later checkpoint, team minus solo was −8.35 points, with a saved 95% task-cluster bootstrap interval [−14.8, −0.9]. Team change from the starting checkpoint was −8.66 [−24.1, +1.2]. The continuation changed optimizer and rubric conditions. This small pilot is not a controlled estimate of the effect of team training or a fully normalized compute comparison.</figcaption></figure></div><div class="wrap">
+<p>At the later checkpoint, team minus solo was <strong>−8.35 points [−14.8, −0.9]</strong>. The team’s change from its starting checkpoint was −8.66 [−24.1, +1.2]. The saved 95% intervals bootstrap task-level means, retaining the two seeds within each task. Six clusters still provide limited uncertainty estimates.</p>
+<h3>Analysis · A lower team score is a result, not a complete explanation</h3>
+<p>This small read does not establish the collaboration gain I wanted. It also does not establish a general limit on agent teams or a causal penalty from adding the judge. The training sequence changed optimizer and judging conditions, and the semantic intervention reached few groups. The solo read improved at the later checkpoint while the team read fell, which makes the team’s execution and final-selection behavior worth inspecting directly.</p>
+<p>Nor does sharing a nominal episode budget establish equal compute. The modes can consume different context, communication and testing work. These are descriptive checkpoint comparisons. A claim about efficient learned cooperation needs a separately trained solo control, matched opportunities and actual work accounting.</p>
+</div></section><hr class="sec"><section id="findings"><div class="sec-head"><p class="eyebrow">09 · What the traces revealed</p><h2>Discovery, preservation and selection failed separately</h2></div><div class="wrap">
+<p>The most revealing episode had already tested a much better program than the one it delivered. Its saved online history repeatedly exceeded 72 out of 100 and reached 73.21. The final submitted artifact scored 0.86, consistent with its last online grade. A final score alone would hide the fact that useful work had already occurred.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 8 · The team found a better answer, then lost it</div><div class="key"><i style="background:var(--accent)"></i>Recorded online grade</div><div class="key"><i style="background:var(--gold)"></i>Best grade seen so far</div><div class="plot-scroll" role="region" tabindex="0" aria-label="Chart; scroll horizontally on small screens"><svg viewBox="0 0 820 370" role="img" aria-label="One team’s eleven recorded online grades: 72.04, 73.206, 72.04, 73.206, 72.04, 72.04, 72.04, 72.04, 44.406, 72.04, 0.856. The final submitted artifact scored 0.8558276 out of 100."><title>One team’s eleven recorded online grades: 72.04, 73.206, 72.04, 73.206, 72.04, 72.04, 72.04, 72.04, 44.406, 72.04, 0.856. The final submitted artifact scored 0.8558276 out of 100.</title><line x1="65" x2="745" y1="290.0" y2="290.0" class="chart-rule"/><text x="51" y="294.0" text-anchor="end" class="chart-small">0</text><line x1="65" x2="745" y1="232.0" y2="232.0" class="chart-rule"/><text x="51" y="236.0" text-anchor="end" class="chart-small">20</text><line x1="65" x2="745" y1="174.0" y2="174.0" class="chart-rule"/><text x="51" y="178.0" text-anchor="end" class="chart-small">40</text><line x1="65" x2="745" y1="116.0" y2="116.0" class="chart-rule"/><text x="51" y="120.0" text-anchor="end" class="chart-small">60</text><line x1="65" x2="745" y1="58.0" y2="58.0" class="chart-rule"/><text x="51" y="62.0" text-anchor="end" class="chart-small">80</text><text x="65" y="32" class="chart-label">Native score / 100</text><polyline points="65,81.08 133,77.70 201,77.70 269,77.70 337,77.70 405,77.70 473,77.70 541,77.70 609,77.70 677,77.70 745,77.70" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-dasharray="6 5"/><polyline points="65,81.08 133,77.70 201,81.08 269,77.70 337,81.08 405,81.08 473,81.08 541,81.08 609,161.22 677,81.08 745,287.52" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="65" cy="81.08" r="4" fill="var(--accent)"/><text x="65" y="314" text-anchor="middle" class="chart-small">1</text><circle cx="133" cy="77.70" r="4" fill="var(--accent)"/><text x="133" y="314" text-anchor="middle" class="chart-small">2</text><circle cx="201" cy="81.08" r="4" fill="var(--accent)"/><text x="201" y="314" text-anchor="middle" class="chart-small">3</text><circle cx="269" cy="77.70" r="4" fill="var(--accent)"/><text x="269" y="314" text-anchor="middle" class="chart-small">4</text><circle cx="337" cy="81.08" r="4" fill="var(--accent)"/><text x="337" y="314" text-anchor="middle" class="chart-small">5</text><circle cx="405" cy="81.08" r="4" fill="var(--accent)"/><text x="405" y="314" text-anchor="middle" class="chart-small">6</text><circle cx="473" cy="81.08" r="4" fill="var(--accent)"/><text x="473" y="314" text-anchor="middle" class="chart-small">7</text><circle cx="541" cy="81.08" r="4" fill="var(--accent)"/><text x="541" y="314" text-anchor="middle" class="chart-small">8</text><circle cx="609" cy="161.22" r="4" fill="var(--accent)"/><text x="609" y="314" text-anchor="middle" class="chart-small">9</text><circle cx="677" cy="81.08" r="4" fill="var(--accent)"/><text x="677" y="314" text-anchor="middle" class="chart-small">10</text><circle cx="745" cy="287.52" r="4" fill="var(--accent)"/><text x="745" y="314" text-anchor="middle" class="chart-small">11</text><line id="replay-cursor" x1="745" x2="745" y1="52" y2="294" stroke="var(--ink-soft)" stroke-dasharray="3 4"/><circle id="replay-dot" cx="745" cy="287.52" r="7" fill="var(--bg)" stroke="var(--accent)" stroke-width="3"/><text x="205" y="61" class="chart-value">Best recorded: 73.21</text><text x="573" y="270" class="chart-value">Final: 0.86</text><text x="405" y="350" text-anchor="middle" class="chart-label">Online admission order</text></svg></div>
+<label class="replay-control" for="replay-step">Inspect the history <input id="replay-step" type="range" min="1" max="11" step="1" value="11"><output id="replay-step-value" for="replay-step">Admission 11 / 11</output></label>
+<p class="replay-readout" id="replay-readout" aria-live="polite">Online: 0.86 · Best seen: 73.21 · Gap: 72.35 points</p>
+<noscript><p class="reading-note">The last online grade was 0.856/100, compared with an earlier best of 73.206/100.</p></noscript>
+<figcaption><b>Saved grade history from one held-out team episode at the later checkpoint.</b> The final-result record binds the selected artifact to a score of 0.8558276/100. The slider inspects the recorded sequence; it does not generate new results. Admission order is not a reconstruction of every edit or fork. A grade ledger shows that a better program existed; preserving its bytes is a separate obligation.</figcaption></figure></div><div class="wrap">
+<h3>Finding · A branch can have time left but no way to test</h3>
+<p>The mechanics audit covered 296 episodes, including 71 forked teams and 86 forks. Forty-one forks began after all eleven shared online admissions were exhausted. The median fork was only about 17% into the wall budget. “Late delegation” here often meant late relative to testing opportunity, not late relative to the deadline.</p>
+</div><div class="wide"><figure><div class="fig-title">Figure 9 · Testing and preservation limited the value of a fork</div>
+<div class="metric-row"><span class="fraction">41 / 86 forks</span><p>Started after the shared online-testing quota was exhausted.</p></div>
+<div class="metric-row"><span class="fraction">49 / 71 teams</span><p>Had a child’s grading request denied by that quota.</p></div>
+<div class="metric-row"><span class="fraction">48 / 71 teams</span><p>Had a child write the root’s shared file.</p></div>
+<div class="metric-row"><span class="fraction">7 / 71 teams</span><p>Produced a graded child artifact better than the root’s best.</p></div>
+<div class="metric-row"><span class="fraction">2 / 71 teams</span><p>Carried such a child improvement into the final artifact.</p></div>
+<figcaption><b>Retrospective mechanics audit: 296 episodes, 71 forked teams and 86 forks.</b> Rows use different units and can overlap; they are not one sequential funnel. The audit joins recorded actions, artifact lineage and grades. Lineage and failure interpretations remain retrospective annotations, not randomized interventions. A write to the shared root is not, by itself, proof that the write hurt performance.</figcaption></figure></div><div class="wrap">
+<p>That matters for the reward interpretation. If a child cannot validate its idea, or its experiment silently replaces the current solution, forking can have poor returns even when an alternative approach has headroom. Reserved tests and protected workspaces make a more meaningful cooperation experiment possible. They do not guarantee a better idea or a successful merge, and a shared write is not by itself proof of harm.</p>
+<h3>Finding · The submitter often already held the better program</h3>
+<p>A separate selection audit found loss in <strong>151 of 381 comparable candidate episodes</strong>. In every such case, a different, higher-graded artifact had existed before selection. The submitter itself had held a better artifact in 142 cases. A peer had held one in 17, with eight overlapping cases. This broader cohort includes independent-arm candidates counted separately; it is not the mechanics audit’s 296-episode population.</p>
+<p>A peer can still challenge a bad choice or remind the submitter of an earlier result. But these counts weaken the explanation that better knowledge was mainly trapped in another agent. More communication is incomplete without artifact memory and a reliable final choice.</p>
+<h3>Analysis · Headroom does not guarantee cooperation, and rescue is not learning</h3>
+<p>The retrospective within-task best-of-k uplift over the mean was about 12–15 score points across the audited training cohorts. That suggests there were better complete attempts to discover. It does not prove that an agent could decompose the task, recognize a useful partial result or combine branches within the same budget.</p>
+<p>In the original setup, online and final used the same evaluator. All 95 checked exact-hash online/final pairs agreed. Preserving and selecting the strongest verified artifact was therefore an important automatic baseline. If a fallback recovers that lost score, the system improves—but the improvement cannot be credited to learned communication without a comparison that receives the same safeguard.</p>
+<p>The selection metric also needs a guard: an episode that never grades anything has no witnessed best to lose. The audit found 33 such episodes among 416 candidates. Missing evidence must not become a cheap way to report zero regret. These observations led to a revised submission-and-reward design rather than a bonus for more forks or more agreement.</p>
+</div></section><hr class="sec"><section id="next"><div class="sec-head"><p class="eyebrow">10 · What changes next</p><h2>Repair the opportunities, then test learned use of them</h2></div><div class="wrap">
+<p>The revised experiment connects the harness repairs to a new training target: reserved child tests, protected branches, explicit adoption and graded proposals, with public online cases separated from hidden final cases. The solo control receives the same submission safeguards and the maximum test entitlement of its paired team cap. Actual usage still has to be measured.</p>
+<p>It also adds a small decision-regret term. The selected program’s public score is compared with the best public score already observed; the implemented coefficient is 0.1. The earlier diagnosis’s suggested 0.25 was not the final recipe. Hidden performance remains the outcome target.</p>
+<div class="eq" role="math" aria-label="Public selection regret is the positive difference between the best observed public score and the selected artifact's public score">Public selection regret = max(0,
+    best observed public score − selected program’s public score)</div>
+<p>Using public scores for this component keeps selection loss separate from the public-to-hidden generalization gap. A separate group-based guard handles no-grade or no-valid-proposal endings. A fallback can rescue the delivered artifact while that guard still charges the episode for failing to complete the protocol; this is intentional process shaping, not pure selection regret. The team LLM rubric is demoted to a diagnostic in this redesigned experiment.</p>
+<h3>Analysis · Mechanical success establishes a path, not the learning result</h3>
+<p>The redesign has bounded checks. Eight episodes exercised public online and hidden final grading with exact final-artifact bindings; six accepted proposals cited printed hashes without failed proposal calls. A scaled local check completed one optimizer update per arm, checkpoint export and a team-checkpoint reload. Some protocol paths remained unexercised, and the local training check did not qualify the full rollout/training probability-parity gate.</p>
+<p>Those checks show that specific paths work. They do not show that the revised reward improves cooperation. The next discriminating comparison is matched solo and team training from the same initialization and task split, plus a team baseline with automatic preservation but no newly learned coordination. I want final hidden scores and actual cost, alongside useful child improvements reaching the final artifact, selection loss and no-grade endings.</p>
+<p>The harness defines what agents can do. The reward defines which episodes receive credit. The traces reveal whether either one supports the behavior we meant to teach. Our first attempt did not establish a team gain; it made the next question more precise: can training learn useful propagation and selection once tested improvements can survive long enough to be chosen?</p>
+</div></section></main><footer><div class="wrap"><p class="eyebrow">Notes</p><h2>Scope and sources</h2>
+<p>The fork, messaging, whiteboard and original team-submit mechanics are grounded in the team runtime and worktree source. Graded proposals, stronger protection and public/hidden judging belong to the later redesign, described from saved implementation and verification reports. The evidence snapshot remains October 23, 2026, approximately 14:10 Pacific. No new training or grading was run to author this revision.</p>
+<p>The same policy makes work, delegation, communication and selection decisions. The starting agent is called the root; it is not a separately trained manager. Original directories separated working copies but did not enforce write isolation. Peer inspection exposes recorded actions and visible results, not hidden reasoning. The illustrative walkthrough is not an observed trajectory.</p>
+<p>The ten-update pilot and ten-update continuation used the original submission behavior. The continuation restarted the optimizer and changed its judge rules. The later graded-proposal and public/hidden recipe is a separate intervention. The two retrospective audit cohorts differ, and their episode counts must not be combined. All reported scores and intervals come from saved readouts.</p>
+<p>Related framing: <a href="https://arxiv.org/abs/2503.13657v3">Why Do Multi-Agent LLM Systems Fail?</a> distinguishes design, alignment and verification failures; <a href="https://arxiv.org/abs/2512.08296v3">Towards a Science of Scaling Agent Systems</a> studies coordination and task–architecture fit. Neither validates this local recipe.</p>
+<div class="foot-links"><a href="../">Part 1 · The Harness Is Part of the Model</a><a href="../part-2/">Part 2 · The Wall, the Compile Tax, and the Oracle</a><a href="../part-3/">Part 3 · Climbing From Zero Without a Teacher</a><a href="../part-4/">Part 4 · Borrowing a Foothold</a><a href="../part-5/">Part 5 · When the Reward Misses the Algorithm</a></div>
+<p class="reading-note">Fork, Talk, Submit. Collective intelligence, part 6: a snapshot of work through October 23, 2026.</p></div></footer><script>
+(function(){
+ const root=document.documentElement,tgl=document.getElementById('tgl');
+ try{const t=localStorage.getItem('ci-theme');if(t==='dark'||t==='light')root.dataset.theme=t}catch(e){}
+ tgl.addEventListener('click',()=>{const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('ci-theme',root.dataset.theme)}catch(e){}});
+ const stages=[{"label": "1 \u00b7 Fork", "a": "Continues the current approach.", "b": "Starts a complementary investigation from the copied state.", "record": "Two conversations and two working trees; one shared episode.", "text": "Illustrative assignment: \u201cTry a different improvement move and check that feasibility is preserved.\u201d The example is a conceptual walkthrough, not a recorded rollout."}, {"label": "2 \u00b7 Message", "a": "Receives B\u2019s report at its next turn boundary.", "b": "Reports the candidate, checks performed and remaining uncertainty.", "record": "Evidence travels; candidate files remain on B\u2019s branch.", "text": "The report can redirect A\u2019s next computation. It does not itself copy code, prove the claim or end the episode."}, {"label": "3 \u00b7 Adopt", "a": "Inspects B\u2019s candidate and deliberately adopts the chosen bytes.", "b": "Keeps the tested candidate available for review.", "record": "A\u2019s working candidate now includes the selected work.", "text": "This is the integration decision. The original harness allowed agents to inspect and merge peer work; the redesign adds protected branches and an explicit adoption operation."}, {"label": "4 \u00b7 Propose", "a": "Proposes a graded artifact identified as h_B.", "b": "Reviews that exact version and acknowledges it, or cites an alternative in an objection.", "record": "Review binds h_B; later edits create a different candidate.", "text": "h_B is an illustrative content identifier. A real proposal cites host-verified artifact identity and online feedback. An unresolved qualifying objection blocks that proposal."}, {"label": "5 \u00b7 Finalize", "a": "The selected bytes become the team\u2019s final artifact.", "b": "Stops with the rest of the team.", "record": "One final submission, one team outcome.", "text": "This depicts the revised acknowledged-proposal route. The protocol also needs no-living-peer and deadline routes. The final outcome can use hidden cases, so the best online score is still only evidence."}],buttons=[...document.querySelectorAll('[data-step]')];
+ function stage(i){const s=stages[i];buttons.forEach((b,n)=>b.setAttribute('aria-pressed',n===i?'true':'false'));document.getElementById('walk-a').textContent=s.a;document.getElementById('walk-b').textContent=s.b;document.getElementById('walk-record').textContent=s.record;document.getElementById('walk-reading').textContent=s.text}
+ buttons.forEach((b,i)=>b.addEventListener('click',()=>stage(i)));stage(0);
+ const grades=[72.04, 73.206, 72.04, 73.206, 72.04, 72.04, 72.04, 72.04, 44.406, 72.04, 0.856],slider=document.getElementById('replay-step');
+ function replay(){const i=Number(slider.value)-1,v=grades[i],best=Math.max(...grades.slice(0,i+1)),x=65+i*68,y=290-v*2.9;document.getElementById('replay-step-value').textContent='Admission '+(i+1)+' / 11';document.getElementById('replay-readout').textContent='Online: '+v.toFixed(2)+' · Best seen: '+best.toFixed(2)+' · Gap: '+(best-v).toFixed(2)+' points';const c=document.getElementById('replay-cursor');c.setAttribute('x1',x);c.setAttribute('x2',x);const d=document.getElementById('replay-dot');d.setAttribute('cx',x);d.setAttribute('cy',y)}
+ slider.addEventListener('input',replay);replay();
+ const links=[...document.querySelectorAll('.toc a')];if('IntersectionObserver' in window){const ob=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('on',a.hash==='#'+e.target.id))})},{rootMargin:'-8% 0px -65% 0px'});document.querySelectorAll('main section').forEach(s=>ob.observe(s))}
+})();
+</script></body></html>
