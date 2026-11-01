@@ -22,3 +22,5 @@ The page is a single static file in [`docs/index.html`](docs/index.html), served
 - [Part 4 · Borrowing a Foothold: Distilling Simulated Annealing into a 9B Agent](https://macoredroid.github.io/collective-intelligence/part-4/)
 - [Part 5 · When the Reward Misses the Algorithm](https://macoredroid.github.io/collective-intelligence/part-5/)
 - [Part 6 · Fork, Talk, Submit](https://macoredroid.github.io/collective-intelligence/part-6/)
+- [Part 7 · The Distance to a Teacher](https://macoredroid.github.io/collective-intelligence/part-7/)
+- [Part 8 · One Harness, Six Ways to Work](https://macoredroid.github.io/collective-intelligence/part-8/)

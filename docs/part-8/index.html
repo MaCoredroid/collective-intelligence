@@ -1,0 +1,1420 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>One Harness, Six Ways to Work</title><meta name="description" content="The final team-harness prompt and tools, six models with different collaboration behavior, and a shared-credit audit for whole-team reinforcement learning."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-8/"><meta property="og:type" content="article"><meta property="og:site_name" content="Collective Intelligence, Part 8"><meta property="og:title" content="One Harness, Six Ways to Work"><meta property="og:description" content="The final team-harness prompt and tools, six models with different collaboration behavior, and a shared-credit audit for whole-team reinforcement learning."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-8/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="One Harness, Six Ways to Work"><meta name="twitter:description" content="The final team-harness prompt and tools, six models with different collaboration behavior, and a shared-credit audit for whole-team reinforcement learning."><style>
+:root{--bg:#f7f8f9;--surface:#fff;--surface-2:#edf0f3;--ink:#1a1c1f;--ink-soft:#414b56;--muted:#626d79;--rule:#d5dae0;--accent:#3a5f8a;--gold:#8a611c;--pos:#397052;--neg:#ad5140;--serif:Georgia,"Iowan Old Style",Charter,serif;--sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
+:root[data-theme=dark]{--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}}
+*{box-sizing:border-box}html{scroll-behavior:auto;scroll-padding-top:2rem}body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.65 var(--serif);-webkit-font-smoothing:antialiased}p{color:var(--ink-soft);margin:1.05em 0;text-wrap:pretty}h1,h2,h3{text-wrap:balance;line-height:1.15}h1{font-size:clamp(2.3rem,5.4vw,3.65rem);letter-spacing:-.025em;font-weight:600;margin:.8rem 0 1.2rem}h2{font-size:clamp(1.65rem,3.5vw,2.3rem);font-weight:600;letter-spacing:-.015em;margin:0 0 1.4rem}h3{font-size:1.14rem;margin:0 0 .6rem}a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:4px}a:hover{text-decoration-style:dotted}.prose{max-width:45rem;margin:auto;padding:0 1.5rem}.wide{max-width:68rem;margin:auto;padding:0 1.5rem}header{padding:4.6rem 0 1rem}.series{font:12px/1.7 var(--mono);color:var(--muted);letter-spacing:.07em}.subtitle{font-size:1.2rem;color:var(--accent);margin:0 0 1.8rem}.deck{font-size:1.22rem;line-height:1.55}.publication{font:13px/1.65 var(--sans);color:var(--muted);padding:.8rem 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:1.8rem 0}.contents{display:flex;gap:.45rem 1rem;flex-wrap:wrap;font:13px/1.7 var(--sans);margin:1.6rem 0 0}.theme{position:fixed;right:1rem;top:1rem;z-index:10;background:var(--surface);border:1px solid var(--rule);color:var(--ink-soft);border-radius:20px;padding:.4rem .8rem;font:12px var(--mono);cursor:pointer}.skip{position:fixed;left:1rem;top:-5rem;z-index:20;background:var(--surface);padding:.7rem}.skip:focus{top:1rem}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}section{padding-top:4rem;margin-top:2.7rem;border-top:1px solid var(--rule)}section:first-of-type{margin-top:1.7rem}.takeaway{font-size:1.13rem;color:var(--ink);margin:1.6rem 0;font-style:italic}figure{margin:2rem 0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.5rem;min-width:0}.fig-title{font:600 15px/1.5 var(--sans);margin:0 0 1.1rem}.kind{font:11px var(--mono);color:var(--muted);display:block;margin-bottom:.35rem;letter-spacing:.03em}.plot{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}.plot svg{display:block;width:100%;height:auto;min-width:650px}figcaption{font:13px/1.65 var(--sans);color:var(--muted);border-top:1px solid var(--rule);padding-top:1rem;margin-top:1.2rem}figcaption strong{color:var(--ink-soft)}.controls{display:flex;flex-wrap:wrap;gap:.5rem 1rem;margin:1rem 0 1.3rem}button{font-family:var(--sans)}.controls button{font:13px/1.5 var(--sans);color:var(--ink-soft);border:1px solid var(--rule);background:var(--surface);padding:.55rem .8rem;border-radius:4px;cursor:pointer}.controls button[aria-pressed=true]{color:var(--accent);border-color:var(--accent);background:var(--surface-2)}.controls button:hover{border-color:var(--accent)}.controls .play{margin-left:auto}.stage{padding:1.1rem 0 .2rem;min-height:8rem}.stage p{font-size:1.03rem;margin:.5rem 0}.stage-title{font:600 16px var(--sans);color:var(--accent)}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:1.2rem 0}.flow span{font:14px/1.6 var(--sans);padding:.6rem .8rem;background:var(--surface-2);border:1px solid var(--rule);border-radius:4px}.flow i{font-style:normal;color:var(--accent)}.flow .faded{opacity:.45}.flow .active{border-color:var(--accent);color:var(--accent)}.changed{animation:enter .26s ease-out}@keyframes enter{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}.small{font:13px/1.7 var(--sans);color:var(--muted)}.measure{font:600 18px/1.6 var(--mono);margin:.7rem 0;color:var(--ink)}.bar{display:block;position:relative;min-height:2.4rem;border-radius:4px;overflow:hidden;margin:1rem 0;background:var(--gold)}.bar span{background:var(--accent);display:block;position:absolute;inset:0;transform-origin:left;transition:transform .5s cubic-bezier(.16,1,.3,1)}.bar span:last-child{display:none}.legend{display:flex;gap:1rem;flex-wrap:wrap;font:13px var(--sans);color:var(--ink-soft)}.legend span::before{content:'';display:inline-block;width:.65rem;height:.65rem;background:var(--accent);margin-right:.4rem}.legend span:last-child::before{background:var(--gold)}.formula{font:16px/1.8 var(--mono);padding:1rem 0;color:var(--ink);overflow-wrap:anywhere}.prompt-source{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.85 var(--mono);background:var(--surface-2);padding:1.25rem;border-radius:4px;color:var(--ink-soft)}.scroll table{min-width:740px}.scroll:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.practice{padding:1.1rem 0;border-top:1px solid var(--rule)}.practice strong{display:block;font:600 16px var(--sans);margin-bottom:.5rem}.practice p{font-size:1rem;margin:.3rem 0}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font:14px/1.6 var(--sans)}th,td{padding:.7rem .8rem;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}th{color:var(--ink);font-weight:600}td{color:var(--ink-soft)}.mono{font-family:var(--mono)}details{border-top:1px solid var(--rule);padding:1rem 0;margin-top:1.4rem;font-size:.95rem}summary{cursor:pointer;color:var(--accent);font:14px/1.5 var(--sans)}details p{font-size:.95rem}.waffle{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;margin:1rem 0;max-width:38rem}.waffle span{aspect-ratio:1;background:var(--rule);border-radius:2px;transition:background-color .2s}.waffle .solo{background:var(--gold)}.waffle .middle{background:var(--accent)}.waffle .four{background:var(--pos)}.model-info{display:flex;flex-wrap:wrap;gap:.5rem 2rem;font:14px/1.7 var(--sans);color:var(--ink-soft);padding:.9rem 0;border-bottom:1px solid var(--rule)}.model-story{font-size:1.02rem;max-width:48rem}.legend span.solo::before{background:var(--gold)}.legend span.middle::before{background:var(--accent)}.legend span.four::before{background:var(--pos)}.token-grid{display:grid;grid-template-columns:minmax(9rem,1.2fr) 1fr 1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);font:13px/1.6 var(--mono)}.token-grid>span{background:var(--surface);padding:.7rem}.token-grid .on{color:var(--pos)}.token-grid .off{color:var(--muted)}.lane{display:flex;align-items:center;gap:.7rem;font:13px var(--sans);margin:.7rem 0}.lane>span{min-width:6rem}.track{height:18px;background:var(--surface-2);flex:1;position:relative;border:1px solid var(--rule)}.track b{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(.428571);transition:transform .5s cubic-bezier(.16,1,.3,1)}.track::after{content:"";position:absolute;left:71.4286%;top:-4px;bottom:-4px;border-left:1px dashed var(--ink-soft)}.lane.total .track b{background:var(--accent)}.lane.total .track{overflow:visible}.deadline{font:14px/1.65 var(--sans);padding:.7rem 0}.step-list{display:flex;flex-wrap:wrap;gap:.6rem;list-style:none;margin:1rem 0;padding:0}.step-list li{font:13px var(--sans);color:var(--muted);border-bottom:2px solid var(--rule);padding:.4rem 0;flex:1 1 8rem}.step-list li.current{color:var(--accent);border-color:var(--accent)}footer{margin:4rem auto 0;padding:2.2rem 0 3rem;border-top:1px solid var(--rule)}footer p{font-size:.92rem}.foot-links{display:flex;gap:.8rem 1.6rem;flex-wrap:wrap;font:13px var(--sans)}.index-list{list-style:none;padding:0}.index-list li{padding:1.5rem 0;border-top:1px solid var(--rule)}.index-list h2{margin:.3rem 0 .7rem}.index-list p{margin:.4rem 0}
+@media(max-width:640px){body{font-size:18px}.prose,.wide{padding-left:1.15rem;padding-right:1.15rem}header{padding-top:4rem}.deck{font-size:1.1rem}.subtitle{font-size:1.03rem}figure{padding:1.1rem .85rem;margin:1.5rem 0}.controls{gap:.45rem}.controls button{padding:.5rem .6rem;font-size:12px}.controls .play{margin-left:0}.stage{min-height:10.5rem}.token-grid{grid-template-columns:minmax(5rem,1.1fr) 1fr 1fr;font-size:11px}.token-grid>span{padding:.6rem .4rem}.model-info{gap:.3rem 1rem}.waffle{gap:4px}.flow span{padding:.5rem .6rem;font-size:13px}section{padding-top:2.8rem;margin-top:2rem}.fig-title{font-size:14px}.plot svg{min-width:630px}.practice p{font-size:1rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+@media print{.theme,.controls,.contents,.skip{display:none}body{background:#fff;color:#111}figure{break-inside:avoid}.plot{overflow:visible}.plot svg{min-width:0}details{display:block}}
+</style></head><body id="top"><a class="skip" href="#models">Skip to article</a><button class="theme" type="button" aria-label="Toggle color theme">◐ Theme</button><header><div class="prose"><p class="series">Collective Intelligence · Part 8<br><a href="../">Part 1</a> · <a href="../part-2/">Part 2</a> · <a href="../part-3/">Part 3</a> · <a href="../part-4/">Part 4</a> · <a href="../part-5/">Part 5</a> · <a href="../part-6/">Part 6</a> · <a href="../part-7/">Part 7</a></p><h1>One Harness, Six Ways to Work</h1><p class="subtitle">How the team harness evolved, and how different models responded</p><p class="deck">One harness offered six models the same collaboration tools. They used them very differently. We show the final prompt, tools and submission contract, trace the repairs from lost work to realistic testing, then compare who formed teams, who stayed solo and who coordinated the final choice. A new training-credit audit asks which agents carry learning signal.</p><p class="publication">Published November 1, 2026 · Evidence through 12:20 Pacific · 14 visual explanations · readout and caveats below</p><nav class="contents" aria-label="Article sections"><a href="#models">The model screen</a><a href="#harness">Final tools</a><a href="#prompt">Final prompt</a><a href="#evolution">Harness evolution</a><a href="#ending">Early endings</a><a href="#protocol">Protocol revisions</a><a href="#environment">Realistic tests</a><a href="#profiles">Behavior profiles</a><a href="#agreement">Agreement</a><a href="#credit">Training credit</a><a href="#next">The next test</a></nav></div></header><main><section id="models"><div class="prose"><h2>The same harness did not produce the same kind of team</h2></div><div class="wide"><figure id="figure-1"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 1 · A strong team-capable system may still work mostly alone</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="As-graded native scores: Qwen 9B 0.326, Qwen 27B 0.328, Qwen Flash 0.750, Haiku 5.5 0.737, Sonnet 5.5 0.791, Opus 5.5 0.791. Opus becomes 0.798 after two judge-failure regrades." xmlns:xlink="http://www.w3.org/1999/xlink" width="694.9025pt" height="313.150797pt" viewBox="0 0 694.9025 313.150797" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>As-graded native scores: Qwen 9B 0.326, Qwen 27B 0.328, Qwen Flash 0.750, Haiku 5.5 0.737, Sonnet 5.5 0.791, Opus 5.5 0.791. Opus becomes 0.798 after two judge-failure regrades.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.288770</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p8-models-figure_1">
+  <g id="p8-models-patch_1">
+   <path d="M 0 313.150797
+L 694.9025 313.150797
+L 694.9025 0
+L 0 0
+L 0 313.150797
+z
+" style="fill: none"/>
+  </g>
+  <g id="p8-models-axes_1">
+   <g id="p8-models-patch_2">
+    <path d="M 74.415781 276.449937
+L 678.955781 276.449937
+L 678.955781 35.229937
+L 74.415781 35.229937
+L 74.415781 276.449937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p8-models-matplotlib.axis_1">
+    <g id="p8-models-xtick_1">
+     <g id="p8-models-line2d_1">
+      <path d="M 74.415781 276.449937
+L 74.415781 35.229937
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-models-line2d_2"/>
+     <g id="p8-models-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="74.415781" y="288.307359" transform="rotate(-0 74.415781 288.307359)">0.0</text>
+     </g>
+    </g>
+    <g id="p8-models-xtick_2">
+     <g id="p8-models-line2d_3">
+      <path d="M 195.323781 276.449937
+L 195.323781 35.229937
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-models-line2d_4"/>
+     <g id="p8-models-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="195.323781" y="288.307359" transform="rotate(-0 195.323781 288.307359)">0.2</text>
+     </g>
+    </g>
+    <g id="p8-models-xtick_3">
+     <g id="p8-models-line2d_5">
+      <path d="M 316.231781 276.449937
+L 316.231781 35.229937
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-models-line2d_6"/>
+     <g id="p8-models-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="316.231781" y="288.307359" transform="rotate(-0 316.231781 288.307359)">0.4</text>
+     </g>
+    </g>
+    <g id="p8-models-xtick_4">
+     <g id="p8-models-line2d_7">
+      <path d="M 437.139781 276.449937
+L 437.139781 35.229937
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-models-line2d_8"/>
+     <g id="p8-models-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="437.139781" y="288.307359" transform="rotate(-0 437.139781 288.307359)">0.6</text>
+     </g>
+    </g>
+    <g id="p8-models-xtick_5">
+     <g id="p8-models-line2d_9">
+      <path d="M 558.047781 276.449937
+L 558.047781 35.229937
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-models-line2d_10"/>
+     <g id="p8-models-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="558.047781" y="288.307359" transform="rotate(-0 558.047781 288.307359)">0.8</text>
+     </g>
+    </g>
+    <g id="p8-models-xtick_6">
+     <g id="p8-models-line2d_11">
+      <path d="M 678.955781 276.449937
+L 678.955781 35.229937
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-models-line2d_12"/>
+     <g id="p8-models-text_6">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="678.955781" y="288.307359" transform="rotate(-0 678.955781 288.307359)">1.0</text>
+     </g>
+    </g>
+    <g id="p8-models-text_7">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="376.685781" y="303.308219" transform="rotate(-0 376.685781 303.308219)">Mean native score · as graded (0–1)</text>
+    </g>
+   </g>
+   <g id="p8-models-matplotlib.axis_2">
+    <g id="p8-models-ytick_1">
+     <g id="p8-models-line2d_13"/>
+     <g id="p8-models-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="60.340962" transform="rotate(-0 70.915781 60.340962)">Qwen 9B</text>
+     </g>
+    </g>
+    <g id="p8-models-ytick_2">
+     <g id="p8-models-line2d_14"/>
+     <g id="p8-models-text_9">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="100.212037" transform="rotate(-0 70.915781 100.212037)">Qwen 27B</text>
+     </g>
+    </g>
+    <g id="p8-models-ytick_3">
+     <g id="p8-models-line2d_15"/>
+     <g id="p8-models-text_10">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="140.083541" transform="rotate(-0 70.915781 140.083541)">Qwen Flash</text>
+     </g>
+    </g>
+    <g id="p8-models-ytick_4">
+     <g id="p8-models-line2d_16"/>
+     <g id="p8-models-text_11">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="179.954615" transform="rotate(-0 70.915781 179.954615)">Haiku 5.5</text>
+     </g>
+    </g>
+    <g id="p8-models-ytick_5">
+     <g id="p8-models-line2d_17"/>
+     <g id="p8-models-text_12">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="219.82526" transform="rotate(-0 70.915781 219.82526)">Sonnet 5.5</text>
+     </g>
+    </g>
+    <g id="p8-models-ytick_6">
+     <g id="p8-models-line2d_18"/>
+     <g id="p8-models-text_13">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="259.696334" transform="rotate(-0 70.915781 259.696334)">Opus 5.5</text>
+     </g>
+    </g>
+   </g>
+   <g id="p8-models-patch_3">
+    <path d="M 74.415781 46.194483
+L 271.495821 46.194483
+L 271.495821 66.13002
+L 74.415781 66.13002
+z
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p8-models-patch_4">
+    <path d="M 74.415781 86.065557
+L 272.704901 86.065557
+L 272.704901 106.001095
+L 74.415781 106.001095
+z
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p8-models-patch_5">
+    <path d="M 74.415781 125.936632
+L 527.820781 125.936632
+L 527.820781 145.872169
+L 74.415781 145.872169
+z
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p8-models-patch_6">
+    <path d="M 74.415781 165.807706
+L 519.961761 165.807706
+L 519.961761 185.743243
+L 74.415781 185.743243
+z
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p8-models-patch_7">
+    <path d="M 74.415781 205.67878
+L 552.606921 205.67878
+L 552.606921 225.614318
+L 74.415781 225.614318
+z
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p8-models-patch_8">
+    <path d="M 74.415781 245.549855
+L 552.606921 245.549855
+L 552.606921 265.485392
+L 74.415781 265.485392
+z
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p8-models-line2d_19">
+    <path d="M 556.838701 255.517623
+" clip-path="url(#p8-models-pd3b2298a11)" style="fill: none; stroke: var(--pos, #397052); stroke-width: 1.5; stroke-linecap: square"/>
+    <defs>
+     <path id="p8-models-ma19e430e16" d="M 0 8.5
+L 0 -8.5
+" style="stroke: var(--pos, #397052); stroke-width: 2"/>
+    </defs>
+    <g clip-path="url(#p8-models-pd3b2298a11)">
+     <use xlink:href="#p8-models-ma19e430e16" x="556.838701" y="255.517623" style="fill: var(--pos, #397052); stroke: var(--pos, #397052); stroke-width: 2"/>
+    </g>
+   </g>
+   <g id="p8-models-text_14">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="278.750301" y="59.019673" transform="rotate(-0 278.750301 59.019673)">0.326</text>
+   </g>
+   <g id="p8-models-text_15">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="279.959381" y="98.890748" transform="rotate(-0 279.959381 98.890748)">0.328</text>
+   </g>
+   <g id="p8-models-text_16">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="535.075261" y="138.761822" transform="rotate(-0 535.075261 138.761822)">0.750</text>
+   </g>
+   <g id="p8-models-text_17">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="527.216241" y="178.632897" transform="rotate(-0 527.216241 178.632897)">0.737</text>
+   </g>
+   <g id="p8-models-text_18">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="559.861401" y="218.503971" transform="rotate(-0 559.861401 218.503971)">0.791</text>
+   </g>
+   <g id="p8-models-text_19">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="559.861401" y="258.375045" transform="rotate(-0 559.861401 258.375045)">0.791</text>
+   </g>
+   <g id="p8-models-text_20">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="74.415781" y="17.229937" transform="rotate(-0 74.415781 17.229937)">The same v7 harness, with teamwork available</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p8-models-pd3b2298a11">
+   <rect x="74.415781" y="35.229937" width="604.54" height="241.22"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>SOP v7, twelve selected tasks × four episodes per model, 30-minute deadlines.</strong> All had team tools; working alone was allowed. The bars use as-graded scores. Two suspected judge-failure cases raised Opus to 0.798 under the reported regrade rule. Different default effort, decoding, serving throughput and cost make this a system screen, not a controlled model leaderboard. The 27B was throughput-limited.</figcaption></figure></div><div class="prose"><p>Part 6 explained how our agents fork, message, adopt code and submit. The next experiments asked a harder question: which of those possibilities would different models actually use?</p><p>On one selected twelve-task screen, Sonnet and Opus reached almost identical as-graded scores. Sonnet worked alone in about half its episodes. Opus almost always forked a peer. The score hid a large behavioral difference.</p></div></section><section id="harness"><div class="prose"><h2>What the final harness actually gives an agent</h2></div><div class="prose">
+<p>Here is the final <em>screened</em> collective-intelligence (CI) harness: SOP v7, a commit-based final answer and a local runner that reproduces the judge’s resource limits. A later v8 prompt was drafted to improve comparisons, but it was not the version used for the six-model results below.</p>
+<p>Every agent receives the same protocol and has the same rights. There is no fixed planner, coder or manager. The episode has a shared 30-minute deadline and per-agent generated-token allowances; tool results show remaining time and tokens. Forking is available, rather than required by an enforced team-size gate.</p></div><div class="wide"><figure id="figure-2"><div class="fig-title"><span class="kind">Interactive harness contract</span>Figure 2 · What survives a fork, a message and the final decision?</div><div class="controls" data-group="episode"><button type="button" data-index="0" aria-pressed="true">Fork a peer</button><button type="button" data-index="1" aria-pressed="false">Compare commits</button><button type="button" data-index="2" aria-pressed="false">Submit for everyone</button><button type="button" class="play" data-play="episode" aria-pressed="false">Play steps</button></div>
+<div class="flow" id="episode-flow"><span class="active">A · current conversation + files</span><i>→</i><span>B · copied context, own branch</span><i>↔</i><span>Both continue under one clock</span></div>
+<div class="stage" id="episode-stage" aria-live="polite"><h3 class="stage-title">A peer starts from a snapshot</h3><p>A direction asks for a distinct approach. The peer inherits the current context and files, then develops separately. Later edits do not synchronize automatically.</p></div><figcaption><strong>Mechanism illustration of the screened contract.</strong> Candidate commits and shared messages make work inspectable. A successful final submission selects one exact program for the entire episode; it is not another request for intermediate feedback.</figcaption></figure></div><div class="wide"><figure id="figure-3"><div class="fig-title"><span class="kind">Implementation contract · SOP v7</span>Figure 3 · The final tool surface is deliberately small</div><div class="scroll" role="region" aria-label="Detailed comparison; scroll horizontally on small screens" tabindex="0"><table><thead><tr><th scope="col">Surface</th><th scope="col">What it does</th><th scope="col">What the agent must understand</th></tr></thead><tbody><tr><td><code>fork(direction)</code></td><td>Starts a peer from the caller’s current conversation and a copy of its current working files, on the peer’s own Git branch. The caller continues in parallel.</td><td>The direction names a different algorithm family. A fork does not reset the team deadline; at most four agents exist in the screened episode.</td></tr><tr><td><code>send_message(to, text, reply_to?)</code></td><td>Sends to one agent, a list or all peers. Messages appear at the recipient’s next step and in the shared log. A direct message can wake a finished peer.</td><td>Report a commit and measurement, a failing input, an approach or an exact submission agreement. Messages do not merge code.</td></tr><tr><td>Shell, file editing and Git</td><td>Agents compile, write generators and checkers, inspect peer files, copy useful code and check out or cherry-pick commits.</td><td>Each agent edits its own working copy. Peer views are read-only; the shared commit ledger lets any peer inspect and submit a recorded candidate.</td></tr><tr><td>Local constrained runner</td><td>Executes an agent-built binary with the problem’s CPU, wall-time, memory and process limits. Input/output can be piped through a local interactor.</td><td>It exposes execution limits, not hidden test cases, a scoring oracle or a ready-made checker. Agents still have to build meaningful tests.</td></tr><tr><td><code>submit_final(commit)</code></td><td>Resolves a recorded commit containing <code>solution.cpp</code>, freezes those bytes and ends every agent’s work. A peer’s commit is equally eligible.</td><td>There is one team submission. Invalid hashes or missing files return errors; code that fails compilation can still consume the submission and score zero. No submission also scores zero.</td></tr></tbody></table></div><figcaption><strong>Version boundary matters.</strong> In this commit mode, the added team tools are fork, send_message and submit_final. Earlier run_check receipts, ack/object submission gates, whiteboards and a dedicated adopt tool are absent. Code adoption uses ordinary file/Git operations. The model screen has intermediate judge feedback switched off.</figcaption></figure></div><div class="prose">
+<p>The shared views provide the other half of the interface: an agent roster, a message log, a commit log and read-only views of each peer’s files. This lets a model inspect actual code instead of trusting “mine is better” messages. A child can inherit the caller’s context and current assumptions, so an explicit request for a different approach is an attempt to create diversity, not proof that it happened.</p>
+<p>Version 7 also separates execution feedback from task reward. The local runner can reveal a timeout or crash. It cannot tell the team how its algorithm ranks on the hidden tests. A local objective number is evidence produced by the team’s own checker, with all the measurement risk that implies.</p></div></section><section id="prompt"><div class="prose"><h2>The prompt is a work protocol, not a role assignment</h2></div><div class="prose">
+<p>The SOP is prepended to every agent’s system prompt. Short reminders also appear in the fork, message and submission descriptions, and deadline notices repeat the convergence procedure. These are repeated instructions at decision points, not just an opening essay the agent can forget.</p>
+<p>The prompt below summarizes the actual v7 contract used in the screen. Its six steps connect algorithmic exploration to one submitted artifact.</p></div><div class="wide"><figure id="figure-4"><div class="fig-title"><span class="kind">Prompt contract · condensed from source</span>Figure 4 · The six instructions the models were asked to follow</div><div class="scroll" role="region" aria-label="Detailed comparison; scroll horizontally on small screens" tabindex="0"><table><thead><tr><th scope="col">Step</th><th scope="col">Prompt asks for</th><th scope="col">Why it is there</th></tr></thead><tbody><tr><td>Split</td><td>Post <code>approach: &lt;family&gt;</code> with send_message, including the first agent. Give forked peers different families; switch if a family is already taken.</td><td>A fork direction is not a broadcast, and four agents repeating one core are not four independent approaches.</td></tr><tr><td>Measure</td><td>Build a checker and tests up to full input size. Agree with peers on inputs and measurement before comparing numbers; label how each number was measured.</td><td>Independent checkers are allowed. Comparable evidence matters more than sharing one script that may be wrong.</td></tr><tr><td>Preserve</td><td>Commit each working version with <code>obj=&lt;value&gt;</code>. Test only the measured commit’s solution.cpp in an empty directory; use an interactor when required.</td><td>A locally passing working tree is not necessarily the single file that will be graded.</td></tr><tr><td>Exchange</td><td>Roughly every three minutes, inspect peer commits, run them and build on the better result. Messages carry measurements or failing inputs, alongside the prescribed protocol posts.</td><td>A message should make the next action better informed. Adoption can also collapse approach diversity.</td></tr><tr><td>Converge</td><td>At six minutes remaining, post <code>best: &lt;commit&gt; obj=&lt;value&gt;</code> measured as agreed. Submit that exact candidate after peers post, or at the two-minute fallback.</td><td>The merge point is expressed as time remaining. No fresh, untested variant should replace the candidate after comparison.</td></tr><tr><td>Finish</td><td>Before six minutes remaining, obtain every peer’s explicit <code>agree: submit &lt;commit&gt;</code>. Silence is not agreement. If left alone near the deadline, submit the best available commit.</td><td>The prompt asks for this behavior. submit_final does not verify the agreement or wait until the merge point.</td></tr></tbody></table></div><figcaption><strong>Condensed from the rendered SOP for a 30-minute episode.</strong> The merge point is 80% through the clock: six minutes left. The rule for early agreement is textual. Tool validity checks do not establish that every peer tested or endorsed the chosen commit.</figcaption></figure></div><div class="prose">
+<details><summary>Read the full SOP v7 prompt used for this screen</summary><p>This is the team SOP rendered for a 30-minute episode. It sits alongside the ordinary task, tool and budget instructions. Agent-visible filesystem paths are retained because they define the interface.</p><pre class="prompt-source">TEAM SOP. Every agent on this team follows these steps. There are no roles and no one is in charge. &quot;Time left&quot; below is the time left shown at the end of every tool result, in whole minutes.
+1. Split early. In your first minutes, pick different algorithm families (for example greedy construction, local search or simulated annealing, exact search or DP on a reduced problem, a problem-specific heuristic), fork one peer per family and name its family in the direction. No two agents share a family. Every agent, including the first, sends &quot;approach: &lt;family&gt;&quot; to all with send_message as its first action; a fork direction does not count as this post. If a peer has already posted your family, switch to one nobody has taken and post the new one.
+2. Checker and tests. Early on, write a checker that computes the problem&#x27;s real objective exactly as the statement defines it, and a test set: an input generator that covers sizes up to the largest allowed, plus the sample. The sample alone is not a test set. The checker builds solution.cpp alone, the way it is graded: copy only that file from the commit being measured into an empty directory and compile it there, and for an interactive problem run it against an interactor that plays the judge&#x27;s side, never on a file of the whole input. Commit them in /app (for example under tests/). Before you compare numbers with a peer, agree with them on the inputs and how you measure, and say in every number you post how you measured it.
+3. Commit every working version with the message &quot;obj=&lt;value&gt;&quot;: its objective on your tests.
+4. About every 3 minutes, look at your peers&#x27; best commits (/team/commits.log, git log --all), run them on your tests, and build on whichever is better (git cherry-pick or checkout it, or cp the file). Keep improving until the merge point: a first working version is never the final one.
+5. Messages carry numbers or failing inputs only, for example &quot;a2 3f9c1e2 obj=1234 on tests/ (my best 1180)&quot; or a failing input with what went wrong. No plans, greetings or praise.
+6. Merge. Nobody calls submit_final while time left is more than 6 min. The only exception: every peer has sent &quot;agree: submit &lt;commit&gt;&quot; for the same commit; silence or &quot;unless someone objects&quot; is not agreement. When time left first shows 6 min or less (the merge point), every agent posts &quot;best: &lt;commit&gt; obj=&lt;value&gt;&quot; for its best commit, measured the way you agreed. Once every peer has posted best:, or at time left 2 min, the agent holding the best commit calls submit_final on exactly that commit; if it has not within a minute, any agent submits it. Never submit a commit made after the best: posts or one that no peer has run. A team that does not submit scores 0: if nobody has submitted at time left 2 min and no best: has been posted (for example you are alone), submit your own best commit.</pre></details>
+<h3>Which parts are enforced?</h3>
+<p>The runtime enforces the agent cap, separate working copies, read-only peer views, exact-commit selection and the fact that one submission ends the team. The constrained runner enforces its execution limits when the agent uses it. The final judge grades only the submitted artifact.</p>
+<p>The SOP asks for distinct algorithms, useful messages, comparable measurements, peer testing and explicit agreement. It does not enforce them. An agent can ignore the runner, skip comparison or submit before everyone agrees. That gap is intentional in this screen: it lets us observe whether a model can use the harness, rather than having a gate perform the cooperation on its behalf.</p>
+<p>This also explains the difference from earlier proposal-based versions. There is no acknowledgement gate to reject an impatient submit. A commit makes the result reproducible; the policy must still choose <em>when</em> to finalize and <em>whose</em> commit to trust.</p></div></section><section id="evolution"><div class="prose"><h2>The harness evolved around the failures it exposed</h2></div><div class="prose"><p>The revisions were not just more collaboration tools. They changed what an artifact meant, what feedback agents could see, when work could be compared and how the episode ended.</p><p>Each repair moved a failure boundary. A protected commit could still arrive too late. A shared score could still be wrong. A clear instruction could still be ignored.</p></div><div class="wide"><figure id="figure-5"><div class="fig-title"><span class="kind">Interactive harness evolution</span>Figure 5 · Follow the changing unit of cooperation</div><div class="controls" data-group="evolution"><button type="button" data-index="0" aria-pressed="true">Preserve</button><button type="button" data-index="1" aria-pressed="false">Feedback</button><button type="button" data-index="2" aria-pressed="false">Commit</button><button type="button" data-index="3" aria-pressed="false">Protocol</button><button type="button" class="play" data-play="evolution" aria-pressed="false">Play steps</button></div><ol class="step-list" id="evolution-list"><li class="current">Preserve improved work</li><li>Separate feedback</li><li>Submit a commit</li><li>Compare and agree</li></ol><div class="flow" id="evolution-flow"><span class="active">Separate working copies</span><i>→</i><span>Exact graded artifact</span><i>→</i><span>One team result</span></div><div class="stage" id="evolution-stage" aria-live="polite"><h3 class="stage-title">Make improved work survive</h3><p>Part 6 exposed a preservation problem: a team could test a better program and deliver a worse one. The next design bound proposals to graded bytes and protected peer work. Those safeguards made selection more explicit, but did not themselves teach cooperation.</p></div><figcaption><strong>A conceptual timeline of implemented revisions.</strong> It separates graded proposals, public/hidden feedback, commit-based final submission and the later SOP. These were successive experiments, not one fixed harness. No score is generated by this animation.</figcaption></figure></div></section><section id="ending"><div class="prose"><h2>An early submit could erase the rest of the team</h2></div><div class="prose"><p>In the commit-submission baseline, most episodes never forked. When a team did form, an agent could submit its own commit and stop everyone. The regret term saw only candidates that already existed as commits.</p><p>That left an unpriced loss: work still being developed by a peer. The final selection could have zero measured regret because the better alternative had never entered the candidate set.</p></div><div class="wide"><figure id="figure-6"><div class="fig-title"><span class="kind">Recorded audit + mechanism illustration</span>Figure 6 · The candidate ledger was smaller than the work in flight</div><div class="scroll"><table><caption class="small">Recorded commit-submission baseline · different denominators</caption><thead><tr><th>Observation</th><th>Readout</th><th>What it leaves out</th></tr></thead><tbody><tr><td>Episodes that never forked</td><td class="mono">68% of 232</td><td>No peer interaction to learn from</td></tr><tr><td>Multi-agent episodes</td><td class="mono">74</td><td>The submitter picked its own commit in all 74</td></tr><tr><td>Peers cut off by submission</td><td class="mono">127</td><td>106 held code they had never committed</td></tr></tbody></table></div><div class="controls" data-group="ending"><button type="button" data-index="0" aria-pressed="true">Before submission</button><button type="button" data-index="1" aria-pressed="false">One agent submits</button></div><div class="flow" id="ending-flow"><span class="active">A · committed candidate</span><span>B · work in progress</span><span>C · testing an edit</span></div><p class="small" id="ending-note">Illustration: only A’s committed candidate is visible to a commit-based regret measure.</p><figcaption><strong>Retrospective audit, not a counterfactual estimate.</strong> Among cut-off peers, 106/127 had uncommitted code; its quality was not established by that count. In the same 29-task comparison, teams matched mean solo performance but trailed hidden-score best-of-4 solo by 0.161 [0.121, 0.201]. That best-of-4 selection is an oracle reference, not an available online selection policy.</figcaption></figure></div></section><section id="protocol"><div class="prose"><h2>More process was not a smooth path upward</h2></div><div class="prose"><p>The SOP made the intended loop explicit: split approaches, test, commit working versions, compare peer work and agree on the artifact to ship. Some revisions improved those visible behaviors while scores fell.</p><p>Forcing one shared testing script reduced ambiguity, but also gave the team one common failure point. A stale build, a missing dependency or an invalid test could make every agent confidently agree on the wrong evidence.</p></div><div class="wide"><figure id="figure-7"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 7 · A protocol is something to test, too</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="Qwen Flash scores across versions: v2 0.643, v3 0.740, v4 0.628, v5 0.516, v6 0.733, v7 0.750. The first three have 24 episodes, the last three 48." xmlns:xlink="http://www.w3.org/1999/xlink" width="694.294297pt" height="284.350797pt" viewBox="0 0 694.294297 284.350797" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>Qwen Flash scores across versions: v2 0.643, v3 0.740, v4 0.628, v5 0.516, v6 0.733, v7 0.750. The first three have 24 episodes, the last three 48.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.332873</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p8-versions-figure_1">
+  <g id="p8-versions-patch_1">
+   <path d="M 0 284.350797
+L 694.294297 284.350797
+L 694.294297 0
+L 0 0
+L 0 284.350797
+z
+" style="fill: none"/>
+  </g>
+  <g id="p8-versions-axes_1">
+   <g id="p8-versions-patch_2">
+    <path d="M 46.694297 244.149938
+L 687.094297 244.149938
+L 687.094297 35.229938
+L 46.694297 35.229938
+L 46.694297 244.149938
+z
+" style="fill: none"/>
+   </g>
+   <g id="p8-versions-line2d_1">
+    <path d="M 75.803388 109.814378
+L 192.239751 89.549138
+L 308.676115 112.948178
+L 425.112479 136.347217
+L 541.548842 91.011578
+L 657.985206 87.459938
+" clip-path="url(#p8-versions-p034c93018c)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 1.5; stroke-linecap: square"/>
+   </g>
+   <g id="p8-versions-matplotlib.axis_1">
+    <g id="p8-versions-xtick_1">
+     <g id="p8-versions-line2d_2">
+      <defs>
+       <path id="p8-versions-m3d6075182c" d="M 0 0
+L 0 3.5
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#p8-versions-m3d6075182c" x="75.803388" y="244.149938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="75.803388" y="259.507359" transform="rotate(-0 75.803388 259.507359)">v2</text>
+     </g>
+    </g>
+    <g id="p8-versions-xtick_2">
+     <g id="p8-versions-line2d_3">
+      <g>
+       <use xlink:href="#p8-versions-m3d6075182c" x="192.239751" y="244.149938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="192.239751" y="259.507359" transform="rotate(-0 192.239751 259.507359)">v3</text>
+     </g>
+    </g>
+    <g id="p8-versions-xtick_3">
+     <g id="p8-versions-line2d_4">
+      <g>
+       <use xlink:href="#p8-versions-m3d6075182c" x="308.676115" y="244.149938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="308.676115" y="259.507359" transform="rotate(-0 308.676115 259.507359)">v4</text>
+     </g>
+    </g>
+    <g id="p8-versions-xtick_4">
+     <g id="p8-versions-line2d_5">
+      <g>
+       <use xlink:href="#p8-versions-m3d6075182c" x="425.112479" y="244.149938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="425.112479" y="259.507359" transform="rotate(-0 425.112479 259.507359)">v5</text>
+     </g>
+    </g>
+    <g id="p8-versions-xtick_5">
+     <g id="p8-versions-line2d_6">
+      <g>
+       <use xlink:href="#p8-versions-m3d6075182c" x="541.548842" y="244.149938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="541.548842" y="259.507359" transform="rotate(-0 541.548842 259.507359)">v6</text>
+     </g>
+    </g>
+    <g id="p8-versions-xtick_6">
+     <g id="p8-versions-line2d_7">
+      <g>
+       <use xlink:href="#p8-versions-m3d6075182c" x="657.985206" y="244.149938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_6">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="657.985206" y="259.507359" transform="rotate(-0 657.985206 259.507359)">v7</text>
+     </g>
+    </g>
+    <g id="p8-versions-text_7">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="366.894297" y="274.508219" transform="rotate(-0 366.894297 274.508219)">Successive protocol / environment versions</text>
+    </g>
+   </g>
+   <g id="p8-versions-matplotlib.axis_2">
+    <g id="p8-versions-ytick_1">
+     <g id="p8-versions-line2d_8">
+      <path d="M 46.694297 244.149938
+L 687.094297 244.149938
+" clip-path="url(#p8-versions-p034c93018c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-versions-line2d_9">
+      <defs>
+       <path id="p8-versions-m9b779a313f" d="M 0 0
+L -3.5 0
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#p8-versions-m9b779a313f" x="46.694297" y="244.149938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="39.694297" y="248.328648" transform="rotate(-0 39.694297 248.328648)">0.0</text>
+     </g>
+    </g>
+    <g id="p8-versions-ytick_2">
+     <g id="p8-versions-line2d_10">
+      <path d="M 46.694297 202.365938
+L 687.094297 202.365938
+" clip-path="url(#p8-versions-p034c93018c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-versions-line2d_11">
+      <g>
+       <use xlink:href="#p8-versions-m9b779a313f" x="46.694297" y="202.365938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_9">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="39.694297" y="206.544648" transform="rotate(-0 39.694297 206.544648)">0.2</text>
+     </g>
+    </g>
+    <g id="p8-versions-ytick_3">
+     <g id="p8-versions-line2d_12">
+      <path d="M 46.694297 160.581938
+L 687.094297 160.581938
+" clip-path="url(#p8-versions-p034c93018c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-versions-line2d_13">
+      <g>
+       <use xlink:href="#p8-versions-m9b779a313f" x="46.694297" y="160.581938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_10">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="39.694297" y="164.760648" transform="rotate(-0 39.694297 164.760648)">0.4</text>
+     </g>
+    </g>
+    <g id="p8-versions-ytick_4">
+     <g id="p8-versions-line2d_14">
+      <path d="M 46.694297 118.797937
+L 687.094297 118.797937
+" clip-path="url(#p8-versions-p034c93018c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-versions-line2d_15">
+      <g>
+       <use xlink:href="#p8-versions-m9b779a313f" x="46.694297" y="118.797937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_11">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="39.694297" y="122.976648" transform="rotate(-0 39.694297 122.976648)">0.6</text>
+     </g>
+    </g>
+    <g id="p8-versions-ytick_5">
+     <g id="p8-versions-line2d_16">
+      <path d="M 46.694297 77.013937
+L 687.094297 77.013937
+" clip-path="url(#p8-versions-p034c93018c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-versions-line2d_17">
+      <g>
+       <use xlink:href="#p8-versions-m9b779a313f" x="46.694297" y="77.013937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_12">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="39.694297" y="81.192648" transform="rotate(-0 39.694297 81.192648)">0.8</text>
+     </g>
+    </g>
+    <g id="p8-versions-ytick_6">
+     <g id="p8-versions-line2d_18">
+      <path d="M 46.694297 35.229938
+L 687.094297 35.229938
+" clip-path="url(#p8-versions-p034c93018c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-versions-line2d_19">
+      <g>
+       <use xlink:href="#p8-versions-m9b779a313f" x="46.694297" y="35.229938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p8-versions-text_13">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="39.694297" y="39.408648" transform="rotate(-0 39.694297 39.408648)">1.0</text>
+     </g>
+    </g>
+    <g id="p8-versions-text_14">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="15.558281" y="139.689937" transform="rotate(-90 15.558281 139.689937)">Mean native score (0–1)</text>
+    </g>
+   </g>
+   <g id="p8-versions-PathCollection_1">
+    <defs>
+     <path id="p8-versions-C0_0_3493f5d1a6" d="M 0 4.031129
+C 1.069068 4.031129 2.094493 3.606384 2.850439 2.850439
+C 3.606384 2.094493 4.031129 1.069068 4.031129 -0
+C 4.031129 -1.069068 3.606384 -2.094493 2.850439 -2.850439
+C 2.094493 -3.606384 1.069068 -4.031129 0 -4.031129
+C -1.069068 -4.031129 -2.094493 -3.606384 -2.850439 -2.850439
+C -3.606384 -2.094493 -4.031129 -1.069068 -4.031129 0
+C -4.031129 1.069068 -3.606384 2.094493 -2.850439 2.850439
+C -2.094493 3.606384 -1.069068 4.031129 0 4.031129
+z
+"/>
+    </defs>
+    <g clip-path="url(#p8-versions-p034c93018c)">
+     <use xlink:href="#p8-versions-C0_0_3493f5d1a6" x="75.803388" y="109.814377" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+    <g clip-path="url(#p8-versions-p034c93018c)">
+     <use xlink:href="#p8-versions-C0_0_3493f5d1a6" x="192.239751" y="89.549137" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+    <g clip-path="url(#p8-versions-p034c93018c)">
+     <use xlink:href="#p8-versions-C0_0_3493f5d1a6" x="308.676115" y="112.948177" style="fill: var(--gold, #a9781f); stroke: var(--gold, #a9781f)"/>
+    </g>
+    <g clip-path="url(#p8-versions-p034c93018c)">
+     <use xlink:href="#p8-versions-C0_0_3493f5d1a6" x="425.112479" y="136.347217" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140)"/>
+    </g>
+    <g clip-path="url(#p8-versions-p034c93018c)">
+     <use xlink:href="#p8-versions-C0_0_3493f5d1a6" x="541.548842" y="91.011577" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+    <g clip-path="url(#p8-versions-p034c93018c)">
+     <use xlink:href="#p8-versions-C0_0_3493f5d1a6" x="657.985206" y="87.459938" style="fill: var(--pos, #397052); stroke: var(--pos, #397052)"/>
+    </g>
+   </g>
+   <g id="p8-versions-patch_3">
+    <path d="M 46.694297 244.149938
+L 46.694297 35.229938
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p8-versions-patch_4">
+    <path d="M 46.694297 244.149938
+L 687.094297 244.149938
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p8-versions-text_15">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(61.489325 85.812424)">0.643</text>
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(62.082294 97.814377)">n=24</text>
+   </g>
+   <g id="p8-versions-text_16">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(177.925689 65.547184)">0.740</text>
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(178.518658 77.549137)">n=24</text>
+   </g>
+   <g id="p8-versions-text_17">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(294.362053 88.946224)">0.628</text>
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(294.955021 100.948177)">n=24</text>
+   </g>
+   <g id="p8-versions-text_18">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(410.798416 112.345264)">0.516</text>
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(411.391385 124.347217)">n=48</text>
+   </g>
+   <g id="p8-versions-text_19">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(527.23478 67.009624)">0.733</text>
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(527.827749 79.011577)">n=48</text>
+   </g>
+   <g id="p8-versions-text_20">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(643.671143 63.457984)">0.750</text>
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; fill: var(--ink-soft, #27313d)" transform="translate(644.264112 75.459938)">n=48</text>
+   </g>
+   <g id="p8-versions-text_21">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="46.694297" y="17.229938" transform="rotate(-0 46.694297 17.229938)">More coordination rules did not produce monotonic gains</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p8-versions-p034c93018c">
+   <rect x="46.694297" y="35.229938" width="640.4" height="208.92"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Successive screens on the same twelve selected tasks; these are not RL updates.</strong> Versions were adapted after inspecting results. Sample counts changed, and v7 changed both prompt and environment. The line shows chronology, not an isolated causal effect of each rule. Version 1 is omitted because decoding validity differed.</figcaption></figure></div><div class="prose"><p>Version 7 let agents keep their own checkers, while requiring agreement on inputs and measurement before comparing numbers. It also aligned local execution with the grader’s resource rules. Those are different interventions; their contributions are not separated by this screen.</p></div></section><section id="environment"><div class="prose"><h2>A test should resemble the thing it is meant to predict</h2></div><div class="prose"><p>Earlier, threaded programs passed local tests and scored zero at grading. Another candidate included a sibling file that existed in the working tree but was absent from the submitted artifact.</p><p>We moved those facts into the environment: test the exact committed file in isolation, and execute under the final CPU, memory and wall-clock rules. Better instructions help only if the measurement itself is meaningful.</p></div><div class="wide"><figure id="figure-8"><div class="fig-title"><span class="kind">Interactive execution model</span>Figure 8 · Two threads can pass a wall-clock check and exceed a CPU budget</div><div class="controls" data-group="cpu"><button type="button" data-index="0" aria-pressed="true">Wall-clock view</button><button type="button" data-index="1" aria-pressed="false">CPU-budget view</button><button type="button" class="play" data-play="cpu" aria-pressed="false">Play steps</button></div><p class="small">Illustrative accounting: two concurrent threads, each using 0.6 of a one-unit time budget.</p><div class="lane"><span>Thread A</span><div class="track"><b></b></div><span>0.6</span></div><div class="lane"><span>Thread B</span><div class="track"><b></b></div><span>0.6</span></div><div class="lane total"><span id="cpu-total-name">Wall total</span><div class="track"><b></b></div><span id="cpu-total-label">0.6</span></div><p class="small">Dashed marker: the one-unit limit. All bars use the same scale.</p><p class="measure" id="cpu-number">Elapsed wall time ≈ 0.6 · within 1.0</p><p class="deadline" id="cpu-note">Overlapping work looks safe if the local check only watches elapsed time.</p><figcaption><strong>Conceptual example, not a measured runtime trace.</strong> Summed CPU time would be 1.2 units, above a one-unit CPU limit. Real overhead and scheduling vary. The v7 runner exposed execution limits without supplying hidden tests, a scorer or a solution.</figcaption></figure></div></section><section id="profiles"><div class="prose"><h2>Watch the behavior behind the average</h2></div><div class="prose"><p>The same tools supported several working styles. The 9B could fork quickly and then submit too early. The 27B waited, but often delegated too late and also faced a throughput limit. Flash usually ran a larger team. The Claude models mostly preferred smaller groups.</p><p>These profiles combine complete-run counts with selected transcript reads. They describe these runs, not permanent personalities of the models.</p></div><div class="wide"><figure id="figure-9"><div class="fig-title"><span class="kind">Recorded measurements · interactive profiles</span>Figure 9 · Choose a model; inspect what “team” meant</div><div class="controls" data-group="models"><button type="button" data-index="0" aria-pressed="true">Qwen 9B</button><button type="button" data-index="1" aria-pressed="false">Qwen 27B</button><button type="button" data-index="2" aria-pressed="false">Qwen Flash</button><button type="button" data-index="3" aria-pressed="false">Haiku 5.5</button><button type="button" data-index="4" aria-pressed="false">Sonnet 5.5</button><button type="button" data-index="5" aria-pressed="false">Opus 5.5</button><button type="button" class="play" data-play="models" aria-pressed="false">Play steps</button></div><div class="legend"><span class="solo">Stayed solo</span><span class="middle">Two or three agents</span><span class="four">Four agents</span></div><div class="waffle" id="model-waffle" role="img" aria-label="Qwen 9B: 20 solo, 14 two-or-three-agent, and 14 four-agent episodes"><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="solo"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="middle"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span><span class="four"></span></div><div class="model-info" id="model-info"><span>20 solo · 14 with 2–3 agents · 14 with 4 agents</span><span>Mean agents: 2.29</span><span>Median submit: 27% of clock</span></div><div class="stage" aria-live="polite" id="model-stage"><h3 class="stage-title">Qwen 9B</h3><p class="model-story">Forks could happen quickly, but comparisons and final agreement often did not. Only 7 of 48 episodes used the constrained runner; 45 submitted before the merge point. A few episodes did propagate peer code. Fast branching did not reliably become a team loop.</p></div><figcaption><strong>One square per episode, aggregated by final team size—not a timeline.</strong> All six models had 48 episodes. The blue category combines teams of two and three; no split between those sizes is inferred. Narratives include selective reader annotations. Working alone was permitted.</figcaption></figure></div><div class="wide"><figure id="figure-10"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 10 · Identical deadlines did not mean identical use of time</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="Median submission share of clock: 9B 27 percent, 27B 97 percent, Flash 78 percent, Haiku 38 percent, Sonnet 37 percent, Opus 68 percent." xmlns:xlink="http://www.w3.org/1999/xlink" width="695.155781pt" height="305.950797pt" viewBox="0 0 695.155781 305.950797" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>Median submission share of clock: 9B 27 percent, 27B 97 percent, Flash 78 percent, Haiku 38 percent, Sonnet 37 percent, Opus 68 percent.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.369747</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p8-clock-figure_1">
+  <g id="p8-clock-patch_1">
+   <path d="M 0 305.950797
+L 695.155781 305.950797
+L 695.155781 0
+L 0 0
+L 0 305.950797
+z
+" style="fill: none"/>
+  </g>
+  <g id="p8-clock-axes_1">
+   <g id="p8-clock-patch_2">
+    <path d="M 74.415781 269.249937
+L 687.955781 269.249937
+L 687.955781 35.229937
+L 74.415781 35.229937
+L 74.415781 269.249937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p8-clock-matplotlib.axis_1">
+    <g id="p8-clock-xtick_1">
+     <g id="p8-clock-line2d_1">
+      <path d="M 74.415781 269.249937
+L 74.415781 35.229937
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-clock-line2d_2"/>
+     <g id="p8-clock-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="74.415781" y="281.107359" transform="rotate(-0 74.415781 281.107359)">0</text>
+     </g>
+    </g>
+    <g id="p8-clock-xtick_2">
+     <g id="p8-clock-line2d_3">
+      <path d="M 210.154719 269.249937
+L 210.154719 35.229937
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-clock-line2d_4"/>
+     <g id="p8-clock-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="210.154719" y="281.107359" transform="rotate(-0 210.154719 281.107359)">25</text>
+     </g>
+    </g>
+    <g id="p8-clock-xtick_3">
+     <g id="p8-clock-line2d_5">
+      <path d="M 345.893657 269.249937
+L 345.893657 35.229937
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-clock-line2d_6"/>
+     <g id="p8-clock-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="345.893657" y="281.107359" transform="rotate(-0 345.893657 281.107359)">50</text>
+     </g>
+    </g>
+    <g id="p8-clock-xtick_4">
+     <g id="p8-clock-line2d_7">
+      <path d="M 481.632595 269.249937
+L 481.632595 35.229937
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-clock-line2d_8"/>
+     <g id="p8-clock-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="481.632595" y="281.107359" transform="rotate(-0 481.632595 281.107359)">75</text>
+     </g>
+    </g>
+    <g id="p8-clock-xtick_5">
+     <g id="p8-clock-line2d_9">
+      <path d="M 617.371533 269.249937
+L 617.371533 35.229937
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-clock-line2d_10"/>
+     <g id="p8-clock-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="617.371533" y="281.107359" transform="rotate(-0 617.371533 281.107359)">100%</text>
+     </g>
+    </g>
+    <g id="p8-clock-text_6">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="381.185781" y="296.108219" transform="rotate(-0 381.185781 296.108219)">Median submission time · share of the 30-minute clock</text>
+    </g>
+   </g>
+   <g id="p8-clock-matplotlib.axis_2">
+    <g id="p8-clock-ytick_1">
+     <g id="p8-clock-line2d_11"/>
+     <g id="p8-clock-text_7">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="50.045921" transform="rotate(-0 70.915781 50.045921)">Qwen 9B</text>
+     </g>
+    </g>
+    <g id="p8-clock-ytick_2">
+     <g id="p8-clock-line2d_12"/>
+     <g id="p8-clock-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="92.595012" transform="rotate(-0 70.915781 92.595012)">Qwen 27B</text>
+     </g>
+    </g>
+    <g id="p8-clock-ytick_3">
+     <g id="p8-clock-line2d_13"/>
+     <g id="p8-clock-text_9">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="135.144533" transform="rotate(-0 70.915781 135.144533)">Qwen Flash</text>
+     </g>
+    </g>
+    <g id="p8-clock-ytick_4">
+     <g id="p8-clock-line2d_14"/>
+     <g id="p8-clock-text_10">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="177.693624" transform="rotate(-0 70.915781 177.693624)">Haiku 5.5</text>
+     </g>
+    </g>
+    <g id="p8-clock-ytick_5">
+     <g id="p8-clock-line2d_15"/>
+     <g id="p8-clock-text_11">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="220.242285" transform="rotate(-0 70.915781 220.242285)">Sonnet 5.5</text>
+     </g>
+    </g>
+    <g id="p8-clock-ytick_6">
+     <g id="p8-clock-line2d_16"/>
+     <g id="p8-clock-text_12">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="70.915781" y="262.791376" transform="rotate(-0 70.915781 262.791376)">Opus 5.5</text>
+     </g>
+    </g>
+   </g>
+   <g id="p8-clock-line2d_17">
+    <path d="M 74.415781 45.86721
+L 221.013834 45.86721
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 5; stroke-linecap: round"/>
+   </g>
+   <g id="p8-clock-line2d_18">
+    <path d="M 74.415781 88.416301
+L 601.082861 88.416301
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 5; stroke-linecap: round"/>
+   </g>
+   <g id="p8-clock-line2d_19">
+    <path d="M 74.415781 130.965392
+L 497.921268 130.965392
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 5; stroke-linecap: round"/>
+   </g>
+   <g id="p8-clock-line2d_20">
+    <path d="M 74.415781 173.514483
+L 280.738967 173.514483
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 5; stroke-linecap: round"/>
+   </g>
+   <g id="p8-clock-line2d_21">
+    <path d="M 74.415781 216.063574
+L 275.30941 216.063574
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 5; stroke-linecap: round"/>
+   </g>
+   <g id="p8-clock-line2d_22">
+    <path d="M 74.415781 258.612665
+L 443.625693 258.612665
+" clip-path="url(#p8-clock-pb2d24de55c)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 5; stroke-linecap: round"/>
+   </g>
+   <g id="p8-clock-PathCollection_1">
+    <defs>
+     <path id="p8-clock-C0_0_1bbf030d98" d="M 0 4.1833
+C 1.109424 4.1833 2.173559 3.742521 2.95804 2.95804
+C 3.742521 2.173559 4.1833 1.109424 4.1833 -0
+C 4.1833 -1.109424 3.742521 -2.173559 2.95804 -2.95804
+C 2.173559 -3.742521 1.109424 -4.1833 0 -4.1833
+C -1.109424 -4.1833 -2.173559 -3.742521 -2.95804 -2.95804
+C -3.742521 -2.173559 -4.1833 -1.109424 -4.1833 0
+C -4.1833 1.109424 -3.742521 2.173559 -2.95804 2.95804
+C -2.173559 3.742521 -1.109424 4.1833 0 4.1833
+z
+"/>
+    </defs>
+    <g clip-path="url(#p8-clock-pb2d24de55c)">
+     <use xlink:href="#p8-clock-C0_0_1bbf030d98" x="221.013834" y="45.86721" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+    <g clip-path="url(#p8-clock-pb2d24de55c)">
+     <use xlink:href="#p8-clock-C0_0_1bbf030d98" x="601.082861" y="88.416301" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+    <g clip-path="url(#p8-clock-pb2d24de55c)">
+     <use xlink:href="#p8-clock-C0_0_1bbf030d98" x="497.921268" y="130.965392" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+    <g clip-path="url(#p8-clock-pb2d24de55c)">
+     <use xlink:href="#p8-clock-C0_0_1bbf030d98" x="280.738967" y="173.514483" style="fill: var(--gold, #a9781f); stroke: var(--gold, #a9781f)"/>
+    </g>
+    <g clip-path="url(#p8-clock-pb2d24de55c)">
+     <use xlink:href="#p8-clock-C0_0_1bbf030d98" x="275.30941" y="216.063574" style="fill: var(--gold, #a9781f); stroke: var(--gold, #a9781f)"/>
+    </g>
+    <g clip-path="url(#p8-clock-pb2d24de55c)">
+     <use xlink:href="#p8-clock-C0_0_1bbf030d98" x="443.625693" y="258.612665" style="fill: var(--gold, #a9781f); stroke: var(--gold, #a9781f)"/>
+    </g>
+   </g>
+   <g id="p8-clock-text_13">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="231.872949" y="48.724632" transform="rotate(-0 231.872949 48.724632)">27%</text>
+   </g>
+   <g id="p8-clock-text_14">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="611.941976" y="91.273723" transform="rotate(-0 611.941976 91.273723)">97%</text>
+   </g>
+   <g id="p8-clock-text_15">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="508.780383" y="133.822814" transform="rotate(-0 508.780383 133.822814)">78%</text>
+   </g>
+   <g id="p8-clock-text_16">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="291.598082" y="176.371905" transform="rotate(-0 291.598082 176.371905)">38%</text>
+   </g>
+   <g id="p8-clock-text_17">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="286.168525" y="218.920996" transform="rotate(-0 286.168525 218.920996)">37%</text>
+   </g>
+   <g id="p8-clock-text_18">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="454.484808" y="261.470087" transform="rotate(-0 454.484808 261.470087)">68%</text>
+   </g>
+   <g id="p8-clock-text_19">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="74.415781" y="17.229937" transform="rotate(-0 74.415781 17.229937)">The same deadline was used very differently</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p8-clock-pb2d24de55c">
+   <rect x="74.415781" y="35.229937" width="613.54" height="234.02"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Thirty-minute episode deadlines.</strong> These are reported median fractions, not actual compute measurements. Early submission could mean a solved task, a plateau or premature stopping; a late submission could also reflect slow generation. The 27B’s generation-timeout confound is especially important.</figcaption></figure></div></section><section id="agreement"><div class="prose"><h2>Good final selection needs more than low regret</h2></div><div class="prose"><p>Opus stood out for explicit agreement on the exact commit: every early team submission had it. But even those teams often converged onto one algorithm quickly, with a peer acting as tester or optimizer.</p><p>Near-zero regret is therefore ambiguous. It can mean careful selection. It can also mean the candidates became almost identical—or that only one was ever created.</p></div><div class="wide"><figure id="figure-11"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 11 · Agreement was a real behavioral difference</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="Early team submissions with every peer agreeing on the exact commit: Flash 4 of 14, Haiku 14 of 18, Sonnet 15 of 17, Opus 39 of 39." xmlns:xlink="http://www.w3.org/1999/xlink" width="694.657187pt" height="248.400859pt" viewBox="0 0 694.657187 248.400859" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>Early team submissions with every peer agreeing on the exact commit: Flash 4 of 14, Haiku 14 of 18, Sonnet 15 of 17, Opus 39 of 39.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.396007</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p8-agreement-figure_1">
+  <g id="p8-agreement-patch_1">
+   <path d="M -0 248.400859
+L 694.657187 248.400859
+L 694.657187 0
+L -0 0
+L -0 248.400859
+z
+" style="fill: none"/>
+  </g>
+  <g id="p8-agreement-axes_1">
+   <g id="p8-agreement-patch_2">
+    <path d="M 49.437188 211.7
+L 687.457188 211.7
+L 687.457188 7.2
+L 49.437188 7.2
+L 49.437188 211.7
+z
+" style="fill: none"/>
+   </g>
+   <g id="p8-agreement-patch_3">
+    <path d="M 49.437188 16.495455
+L 585.588448 16.495455
+L 585.588448 40.744466
+L 49.437188 40.744466
+z
+" clip-path="url(#p8-agreement-p1e21d40140)" style="fill: var(--rule, #d5dae0)"/>
+   </g>
+   <g id="p8-agreement-patch_4">
+    <path d="M 49.437188 70.382148
+L 585.588448 70.382148
+L 585.588448 94.631159
+L 49.437188 94.631159
+z
+" clip-path="url(#p8-agreement-p1e21d40140)" style="fill: var(--rule, #d5dae0)"/>
+   </g>
+   <g id="p8-agreement-patch_5">
+    <path d="M 49.437188 124.268841
+L 585.588448 124.268841
+L 585.588448 148.517852
+L 49.437188 148.517852
+z
+" clip-path="url(#p8-agreement-p1e21d40140)" style="fill: var(--rule, #d5dae0)"/>
+   </g>
+   <g id="p8-agreement-patch_6">
+    <path d="M 49.437188 178.155534
+L 585.588448 178.155534
+L 585.588448 202.404545
+L 49.437188 202.404545
+z
+" clip-path="url(#p8-agreement-p1e21d40140)" style="fill: var(--rule, #d5dae0)"/>
+   </g>
+   <g id="p8-agreement-patch_7">
+    <path d="M 49.437188 16.495455
+L 202.623262 16.495455
+L 202.623262 40.744466
+L 49.437188 40.744466
+z
+" clip-path="url(#p8-agreement-p1e21d40140)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p8-agreement-patch_8">
+    <path d="M 49.437188 70.382148
+L 466.443723 70.382148
+L 466.443723 94.631159
+L 49.437188 94.631159
+z
+" clip-path="url(#p8-agreement-p1e21d40140)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p8-agreement-patch_9">
+    <path d="M 49.437188 124.268841
+L 522.511829 124.268841
+L 522.511829 148.517852
+L 49.437188 148.517852
+z
+" clip-path="url(#p8-agreement-p1e21d40140)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p8-agreement-patch_10">
+    <path d="M 49.437188 178.155534
+L 585.588448 178.155534
+L 585.588448 202.404545
+L 49.437188 202.404545
+z
+" clip-path="url(#p8-agreement-p1e21d40140)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p8-agreement-matplotlib.axis_1">
+    <g id="p8-agreement-xtick_1">
+     <g id="p8-agreement-line2d_1"/>
+     <g id="p8-agreement-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="49.437188" y="223.557422" transform="rotate(-0 49.437188 223.557422)">0</text>
+     </g>
+    </g>
+    <g id="p8-agreement-xtick_2">
+     <g id="p8-agreement-line2d_2"/>
+     <g id="p8-agreement-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="183.475003" y="223.557422" transform="rotate(-0 183.475003 223.557422)">25</text>
+     </g>
+    </g>
+    <g id="p8-agreement-xtick_3">
+     <g id="p8-agreement-line2d_3"/>
+     <g id="p8-agreement-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="317.512818" y="223.557422" transform="rotate(-0 317.512818 223.557422)">50</text>
+     </g>
+    </g>
+    <g id="p8-agreement-xtick_4">
+     <g id="p8-agreement-line2d_4"/>
+     <g id="p8-agreement-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="451.550633" y="223.557422" transform="rotate(-0 451.550633 223.557422)">75</text>
+     </g>
+    </g>
+    <g id="p8-agreement-xtick_5">
+     <g id="p8-agreement-line2d_5"/>
+     <g id="p8-agreement-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="585.588448" y="223.557422" transform="rotate(-0 585.588448 223.557422)">100%</text>
+     </g>
+    </g>
+    <g id="p8-agreement-text_6">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="368.447187" y="238.558281" transform="rotate(-0 368.447187 238.558281)">Early team submissions with every peer agreeing on the commit</text>
+    </g>
+   </g>
+   <g id="p8-agreement-matplotlib.axis_2">
+    <g id="p8-agreement-ytick_1">
+     <g id="p8-agreement-line2d_6"/>
+     <g id="p8-agreement-text_7">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="45.937188" y="32.799101" transform="rotate(-0 45.937188 32.799101)">Flash</text>
+     </g>
+    </g>
+    <g id="p8-agreement-ytick_2">
+     <g id="p8-agreement-line2d_7"/>
+     <g id="p8-agreement-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="45.937188" y="86.685794" transform="rotate(-0 45.937188 86.685794)">Haiku</text>
+     </g>
+    </g>
+    <g id="p8-agreement-ytick_3">
+     <g id="p8-agreement-line2d_8"/>
+     <g id="p8-agreement-text_9">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="45.937188" y="140.572057" transform="rotate(-0 45.937188 140.572057)">Sonnet</text>
+     </g>
+    </g>
+    <g id="p8-agreement-ytick_4">
+     <g id="p8-agreement-line2d_9"/>
+     <g id="p8-agreement-text_10">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="45.937188" y="194.45875" transform="rotate(-0 45.937188 194.45875)">Opus</text>
+     </g>
+    </g>
+   </g>
+   <g id="p8-agreement-text_11">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="596.311473" y="31.477382" transform="rotate(-0 596.311473 31.477382)">4/14</text>
+   </g>
+   <g id="p8-agreement-text_12">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="596.311473" y="85.364075" transform="rotate(-0 596.311473 85.364075)">14/18</text>
+   </g>
+   <g id="p8-agreement-text_13">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="596.311473" y="139.250768" transform="rotate(-0 596.311473 139.250768)">15/17</text>
+   </g>
+   <g id="p8-agreement-text_14">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="596.311473" y="193.137461" transform="rotate(-0 596.311473 193.137461)">39/39</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p8-agreement-p1e21d40140">
+   <rect x="49.437188" y="7.2" width="638.02" height="204.5"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Denominator: early submissions by teams, not all episodes.</strong> A solo episode has no peer agreement to obtain and is not evidence for this behavior. Agreement does not prove that peers performed a useful comparison. The selected Opus reads found concrete re-runs, but also choices between candidates within local measurement noise.</figcaption></figure></div><div class="prose"><p class="takeaway">The process metric should follow the claim: distinct approaches, useful information arriving in time, peer work surviving, and a justified final choice.</p></div></section><section id="credit"><div class="prose"><h2>Training the whole team raises a second attribution problem</h2></div><div class="prose">
+<p>The new Flash run trains on complete agent chains under the same v7 interaction contract. It samples four tasks with eight team episodes each, keeps four episodes per task and trains two randomly sampled chains per retained team. Group-relative outcome advantage is shared across the team; decision regret is included, while helping credit remains off. Later dynamic sampling favors task groups with reward spread.</p>
+<p>That raises a tempting shortcut: if everyone gets the same advantage, perhaps training the initial agent alone is enough. The new audit argues against that shortcut. Forked agents carried almost two thirds of generated tokens in the live snapshot, and the submitted commit belonged to a forked agent in about two thirds of valid teams.</p></div><div class="wide"><figure id="figure-12"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 12 · Forked members carried outcome signal, too</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="Pooled Flash own-last-draft scores explained 44 percent of within-group team reward variance for roots, 95 percent interval 33 to 56, and 23 percent for forked members, interval 16 to 33. Corresponding live-snapshot estimates were 38 and 28 percent." xmlns:xlink="http://www.w3.org/1999/xlink" width="695.121094pt" height="232.330139pt" viewBox="0 0 695.121094 232.330139" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>Pooled Flash own-last-draft scores explained 44 percent of within-group team reward variance for roots, 95 percent interval 33 to 56, and 23 percent for forked members, interval 16 to 33. Corresponding live-snapshot estimates were 38 and 28 percent.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.562711</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p8-credit-figure_1">
+  <g id="p8-credit-patch_1">
+   <path d="M 0 232.330139
+L 695.121094 232.330139
+L 695.121094 0
+L 0 0
+L 0 232.330139
+z
+" style="fill: none"/>
+  </g>
+  <g id="p8-credit-axes_1">
+   <g id="p8-credit-patch_2">
+    <path d="M 103.314844 195.62928
+L 680.922344 195.62928
+L 680.922344 34.85488
+L 103.314844 34.85488
+L 103.314844 195.62928
+z
+" style="fill: none"/>
+   </g>
+   <g id="p8-credit-matplotlib.axis_1">
+    <g id="p8-credit-xtick_1">
+     <g id="p8-credit-line2d_1">
+      <path d="M 103.314844 195.62928
+L 103.314844 34.85488
+" clip-path="url(#p8-credit-p85a7f64a19)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-credit-line2d_2"/>
+     <g id="p8-credit-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="103.314844" y="207.486702" transform="rotate(-0 103.314844 207.486702)">0</text>
+     </g>
+    </g>
+    <g id="p8-credit-xtick_2">
+     <g id="p8-credit-line2d_3">
+      <path d="M 185.830201 195.62928
+L 185.830201 34.85488
+" clip-path="url(#p8-credit-p85a7f64a19)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-credit-line2d_4"/>
+     <g id="p8-credit-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="185.830201" y="207.486702" transform="rotate(-0 185.830201 207.486702)">10</text>
+     </g>
+    </g>
+    <g id="p8-credit-xtick_3">
+     <g id="p8-credit-line2d_5">
+      <path d="M 268.345558 195.62928
+L 268.345558 34.85488
+" clip-path="url(#p8-credit-p85a7f64a19)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-credit-line2d_6"/>
+     <g id="p8-credit-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="268.345558" y="207.486702" transform="rotate(-0 268.345558 207.486702)">20</text>
+     </g>
+    </g>
+    <g id="p8-credit-xtick_4">
+     <g id="p8-credit-line2d_7">
+      <path d="M 350.860915 195.62928
+L 350.860915 34.85488
+" clip-path="url(#p8-credit-p85a7f64a19)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-credit-line2d_8"/>
+     <g id="p8-credit-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="350.860915" y="207.486702" transform="rotate(-0 350.860915 207.486702)">30</text>
+     </g>
+    </g>
+    <g id="p8-credit-xtick_5">
+     <g id="p8-credit-line2d_9">
+      <path d="M 433.376272 195.62928
+L 433.376272 34.85488
+" clip-path="url(#p8-credit-p85a7f64a19)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-credit-line2d_10"/>
+     <g id="p8-credit-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="433.376272" y="207.486702" transform="rotate(-0 433.376272 207.486702)">40</text>
+     </g>
+    </g>
+    <g id="p8-credit-xtick_6">
+     <g id="p8-credit-line2d_11">
+      <path d="M 515.891629 195.62928
+L 515.891629 34.85488
+" clip-path="url(#p8-credit-p85a7f64a19)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-credit-line2d_12"/>
+     <g id="p8-credit-text_6">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="515.891629" y="207.486702" transform="rotate(-0 515.891629 207.486702)">50</text>
+     </g>
+    </g>
+    <g id="p8-credit-xtick_7">
+     <g id="p8-credit-line2d_13">
+      <path d="M 598.406987 195.62928
+L 598.406987 34.85488
+" clip-path="url(#p8-credit-p85a7f64a19)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-credit-line2d_14"/>
+     <g id="p8-credit-text_7">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="598.406987" y="207.486702" transform="rotate(-0 598.406987 207.486702)">60</text>
+     </g>
+    </g>
+    <g id="p8-credit-xtick_8">
+     <g id="p8-credit-line2d_15">
+      <path d="M 680.922344 195.62928
+L 680.922344 34.85488
+" clip-path="url(#p8-credit-p85a7f64a19)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-credit-line2d_16"/>
+     <g id="p8-credit-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="680.922344" y="207.486702" transform="rotate(-0 680.922344 207.486702)">70</text>
+     </g>
+    </g>
+    <g id="p8-credit-text_9">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="392.118594" y="222.487561" transform="rotate(-0 392.118594 222.487561)">Within-group team reward variance explained (%)</text>
+    </g>
+   </g>
+   <g id="p8-credit-matplotlib.axis_2">
+    <g id="p8-credit-ytick_1">
+     <g id="p8-credit-line2d_17"/>
+     <g id="p8-credit-text_10">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="99.814844" y="46.341948" transform="rotate(-0 99.814844 46.341948)">Initial agent</text>
+     </g>
+    </g>
+    <g id="p8-credit-ytick_2">
+     <g id="p8-credit-line2d_18"/>
+     <g id="p8-credit-text_11">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="99.814844" y="192.500493" transform="rotate(-0 99.814844 192.500493)">Forked members</text>
+     </g>
+    </g>
+   </g>
+   <g id="p8-credit-LineCollection_1">
+    <path d="M 375.615522 42.162807
+L 565.400844 42.162807
+" clip-path="url(#p8-credit-p85a7f64a19)" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 2"/>
+    <path d="M 235.339415 188.321353
+L 375.615522 188.321353
+" clip-path="url(#p8-credit-p85a7f64a19)" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 2"/>
+   </g>
+   <g id="p8-credit-line2d_19">
+    <defs>
+     <path id="p8-credit-m8cbf22990f" d="M 0 5
+L 0 -5
+" style="stroke: var(--accent, #3a5f8a)"/>
+    </defs>
+    <g clip-path="url(#p8-credit-p85a7f64a19)">
+     <use xlink:href="#p8-credit-m8cbf22990f" x="375.615522" y="42.162807" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p8-credit-m8cbf22990f" x="235.339415" y="188.321353" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="p8-credit-line2d_20">
+    <g clip-path="url(#p8-credit-p85a7f64a19)">
+     <use xlink:href="#p8-credit-m8cbf22990f" x="565.400844" y="42.162807" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p8-credit-m8cbf22990f" x="375.615522" y="188.321353" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="p8-credit-line2d_21">
+    <defs>
+     <path id="p8-credit-m0d91eda7f2" d="M 0 9
+L 0 -9
+" style="stroke: var(--gold, #a9781f); stroke-width: 2"/>
+    </defs>
+    <g clip-path="url(#p8-credit-p85a7f64a19)">
+     <use xlink:href="#p8-credit-m0d91eda7f2" x="416.873201" y="42.162807" style="fill: var(--gold, #a9781f); stroke: var(--gold, #a9781f); stroke-width: 2"/>
+     <use xlink:href="#p8-credit-m0d91eda7f2" x="334.357844" y="188.321353" style="fill: var(--gold, #a9781f); stroke: var(--gold, #a9781f); stroke-width: 2"/>
+    </g>
+   </g>
+   <g id="p8-credit-line2d_22">
+    <defs>
+     <path id="p8-credit-m10271fe93a" d="M 0 4.5
+C 1.193414 4.5 2.338109 4.025852 3.181981 3.181981
+C 4.025852 2.338109 4.5 1.193414 4.5 0
+C 4.5 -1.193414 4.025852 -2.338109 3.181981 -3.181981
+C 2.338109 -4.025852 1.193414 -4.5 0 -4.5
+C -1.193414 -4.5 -2.338109 -4.025852 -3.181981 -3.181981
+C -4.025852 -2.338109 -4.5 -1.193414 -4.5 0
+C -4.5 1.193414 -4.025852 2.338109 -3.181981 3.181981
+C -2.338109 4.025852 -1.193414 4.5 0 4.5
+z
+" style="stroke: var(--accent, #3a5f8a)"/>
+    </defs>
+    <g clip-path="url(#p8-credit-p85a7f64a19)">
+     <use xlink:href="#p8-credit-m10271fe93a" x="466.382415" y="42.162807" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p8-credit-m10271fe93a" x="293.100165" y="188.321353" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="p8-credit-text_12">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="590.155451" y="44.760854" transform="rotate(-0 590.155451 44.760854)">44% pooled</text>
+   </g>
+   <g id="p8-credit-text_13">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="590.155451" y="190.9194" transform="rotate(-0 590.155451 190.9194)">23% pooled</text>
+   </g>
+   <g id="p8-credit-legend_1">
+    <g id="p8-credit-line2d_23">
+     <g>
+      <use xlink:href="#p8-credit-m0d91eda7f2" x="264.3875" y="14.488594" style="fill: var(--gold, #a9781f); stroke: var(--gold, #a9781f); stroke-width: 2"/>
+     </g>
+    </g>
+    <g id="p8-credit-text_14">
+     <text style="font-size: 9px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="280.5875" y="17.638594" transform="rotate(-0 280.5875 17.638594)">Live snapshot</text>
+    </g>
+    <g id="p8-credit-LineCollection_2">
+     <path d="M 365.375938 14.488594
+L 374.375938 14.488594
+" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 2"/>
+    </g>
+    <g id="p8-credit-line2d_24">
+     <g>
+      <use xlink:href="#p8-credit-m8cbf22990f" x="365.375938" y="14.488594" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     </g>
+    </g>
+    <g id="p8-credit-line2d_25">
+     <g>
+      <use xlink:href="#p8-credit-m8cbf22990f" x="374.375938" y="14.488594" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     </g>
+    </g>
+    <g id="p8-credit-line2d_26"/>
+    <g id="p8-credit-line2d_27">
+     <g>
+      <use xlink:href="#p8-credit-m10271fe93a" x="369.875938" y="14.488594" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     </g>
+    </g>
+    <g id="p8-credit-text_15">
+     <text style="font-size: 9px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="386.075938" y="17.638594" transform="rotate(-0 386.075938 17.638594)">Pooled estimate + 95% interval</text>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p8-credit-p85a7f64a19">
+   <rect x="103.314844" y="34.85488" width="577.6075" height="160.7744"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Associations from recorded own-draft scores, not causal contributions.</strong> The pooled audit includes Flash smoke and SOP-screen episodes. The live snapshot contained 120 valid teams; 24 interrupted teams were excluded. Root is the initial agent, not necessarily the submitter. A draft can itself be the submitted code, which makes this proxy partly circular.</figcaption></figure></div><div class="prose">
+<p>Code authorship told a different story: shared advantage had near-zero association with it, and many positively rewarded forked traces wrote almost none of the submitted code. Yet a useful tester may contribute no lines. Neither code ownership nor an agent’s own draft is a complete measure of helping.</p></div><div class="wide"><figure id="figure-13"><div class="fig-title"><span class="kind">Credit-design audit · November 1</span>Figure 13 · Credit rules were replayed before being changed</div><div class="scroll" role="region" aria-label="Detailed comparison; scroll horizontally on small screens" tabindex="0"><table><thead><tr><th scope="col">Scheme</th><th scope="col">What the offline replay showed</th><th scope="col">Decision</th></tr></thead><tbody><tr><td>Two random chains per team</td><td>Each selected chain receives the team-level advantage, with sampling weights. Helping-credit weight is zero.</td><td>Retained as the baseline scheme. Shared outcome credit contains peer signal but does not identify each peer’s marginal contribution.</td></tr><tr><td>Force the submitting author into the sample</td><td>Author plus random sampling reduced trained tokens on traces with under 5% code authorship from 42% to 32%.</td><td>It did not improve the chosen signal proxy and made the gradient estimate noisier. Lower observed token share is not the same as lower expected gradient weight.</td></tr><tr><td>Add own-draft reward</td><td>Mix a member’s own last-draft score into its credit.</td><td>Correlation with that same draft rose partly by construction. The gain against authorship was small and uncertain, and the replay often rewarded apparent free riders more.</td></tr></tbody></table></div><figcaption><strong>Offline replay of saved draws and rewards; no new policies trained for this audit.</strong> It reproduced the logged chain sampling. Variance estimates depended on whether the calculation used token counts or chain-level masks, but both versions found more noise for author-plus-random sampling. These tests concern the shape of the update, not eventual learning performance.</figcaption></figure></div><div class="prose">
+<p>The current scheme was kept. This is a useful negative finding: a reward decomposition that sounds more individual can make the estimator noisier without measuring better cooperation.</p>
+<p>At the refreshed snapshot, the Flash run had completed three updates and was training the fourth. It had not established a held-out cooperation gain. Its new FrontierCS team baseline was also partial: 93 of 172 tasks. It should not be treated as a finished benchmark or compared directly with the one-shot scores in Part 7.</p></div></section><section id="next"><div class="prose"><h2>What this changes about the next training experiment</h2></div><div class="prose"><p>Sonnet’s score with frequent solo work and Opus’s score with frequent peer work leave an important comparison open: how much does cooperation add beyond each model’s own solver?</p><p>That requires matched solo, independent-sampling and team controls, with the same artifact safeguards and actual resource accounting. A better fallback is a system improvement; it is not automatically learned coordination.</p></div><div class="wide"><figure id="figure-14"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 14 · Cost belongs beside behavior and score</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="Mean model API cost per episode: Haiku 0.034 US dollars, Sonnet 0.83 US dollars, Opus 2.34 US dollars." xmlns:xlink="http://www.w3.org/1999/xlink" width="694.046562pt" height="205.150797pt" viewBox="0 0 694.046562 205.150797" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>Mean model API cost per episode: Haiku 0.034 US dollars, Sonnet 0.83 US dollars, Opus 2.34 US dollars.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.422668</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p8-cost-figure_1">
+  <g id="p8-cost-patch_1">
+   <path d="M 0 205.150797
+L 694.046562 205.150797
+L 694.046562 0
+L 0 0
+L 0 205.150797
+z
+" style="fill: none"/>
+  </g>
+  <g id="p8-cost-axes_1">
+   <g id="p8-cost-patch_2">
+    <path d="M 70.426563 168.449937
+L 686.846563 168.449937
+L 686.846563 35.229937
+L 70.426563 35.229937
+L 70.426563 168.449937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p8-cost-patch_3">
+    <path d="M 70.426563 41.285392
+L 77.653556 41.285392
+L 77.653556 62.716219
+L 70.426563 62.716219
+z
+" clip-path="url(#p8-cost-p35bf80a828)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p8-cost-patch_4">
+    <path d="M 70.426563 91.124524
+L 246.850218 91.124524
+L 246.850218 112.555351
+L 70.426563 112.555351
+z
+" clip-path="url(#p8-cost-p35bf80a828)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p8-cost-patch_5">
+    <path d="M 70.426563 140.963656
+L 567.813735 140.963656
+L 567.813735 162.394483
+L 70.426563 162.394483
+z
+" clip-path="url(#p8-cost-p35bf80a828)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p8-cost-matplotlib.axis_1">
+    <g id="p8-cost-xtick_1">
+     <g id="p8-cost-line2d_1">
+      <path d="M 70.426563 168.449937
+L 70.426563 35.229937
+" clip-path="url(#p8-cost-p35bf80a828)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-cost-line2d_2"/>
+     <g id="p8-cost-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="70.426563" y="180.307359" transform="rotate(-0 70.426563 180.307359)">0.0</text>
+     </g>
+    </g>
+    <g id="p8-cost-xtick_2">
+     <g id="p8-cost-line2d_3">
+      <path d="M 176.705873 168.449937
+L 176.705873 35.229937
+" clip-path="url(#p8-cost-p35bf80a828)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-cost-line2d_4"/>
+     <g id="p8-cost-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="176.705873" y="180.307359" transform="rotate(-0 176.705873 180.307359)">0.5</text>
+     </g>
+    </g>
+    <g id="p8-cost-xtick_3">
+     <g id="p8-cost-line2d_5">
+      <path d="M 282.985183 168.449937
+L 282.985183 35.229937
+" clip-path="url(#p8-cost-p35bf80a828)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-cost-line2d_6"/>
+     <g id="p8-cost-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="282.985183" y="180.307359" transform="rotate(-0 282.985183 180.307359)">1.0</text>
+     </g>
+    </g>
+    <g id="p8-cost-xtick_4">
+     <g id="p8-cost-line2d_7">
+      <path d="M 389.264494 168.449937
+L 389.264494 35.229937
+" clip-path="url(#p8-cost-p35bf80a828)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-cost-line2d_8"/>
+     <g id="p8-cost-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="389.264494" y="180.307359" transform="rotate(-0 389.264494 180.307359)">1.5</text>
+     </g>
+    </g>
+    <g id="p8-cost-xtick_5">
+     <g id="p8-cost-line2d_9">
+      <path d="M 495.543804 168.449937
+L 495.543804 35.229937
+" clip-path="url(#p8-cost-p35bf80a828)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-cost-line2d_10"/>
+     <g id="p8-cost-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="495.543804" y="180.307359" transform="rotate(-0 495.543804 180.307359)">2.0</text>
+     </g>
+    </g>
+    <g id="p8-cost-xtick_6">
+     <g id="p8-cost-line2d_11">
+      <path d="M 601.823114 168.449937
+L 601.823114 35.229937
+" clip-path="url(#p8-cost-p35bf80a828)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p8-cost-line2d_12"/>
+     <g id="p8-cost-text_6">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="601.823114" y="180.307359" transform="rotate(-0 601.823114 180.307359)">2.5</text>
+     </g>
+    </g>
+    <g id="p8-cost-text_7">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="378.636562" y="195.308219" transform="rotate(-0 378.636562 195.308219)">Mean model API cost per episode (USD)</text>
+    </g>
+   </g>
+   <g id="p8-cost-matplotlib.axis_2">
+    <g id="p8-cost-ytick_1">
+     <g id="p8-cost-line2d_13"/>
+     <g id="p8-cost-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="66.926563" y="56.179946" transform="rotate(-0 66.926563 56.179946)">Haiku 5.5</text>
+     </g>
+    </g>
+    <g id="p8-cost-ytick_2">
+     <g id="p8-cost-line2d_14"/>
+     <g id="p8-cost-text_9">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="66.926563" y="106.018648" transform="rotate(-0 66.926563 106.018648)">Sonnet 5.5</text>
+     </g>
+    </g>
+    <g id="p8-cost-ytick_3">
+     <g id="p8-cost-line2d_15"/>
+     <g id="p8-cost-text_10">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="66.926563" y="155.85778" transform="rotate(-0 66.926563 155.85778)">Opus 5.5</text>
+     </g>
+    </g>
+   </g>
+   <g id="p8-cost-text_11">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="86.1559" y="54.858657" transform="rotate(-0 86.1559 54.858657)">$0.034</text>
+   </g>
+   <g id="p8-cost-text_12">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="255.352563" y="104.697789" transform="rotate(-0 255.352563 104.697789)">$0.83</text>
+   </g>
+   <g id="p8-cost-text_13">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="576.31608" y="154.536921" transform="rotate(-0 576.31608 154.536921)">$2.34</text>
+   </g>
+   <g id="p8-cost-text_14">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="70.426563" y="17.229937" transform="rotate(-0 70.426563 17.229937)">A cost view of this screen, not total system cost</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p8-cost-p35bf80a828">
+   <rect x="70.426563" y="35.229937" width="616.42" height="133.22"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Observed model API charges for this screen, at API default effort.</strong> These exclude environment execution, grading and other system costs. Prompt caching was active. Similar average scores on twelve selected tasks do not establish equivalence or a general price–quality frontier.</figcaption></figure></div><div class="prose"><p>The new Flash team-training run had not established a learned cooperation gain at the snapshot. The finished model screen is evidence about what the harness permits and what policies choose to do with it.</p><p class="takeaway">Build the opportunity for useful teamwork, measure whether the model takes it, then test whether training makes that choice pay.</p></div></section></main><footer><div class="prose"><h3>Evidence and limits</h3><p>Saved experiment readouts through November 1, 2026, about 12:20 Pacific. The historical audits, SOP revision screens and final six-model screen are different cohorts.</p><p>The final screen used twelve selected tasks and four episodes per model; several tasks saturated, and screen tasks were reused during protocol development. Open-model labels refer to Qwen3.5-9B, Qwen3.8-27B and Qwen3.8-Flash-Next. Claude models used API default effort. Decoding, execution speed and costs differ; the 27B is throughput-limited. Claude grading used a second route: its cross-check averaged −0.0007 versus the Flash route, with some episode changes around 0.015.</p><p>Reader annotations came from selected episodes, with visible actions and text rather than hidden reasoning for the Claude screen. Two Opus judge-failure cases were regraded; the main figure preserves as-graded scores alongside the adjustment. These are system and behavior comparisons, not a causal estimate of learned cooperation.</p><p>Graphs are reproducible SVG exports from recorded values. Interactive diagrams explain mechanisms; they do not simulate or invent experimental outcomes. Play controls pause when the page is hidden and respect reduced-motion preferences.</p><div class="foot-links"><a href="../">Part 1 · The Harness Is Part of the Model</a><a href="../part-2/">Part 2 · The Wall, the Compile Tax, and the Oracle</a><a href="../part-3/">Part 3 · Climbing From Zero Without a Teacher</a><a href="../part-4/">Part 4 · Borrowing a Foothold</a><a href="../part-5/">Part 5 · When the Reward Misses the Algorithm</a><a href="../part-6/">Part 6 · Fork, Talk, Submit</a><a href="../part-7/">Part 7 · The Distance to a Teacher</a><a href="https://github.com/MaCoredroid/collective-intelligence">Repository</a><a href="#top">Back to top ↑</a></div></div></footer><script>
+(()=>{
+ const root=document.documentElement,theme=document.querySelector('.theme');
+ try{const saved=localStorage.getItem('ci-visual-theme');if(saved)root.dataset.theme=saved}catch(e){}
+ theme?.addEventListener('click',()=>{const dark=root.dataset.theme==='dark'||(!root.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('ci-visual-theme',root.dataset.theme)}catch(e){}});
+ const states={},timers={},motion=matchMedia('(prefers-reduced-motion:reduce)');
+ function animate(el){if(!el)return;el.classList.remove('changed');requestAnimationFrame(()=>el.classList.add('changed'))}
+ function stage(id,title,copy){const e=document.getElementById(id);if(!e)return;e.querySelector('h3').textContent=title;e.querySelector('p').textContent=copy;animate(e)}
+ const evolution=[{"title": "Make improved work survive", "flow": ["Separate working copies", "Exact graded artifact", "One team result"], "text": "Part 6 exposed a preservation problem: a team could test a better program and deliver a worse one. The next design bound proposals to graded bytes and protected peer work. Those safeguards made selection more explicit, but did not themselves teach cooperation."}, {"title": "Separate public feedback from the final outcome", "flow": ["Public cases or self-score", "Candidate proposal", "Hidden-case score"], "text": "Later arms changed the feedback channel. Public scoring could become the whole testing strategy; self-scores could become confidence claims. Across the audited A/B episodes, neither arm developed much genuine peer work. A low regret value was often the result of producing only one candidate."}, {"title": "Make a commit the unit of submission", "flow": ["Independent branches", "Recorded commits", "submit_final(commit)"], "text": "A commit identifies exactly what is shipped. But any agent could end the entire episode early, before a peer had committed its work. Preservation helped only after the candidate entered the ledger. This is a mechanism illustration, not a replay of one episode."}, {"title": "Add a work protocol and realistic local tests", "flow": ["Split approaches", "Measure and compare", "Agree on the exact commit"], "text": "The SOP asked agents to explore distinct approaches, test code, publish measurements, inspect peer commits and coordinate the final choice. Version 7 also made local execution respect the final judge\u2019s resource limits. Its behavioral rules remained prompt instructions, not hard submission gates."}],models=[{"name": "Qwen 9B", "solo": 20, "four": 14, "agents": 2.29, "clock": 27, "story": "Forks could happen quickly, but comparisons and final agreement often did not. Only 7 of 48 episodes used the constrained runner; 45 submitted before the merge point. A few episodes did propagate peer code. Fast branching did not reliably become a team loop."}, {"name": "Qwen 27B", "solo": 22, "four": 6, "agents": 2.1, "clock": 97, "story": "This model waited much later. Peers often appeared only after a long solo start, leaving little time to compare. Serving throughput also limited the run: 17 episodes timed out during generation. Its low score cannot be read as a clean model-size or cooperation result."}, {"name": "Qwen Flash", "solo": 1, "four": 25, "agents": 3.46, "clock": 78, "story": "Flash usually formed a larger team and used the constrained runner in 47 of 48 episodes. It often re-ran peer commits, yet could choose between nearly tied or incomparable local numbers. More active teamwork did not remove measurement and selection errors."}, {"name": "Haiku 5.5", "solo": 29, "four": 0, "agents": 1.48, "clock": 38, "story": "Haiku worked alone in most episodes. When it forked, the peer was often a checker. Early stopping and idle waits were common in the selected reads. Within-task later submissions scored better, but that observational association is not a randomized test of waiting."}, {"name": "Sonnet 5.5", "solo": 25, "four": 0, "agents": 1.67, "clock": 37, "story": "Sonnet split into two modes: very short solo solutions on some tasks, and small teams on others. Its as-graded score matched Opus despite far more solo episodes. This is the clearest warning that a strong score with team tools available is not a measurement of cooperation."}, {"name": "Opus 5.5", "solo": 3, "four": 0, "agents": 2.19, "clock": 68, "story": "Opus forked in 45 of 48 episodes, usually one peer. All 39 early team submissions had explicit agreement from every peer on the commit. Checking was concrete, but peers often tested or polished one algorithm rather than preserving a distinct competing approach."}];
+ const render={
+ learning(i){const data=[{flow:['Teacher writes a full trace','Freeze and filter the dataset','Student predicts its tokens'],title:'Learn under the teacher’s prefix',text:'At every supervised position, the preceding reasoning and code come from the saved teacher trace. The data stays fixed while the student changes.',signal:'Signal: negative log-likelihood of demonstrated thinking and answer tokens. Prompt tokens receive zero weight.'},{flow:['Student samples a response','Teacher scores those tokens','Update the student'],title:'Learn on the student’s own prefix',text:'The teacher evaluates tokens the student actually sampled, including prefixes the teacher might not have generated. This addresses one SFT conditioning gap, while still requiring explicit control of length and termination.',signal:'Signal: teacher log-probability versus student log-probability on sampled tokens; the corrected retry adds a separate frozen-student reference-KL term.'},{flow:['Student writes a program','Compile and execute it','Compare rewards within a group'],title:'Learn from the program’s outcome',text:'A verifier measures whether the program runs and how well it solves the task. Reward can favor safer construction even when the research goal is richer search; the behavioral target needs its own audit.',signal:'Signal: executed-program reward; some continuations also add guarded search bonuses or near-miss repair credit.'}][i];document.getElementById('learning-flow').innerHTML=data.flow.map((x,k)=>`<span class="${k===i?'active':''}">${x}</span>`).join('<i>→</i>');stage('learning-stage',data.title,data.text);document.getElementById('learning-objective').textContent=data.signal;},
+ episode(i){const data=[{flow:['A · current conversation + files','B · copied context, own branch','Both continue under one clock'],title:'A peer starts from a snapshot',text:'A direction asks for a distinct approach. The peer inherits the current context and files, then develops separately. Later edits do not synchronize automatically.'},{flow:['A and B commit candidates','Read messages and peer files','Re-run and adopt a measured candidate'],title:'Messages exchange evidence; commits identify code',text:'A message can point to a commit and explain its measurement. Any peer can inspect or copy the code. The message itself neither merges files nor certifies the local score.'},{flow:['A calls submit_final(B’s commit)','Freeze B’s solution.cpp','Every agent stops; one answer is graded'],title:'Any peer can finalize the whole team',text:'The tool selects the recorded bytes and ends all work immediately. Agreement and timing are SOP instructions; the runtime does not wait for peers to approve.'}][i];document.getElementById('episode-flow').innerHTML=data.flow.map((x,k)=>`<span class="${k===i?'active':''}">${x}</span>`).join('<i>→</i>');stage('episode-stage',data.title,data.text);},
+ context(i){const flow=document.getElementById('context-flow');flow.innerHTML=i?'<span class="active">Student’s own reasoning</span><i>→</i><span>Write and execute a program</span>':'<span class="active">Teacher’s reasoning</span><i>→</i><span>Predict the final program</span>';stage('context-stage',i?'The deployment condition':'The training condition',i?'At generation time the student must create its own prefix, keep names and invariants coherent, and finish a valid program. Low answer NLL under teacher context does not establish that entire capability.':'The answer loss is measured after the teacher’s reasoning. The student can predict that code reasonably well under a context it may not reproduce itself.');},
+ loss(i){const a=i?97.7:84.8,b=100-a;const bar=document.getElementById('loss-bar');bar.children[0].style.transform=`scaleX(${a/100})`;bar.setAttribute('aria-label',`Thinking ${a} percent; answer code ${b.toFixed(1)} percent of ${i?'loss mass':'tokens'}`);document.getElementById('loss-number').textContent=`Thinking: ${a}% · code: ${b.toFixed(1)}%`;document.getElementById('loss-note').textContent=i?'Share of measured loss mass. This is not a gradient attribution.':'Share of supervised tokens in the diagnosed K3 data.';},
+ mask(i){document.getElementById('mask-grid').innerHTML=i?'<span>Token group</span><span>Teacher term</span><span>Reference anchor</span><span>Ordinary text</span><span class="on">Active*</span><span class="on">Active</span><span>All special targets</span><span class="off">Zero</span><span class="on">Active</span>':'<span>Token group</span><span>Teacher term</span><span>Reference anchor</span><span>Ordinary text</span><span class="on">Active*</span><span>Not this new anchor</span><span>Stop-equivalent</span><span>Two tokens clamped ≥ 0</span><span>Not this new anchor</span>';stage('mask-stage',i?'The retry separates two signals':'Clamping did not stop the length drift',i?'Teacher credit is zeroed on special-token targets. A separate reference-KL term still anchors those positions to the starting student. This recipe subsequently ran with anchor coefficients 0.5 and 2.0. Both initially drifted longer; the matched-task follow-up below shows why that is not a complete quality verdict.':'Preventing negative teacher credit on two termination tokens was not enough in this run. Other tokens and the rest of the update still changed stopping behavior.');},
+ evolution(i){const d=evolution[i];document.getElementById('evolution-flow').innerHTML=d.flow.map((x,k)=>`<span class="${k===i%3?'active':''}">${x}</span>`).join('<i>→</i>');document.querySelectorAll('#evolution-list li').forEach((e,k)=>e.classList.toggle('current',k===i));stage('evolution-stage',d.title,d.text);},
+ ending(i){document.getElementById('ending-flow').innerHTML=i?'<span class="active">A · commit shipped</span><span class="faded">B · work stopped</span><span class="faded">C · test stopped</span>':'<span class="active">A · committed candidate</span><span>B · work in progress</span><span>C · testing an edit</span>';document.getElementById('ending-note').textContent=i?'The ledger can report no lost committed candidate while uncommitted peer work disappears. Its quality remains unknown.':'Illustration: only A’s committed candidate is visible to a commit-based regret measure.';animate(document.getElementById('ending-flow'));},
+ cpu(i){document.getElementById('cpu-number').textContent=i?'Summed CPU time ≈ 1.2 · exceeds 1.0':'Elapsed wall time ≈ 0.6 · within 1.0';document.getElementById('cpu-note').textContent=i?'The judge charges both threads. Local tests need the same accounting if they are to predict this failure.':'Overlapping work looks safe if the local check only watches elapsed time.';document.querySelector('.lane.total .track b').style.transform=i?'scaleX(.857143)':'scaleX(.428571)';document.querySelector('.lane.total .track b').style.background=i?'var(--neg)':'var(--accent)';document.getElementById('cpu-total-name').textContent=i?'CPU total':'Wall total';document.getElementById('cpu-total-label').textContent=i?'1.2':'0.6';},
+ models(i){const d=models[i],mid=48-d.solo-d.four,w=document.getElementById('model-waffle');Array.from(w.children).forEach((e,k)=>e.className=k<d.solo?'solo':k<d.solo+mid?'middle':'four');w.setAttribute('aria-label',`${d.name}: ${d.solo} solo, ${mid} two-or-three-agent and ${d.four} four-agent episodes`);document.getElementById('model-info').innerHTML=`<span>${d.solo} solo · ${mid} with 2–3 agents · ${d.four} with 4 agents</span><span>Mean agents: ${d.agents.toFixed(2)}</span><span>Median submit: ${d.clock}% of clock</span>`;stage('model-stage',d.name,d.story);}
+ };
+ function select(key,i){const group=document.querySelector(`[data-group="${key}"]`);if(!group)return;const options=[...group.querySelectorAll('[data-index]')];states[key]=i;options.forEach((b,k)=>b.setAttribute('aria-pressed',String(k===i)));render[key]?.(i)}
+ document.querySelectorAll('[data-group]').forEach(group=>{const key=group.dataset.group;states[key]=0;group.querySelectorAll('[data-index]').forEach(b=>b.addEventListener('click',()=>select(key,+b.dataset.index)));const play=group.querySelector('[data-play]');if(play)play.addEventListener('click',()=>{if(timers[key]){clearInterval(timers[key]);delete timers[key];play.textContent='Play steps';play.setAttribute('aria-pressed','false');return}if(motion.matches){select(key,(states[key]+1)%group.querySelectorAll('[data-index]').length);return}play.textContent='Pause';play.setAttribute('aria-pressed','true');timers[key]=setInterval(()=>select(key,(states[key]+1)%group.querySelectorAll('[data-index]').length),key==='models'?7000:2600)});});
+ function stop(){Object.keys(timers).forEach(k=>{clearInterval(timers[k]);delete timers[k]});document.querySelectorAll('[data-play]').forEach(b=>{b.textContent='Play steps';b.setAttribute('aria-pressed','false')})}motion.addEventListener('change',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});window.addEventListener('pagehide',stop);
+})();
+</script></body></html>

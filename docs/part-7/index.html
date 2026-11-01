@@ -1,0 +1,2442 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>The Distance to a Teacher</title><meta name="description" content="Distilling advanced algorithms into a 9B coding model: off-policy SFT, on-policy distillation, failed mitigations, matched evaluations and a teacher-distribution experiment."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-7/"><meta property="og:type" content="article"><meta property="og:site_name" content="Collective Intelligence, Part 7"><meta property="og:title" content="The Distance to a Teacher"><meta property="og:description" content="Distilling advanced algorithms into a 9B coding model: off-policy SFT, on-policy distillation, failed mitigations, matched evaluations and a teacher-distribution experiment."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-7/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="The Distance to a Teacher"><meta name="twitter:description" content="Distilling advanced algorithms into a 9B coding model: off-policy SFT, on-policy distillation, failed mitigations, matched evaluations and a teacher-distribution experiment."><style>
+:root{--bg:#f7f8f9;--surface:#fff;--surface-2:#edf0f3;--ink:#1a1c1f;--ink-soft:#414b56;--muted:#626d79;--rule:#d5dae0;--accent:#3a5f8a;--gold:#8a611c;--pos:#397052;--neg:#ad5140;--serif:Georgia,"Iowan Old Style",Charter,serif;--sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
+:root[data-theme=dark]{--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}}
+*{box-sizing:border-box}html{scroll-behavior:auto;scroll-padding-top:2rem}body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.65 var(--serif);-webkit-font-smoothing:antialiased}p{color:var(--ink-soft);margin:1.05em 0;text-wrap:pretty}h1,h2,h3{text-wrap:balance;line-height:1.15}h1{font-size:clamp(2.3rem,5.4vw,3.65rem);letter-spacing:-.025em;font-weight:600;margin:.8rem 0 1.2rem}h2{font-size:clamp(1.65rem,3.5vw,2.3rem);font-weight:600;letter-spacing:-.015em;margin:0 0 1.4rem}h3{font-size:1.14rem;margin:0 0 .6rem}a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:4px}a:hover{text-decoration-style:dotted}.prose{max-width:45rem;margin:auto;padding:0 1.5rem}.wide{max-width:68rem;margin:auto;padding:0 1.5rem}header{padding:4.6rem 0 1rem}.series{font:12px/1.7 var(--mono);color:var(--muted);letter-spacing:.07em}.subtitle{font-size:1.2rem;color:var(--accent);margin:0 0 1.8rem}.deck{font-size:1.22rem;line-height:1.55}.publication{font:13px/1.65 var(--sans);color:var(--muted);padding:.8rem 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:1.8rem 0}.contents{display:flex;gap:.45rem 1rem;flex-wrap:wrap;font:13px/1.7 var(--sans);margin:1.6rem 0 0}.theme{position:fixed;right:1rem;top:1rem;z-index:10;background:var(--surface);border:1px solid var(--rule);color:var(--ink-soft);border-radius:20px;padding:.4rem .8rem;font:12px var(--mono);cursor:pointer}.skip{position:fixed;left:1rem;top:-5rem;z-index:20;background:var(--surface);padding:.7rem}.skip:focus{top:1rem}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}section{padding-top:4rem;margin-top:2.7rem;border-top:1px solid var(--rule)}section:first-of-type{margin-top:1.7rem}.takeaway{font-size:1.13rem;color:var(--ink);margin:1.6rem 0;font-style:italic}figure{margin:2rem 0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.5rem;min-width:0}.fig-title{font:600 15px/1.5 var(--sans);margin:0 0 1.1rem}.kind{font:11px var(--mono);color:var(--muted);display:block;margin-bottom:.35rem;letter-spacing:.03em}.plot{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}.plot svg{display:block;width:100%;height:auto;min-width:650px}figcaption{font:13px/1.65 var(--sans);color:var(--muted);border-top:1px solid var(--rule);padding-top:1rem;margin-top:1.2rem}figcaption strong{color:var(--ink-soft)}.controls{display:flex;flex-wrap:wrap;gap:.5rem 1rem;margin:1rem 0 1.3rem}button{font-family:var(--sans)}.controls button{font:13px/1.5 var(--sans);color:var(--ink-soft);border:1px solid var(--rule);background:var(--surface);padding:.55rem .8rem;border-radius:4px;cursor:pointer}.controls button[aria-pressed=true]{color:var(--accent);border-color:var(--accent);background:var(--surface-2)}.controls button:hover{border-color:var(--accent)}.controls .play{margin-left:auto}.stage{padding:1.1rem 0 .2rem;min-height:8rem}.stage p{font-size:1.03rem;margin:.5rem 0}.stage-title{font:600 16px var(--sans);color:var(--accent)}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:1.2rem 0}.flow span{font:14px/1.6 var(--sans);padding:.6rem .8rem;background:var(--surface-2);border:1px solid var(--rule);border-radius:4px}.flow i{font-style:normal;color:var(--accent)}.flow .faded{opacity:.45}.flow .active{border-color:var(--accent);color:var(--accent)}.changed{animation:enter .26s ease-out}@keyframes enter{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}.small{font:13px/1.7 var(--sans);color:var(--muted)}.measure{font:600 18px/1.6 var(--mono);margin:.7rem 0;color:var(--ink)}.bar{display:block;position:relative;min-height:2.4rem;border-radius:4px;overflow:hidden;margin:1rem 0;background:var(--gold)}.bar span{background:var(--accent);display:block;position:absolute;inset:0;transform-origin:left;transition:transform .5s cubic-bezier(.16,1,.3,1)}.bar span:last-child{display:none}.legend{display:flex;gap:1rem;flex-wrap:wrap;font:13px var(--sans);color:var(--ink-soft)}.legend span::before{content:'';display:inline-block;width:.65rem;height:.65rem;background:var(--accent);margin-right:.4rem}.legend span:last-child::before{background:var(--gold)}.formula{font:16px/1.8 var(--mono);padding:1rem 0;color:var(--ink);overflow-wrap:anywhere}.prompt-source{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.85 var(--mono);background:var(--surface-2);padding:1.25rem;border-radius:4px;color:var(--ink-soft)}.scroll table{min-width:740px}.scroll:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.practice{padding:1.1rem 0;border-top:1px solid var(--rule)}.practice strong{display:block;font:600 16px var(--sans);margin-bottom:.5rem}.practice p{font-size:1rem;margin:.3rem 0}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font:14px/1.6 var(--sans)}th,td{padding:.7rem .8rem;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}th{color:var(--ink);font-weight:600}td{color:var(--ink-soft)}.mono{font-family:var(--mono)}details{border-top:1px solid var(--rule);padding:1rem 0;margin-top:1.4rem;font-size:.95rem}summary{cursor:pointer;color:var(--accent);font:14px/1.5 var(--sans)}details p{font-size:.95rem}.waffle{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;margin:1rem 0;max-width:38rem}.waffle span{aspect-ratio:1;background:var(--rule);border-radius:2px;transition:background-color .2s}.waffle .solo{background:var(--gold)}.waffle .middle{background:var(--accent)}.waffle .four{background:var(--pos)}.model-info{display:flex;flex-wrap:wrap;gap:.5rem 2rem;font:14px/1.7 var(--sans);color:var(--ink-soft);padding:.9rem 0;border-bottom:1px solid var(--rule)}.model-story{font-size:1.02rem;max-width:48rem}.legend span.solo::before{background:var(--gold)}.legend span.middle::before{background:var(--accent)}.legend span.four::before{background:var(--pos)}.token-grid{display:grid;grid-template-columns:minmax(9rem,1.2fr) 1fr 1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);font:13px/1.6 var(--mono)}.token-grid>span{background:var(--surface);padding:.7rem}.token-grid .on{color:var(--pos)}.token-grid .off{color:var(--muted)}.lane{display:flex;align-items:center;gap:.7rem;font:13px var(--sans);margin:.7rem 0}.lane>span{min-width:6rem}.track{height:18px;background:var(--surface-2);flex:1;position:relative;border:1px solid var(--rule)}.track b{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(.428571);transition:transform .5s cubic-bezier(.16,1,.3,1)}.track::after{content:"";position:absolute;left:71.4286%;top:-4px;bottom:-4px;border-left:1px dashed var(--ink-soft)}.lane.total .track b{background:var(--accent)}.lane.total .track{overflow:visible}.deadline{font:14px/1.65 var(--sans);padding:.7rem 0}.step-list{display:flex;flex-wrap:wrap;gap:.6rem;list-style:none;margin:1rem 0;padding:0}.step-list li{font:13px var(--sans);color:var(--muted);border-bottom:2px solid var(--rule);padding:.4rem 0;flex:1 1 8rem}.step-list li.current{color:var(--accent);border-color:var(--accent)}footer{margin:4rem auto 0;padding:2.2rem 0 3rem;border-top:1px solid var(--rule)}footer p{font-size:.92rem}.foot-links{display:flex;gap:.8rem 1.6rem;flex-wrap:wrap;font:13px var(--sans)}.index-list{list-style:none;padding:0}.index-list li{padding:1.5rem 0;border-top:1px solid var(--rule)}.index-list h2{margin:.3rem 0 .7rem}.index-list p{margin:.4rem 0}
+@media(max-width:640px){body{font-size:18px}.prose,.wide{padding-left:1.15rem;padding-right:1.15rem}header{padding-top:4rem}.deck{font-size:1.1rem}.subtitle{font-size:1.03rem}figure{padding:1.1rem .85rem;margin:1.5rem 0}.controls{gap:.45rem}.controls button{padding:.5rem .6rem;font-size:12px}.controls .play{margin-left:0}.stage{min-height:10.5rem}.token-grid{grid-template-columns:minmax(5rem,1.1fr) 1fr 1fr;font-size:11px}.token-grid>span{padding:.6rem .4rem}.model-info{gap:.3rem 1rem}.waffle{gap:4px}.flow span{padding:.5rem .6rem;font-size:13px}section{padding-top:2.8rem;margin-top:2rem}.fig-title{font-size:14px}.plot svg{min-width:630px}.practice p{font-size:1rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+@media print{.theme,.controls,.contents,.skip{display:none}body{background:#fff;color:#111}figure{break-inside:avoid}.plot{overflow:visible}.plot svg{min-width:0}details{display:block}}
+</style></head><body id="top"><a class="skip" href="#transfer">Skip to article</a><button class="theme" type="button" aria-label="Toggle color theme">◐ Theme</button><header><div class="prose"><p class="series">Collective Intelligence · Part 7<br><a href="../">Part 1</a> · <a href="../part-2/">Part 2</a> · <a href="../part-3/">Part 3</a> · <a href="../part-4/">Part 4</a> · <a href="../part-5/">Part 5</a> · <a href="../part-6/">Part 6</a> · <a href="../part-8/">Part 8</a></p><h1>The Distance to a Teacher</h1><p class="subtitle">Distilling advanced search into a 9B coding model</p><p class="deck">A strong teacher is not necessarily an easy teacher to learn from. We tried off-policy SFT, OPD and RL to teach a 9B model to construct and improve advanced search algorithms on FrontierCS. The matched evaluations separate copied style, reliable programs and occasional strong answers. New controls show why length drift alone cannot decide whether distillation helped.</p><p class="publication">Published November 1, 2026 · Evidence through 12:20 Pacific · 14 visual explanations · readout and caveats below</p><nav class="contents" aria-label="Article sections"><a href="#transfer">The transfer test</a><a href="#methods">SFT / OPD / RL</a><a href="#voice">Style and skill</a><a href="#loss">Loss accounting</a><a href="#reach">Teacher distance</a><a href="#sft-record">SFT attempts</a><a href="#feedback">RL drift</a><a href="#opd-record">OPD attempts</a><a href="#stopping">Stopping</a><a href="#fairness">Matched controls</a><a href="#target">Teacher target</a><a href="#practice">Working practices</a></nav></div></header><main><section id="transfer"><div class="prose"><h2>First ask what actually transferred</h2></div><div class="wide"><figure id="figure-1"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 1 · Average quality and best-of-five tell different stories</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="Original-prompt FCS-172 x5: Flash-SFT e3 versus checkpoint 84. Avg at 5: 6.88 versus 13.91. Best at 5: 20.20 versus 21.65. At least one nonzero score: 50.0 versus 60.5 percent of tasks." xmlns:xlink="http://www.w3.org/1999/xlink" width="762.314394pt" height="290.468531pt" viewBox="0 0 762.314394 290.468531" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>Original-prompt FCS-172 x5: Flash-SFT e3 versus checkpoint 84. Avg at 5: 6.88 versus 13.91. Best at 5: 20.20 versus 21.65. At least one nonzero score: 50.0 versus 60.5 percent of tasks.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.485573</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p7-matched-baseline-figure_1">
+  <g id="p7-matched-baseline-patch_1">
+   <path d="M 0 290.468531
+L 762.314394 290.468531
+L 762.314394 0
+L 0 0
+L 0 290.468531
+z
+" style="fill: none"/>
+  </g>
+  <g id="p7-matched-baseline-axes_1">
+   <g id="p7-matched-baseline-patch_2">
+    <path d="M 43.1975 267.267828
+L 239.257055 267.267828
+L 239.257055 35.229938
+L 43.1975 35.229938
+L 43.1975 267.267828
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-matched-baseline-matplotlib.axis_1">
+    <g id="p7-matched-baseline-xtick_1">
+     <g id="p7-matched-baseline-line2d_1">
+      <defs>
+       <path id="p7-matched-baseline-med16d84776" d="M 0 0
+L 0 3.5
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#p7-matched-baseline-med16d84776" x="81.012426" y="267.267828" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_1">
+      <text style="font-size: 9px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="81.012426" y="281.106422" transform="rotate(-0 81.012426 281.106422)">Flash-SFT e3</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-xtick_2">
+     <g id="p7-matched-baseline-line2d_2">
+      <g>
+       <use xlink:href="#p7-matched-baseline-med16d84776" x="201.442128" y="267.267828" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_2">
+      <text style="font-size: 9px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="201.442128" y="281.106422" transform="rotate(-0 201.442128 281.106422)">RL checkpoint 84</text>
+     </g>
+    </g>
+   </g>
+   <g id="p7-matched-baseline-matplotlib.axis_2">
+    <g id="p7-matched-baseline-ytick_1">
+     <g id="p7-matched-baseline-line2d_3">
+      <path d="M 43.1975 267.267828
+L 239.257055 267.267828
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_4">
+      <defs>
+       <path id="p7-matched-baseline-m4c1d226a0a" d="M 0 0
+L -3.5 0
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="43.1975" y="267.267828" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="36.1975" y="271.446539" transform="rotate(-0 36.1975 271.446539)">0</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_2">
+     <g id="p7-matched-baseline-line2d_5">
+      <path d="M 43.1975 241.48584
+L 239.257055 241.48584
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_6">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="43.1975" y="241.48584" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="36.1975" y="245.664551" transform="rotate(-0 36.1975 245.664551)">2</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_3">
+     <g id="p7-matched-baseline-line2d_7">
+      <path d="M 43.1975 215.703852
+L 239.257055 215.703852
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_8">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="43.1975" y="215.703852" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="36.1975" y="219.882563" transform="rotate(-0 36.1975 219.882563)">4</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_4">
+     <g id="p7-matched-baseline-line2d_9">
+      <path d="M 43.1975 189.921865
+L 239.257055 189.921865
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_10">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="43.1975" y="189.921865" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_6">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="36.1975" y="194.100576" transform="rotate(-0 36.1975 194.100576)">6</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_5">
+     <g id="p7-matched-baseline-line2d_11">
+      <path d="M 43.1975 164.139877
+L 239.257055 164.139877
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_12">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="43.1975" y="164.139877" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_7">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="36.1975" y="168.318588" transform="rotate(-0 36.1975 168.318588)">8</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_6">
+     <g id="p7-matched-baseline-line2d_13">
+      <path d="M 43.1975 138.357889
+L 239.257055 138.357889
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_14">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="43.1975" y="138.357889" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="36.1975" y="142.5366" transform="rotate(-0 36.1975 142.5366)">10</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_7">
+     <g id="p7-matched-baseline-line2d_15">
+      <path d="M 43.1975 112.575901
+L 239.257055 112.575901
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_16">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="43.1975" y="112.575901" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_9">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="36.1975" y="116.754612" transform="rotate(-0 36.1975 116.754612)">12</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_8">
+     <g id="p7-matched-baseline-line2d_17">
+      <path d="M 43.1975 86.793913
+L 239.257055 86.793913
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_18">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="43.1975" y="86.793913" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_10">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="36.1975" y="90.972624" transform="rotate(-0 36.1975 90.972624)">14</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_9">
+     <g id="p7-matched-baseline-line2d_19">
+      <path d="M 43.1975 61.011925
+L 239.257055 61.011925
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_20">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="43.1975" y="61.011925" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_11">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="36.1975" y="65.190636" transform="rotate(-0 36.1975 65.190636)">16</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_10">
+     <g id="p7-matched-baseline-line2d_21">
+      <path d="M 43.1975 35.229938
+L 239.257055 35.229938
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_22">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="43.1975" y="35.229938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_12">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="36.1975" y="39.408648" transform="rotate(-0 36.1975 39.408648)">18</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-text_13">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="15.557422" y="151.248883" transform="rotate(-90 15.557422 151.248883)">Score / 100</text>
+    </g>
+   </g>
+   <g id="p7-matched-baseline-patch_3">
+    <path d="M 52.109298 267.267828
+L 109.915555 267.267828
+L 109.915555 178.57779
+L 52.109298 178.57779
+z
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-matched-baseline-patch_4">
+    <path d="M 172.539 267.267828
+L 230.345257 267.267828
+L 230.345257 87.954103
+L 172.539 87.954103
+z
+" clip-path="url(#p7-matched-baseline-p9ec5dc73d9)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p7-matched-baseline-patch_5">
+    <path d="M 43.1975 267.267828
+L 43.1975 35.229938
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-matched-baseline-patch_6">
+    <path d="M 43.1975 267.267828
+L 239.257055 267.267828
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-matched-baseline-text_14">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="81.012426" y="172.776843" transform="rotate(-0 81.012426 172.776843)">6.88</text>
+   </g>
+   <g id="p7-matched-baseline-text_15">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="201.442128" y="82.153155" transform="rotate(-0 201.442128 82.153155)">13.91</text>
+   </g>
+   <g id="p7-matched-baseline-text_16">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="43.1975" y="17.229938" transform="rotate(-0 43.1975 17.229938)">Mean of five</text>
+   </g>
+  </g>
+  <g id="p7-matched-baseline-axes_2">
+   <g id="p7-matched-baseline-patch_7">
+    <path d="M 300.5975 267.267828
+L 496.657055 267.267828
+L 496.657055 35.229938
+L 300.5975 35.229938
+L 300.5975 267.267828
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-matched-baseline-matplotlib.axis_3">
+    <g id="p7-matched-baseline-xtick_3">
+     <g id="p7-matched-baseline-line2d_23">
+      <g>
+       <use xlink:href="#p7-matched-baseline-med16d84776" x="338.412426" y="267.267828" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_17">
+      <text style="font-size: 9px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="338.412426" y="281.106422" transform="rotate(-0 338.412426 281.106422)">Flash-SFT e3</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-xtick_4">
+     <g id="p7-matched-baseline-line2d_24">
+      <g>
+       <use xlink:href="#p7-matched-baseline-med16d84776" x="458.842128" y="267.267828" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_18">
+      <text style="font-size: 9px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="458.842128" y="281.106422" transform="rotate(-0 458.842128 281.106422)">RL checkpoint 84</text>
+     </g>
+    </g>
+   </g>
+   <g id="p7-matched-baseline-matplotlib.axis_4">
+    <g id="p7-matched-baseline-ytick_11">
+     <g id="p7-matched-baseline-line2d_25">
+      <path d="M 300.5975 267.267828
+L 496.657055 267.267828
+" clip-path="url(#p7-matched-baseline-pa9f593e347)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_26">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="300.5975" y="267.267828" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_19">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="293.5975" y="271.446539" transform="rotate(-0 293.5975 271.446539)">0</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_12">
+     <g id="p7-matched-baseline-line2d_27">
+      <path d="M 300.5975 224.297848
+L 496.657055 224.297848
+" clip-path="url(#p7-matched-baseline-pa9f593e347)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_28">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="300.5975" y="224.297848" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_20">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="293.5975" y="228.476559" transform="rotate(-0 293.5975 228.476559)">5</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_13">
+     <g id="p7-matched-baseline-line2d_29">
+      <path d="M 300.5975 181.327869
+L 496.657055 181.327869
+" clip-path="url(#p7-matched-baseline-pa9f593e347)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_30">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="300.5975" y="181.327869" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_21">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="293.5975" y="185.50658" transform="rotate(-0 293.5975 185.50658)">10</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_14">
+     <g id="p7-matched-baseline-line2d_31">
+      <path d="M 300.5975 138.357889
+L 496.657055 138.357889
+" clip-path="url(#p7-matched-baseline-pa9f593e347)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_32">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="300.5975" y="138.357889" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_22">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="293.5975" y="142.5366" transform="rotate(-0 293.5975 142.5366)">15</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_15">
+     <g id="p7-matched-baseline-line2d_33">
+      <path d="M 300.5975 95.387909
+L 496.657055 95.387909
+" clip-path="url(#p7-matched-baseline-pa9f593e347)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_34">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="300.5975" y="95.387909" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_23">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="293.5975" y="99.56662" transform="rotate(-0 293.5975 99.56662)">20</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_16">
+     <g id="p7-matched-baseline-line2d_35">
+      <path d="M 300.5975 52.417929
+L 496.657055 52.417929
+" clip-path="url(#p7-matched-baseline-pa9f593e347)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_36">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="300.5975" y="52.417929" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_24">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="293.5975" y="56.59664" transform="rotate(-0 293.5975 56.59664)">25</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-text_25">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="272.957422" y="151.248883" transform="rotate(-90 272.957422 151.248883)">Score / 100</text>
+    </g>
+   </g>
+   <g id="p7-matched-baseline-patch_8">
+    <path d="M 309.509298 267.267828
+L 367.315555 267.267828
+L 367.315555 93.66911
+L 309.509298 93.66911
+z
+" clip-path="url(#p7-matched-baseline-pa9f593e347)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-matched-baseline-patch_9">
+    <path d="M 429.939 267.267828
+L 487.745257 267.267828
+L 487.745257 81.207816
+L 429.939 81.207816
+z
+" clip-path="url(#p7-matched-baseline-pa9f593e347)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p7-matched-baseline-patch_10">
+    <path d="M 300.5975 267.267828
+L 300.5975 35.229938
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-matched-baseline-patch_11">
+    <path d="M 300.5975 267.267828
+L 496.657055 267.267828
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-matched-baseline-text_26">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="338.412426" y="87.868163" transform="rotate(-0 338.412426 87.868163)">20.2</text>
+   </g>
+   <g id="p7-matched-baseline-text_27">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="458.842128" y="75.406869" transform="rotate(-0 458.842128 75.406869)">21.65</text>
+   </g>
+   <g id="p7-matched-baseline-text_28">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="300.5975" y="17.229938" transform="rotate(-0 300.5975 17.229938)">Best of five</text>
+   </g>
+  </g>
+  <g id="p7-matched-baseline-axes_3">
+   <g id="p7-matched-baseline-patch_12">
+    <path d="M 557.9975 267.267828
+L 754.057055 267.267828
+L 754.057055 35.229938
+L 557.9975 35.229938
+L 557.9975 267.267828
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-matched-baseline-matplotlib.axis_5">
+    <g id="p7-matched-baseline-xtick_5">
+     <g id="p7-matched-baseline-line2d_37">
+      <g>
+       <use xlink:href="#p7-matched-baseline-med16d84776" x="595.812426" y="267.267828" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_29">
+      <text style="font-size: 9px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="595.812426" y="281.106422" transform="rotate(-0 595.812426 281.106422)">Flash-SFT e3</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-xtick_6">
+     <g id="p7-matched-baseline-line2d_38">
+      <g>
+       <use xlink:href="#p7-matched-baseline-med16d84776" x="716.242128" y="267.267828" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_30">
+      <text style="font-size: 9px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="716.242128" y="281.106422" transform="rotate(-0 716.242128 281.106422)">RL checkpoint 84</text>
+     </g>
+    </g>
+   </g>
+   <g id="p7-matched-baseline-matplotlib.axis_6">
+    <g id="p7-matched-baseline-ytick_17">
+     <g id="p7-matched-baseline-line2d_39">
+      <path d="M 557.9975 267.267828
+L 754.057055 267.267828
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_40">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="557.9975" y="267.267828" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_31">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="550.9975" y="271.446539" transform="rotate(-0 550.9975 271.446539)">0</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_18">
+     <g id="p7-matched-baseline-line2d_41">
+      <path d="M 557.9975 238.263092
+L 754.057055 238.263092
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_42">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="557.9975" y="238.263092" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_32">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="550.9975" y="242.441803" transform="rotate(-0 550.9975 242.441803)">10</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_19">
+     <g id="p7-matched-baseline-line2d_43">
+      <path d="M 557.9975 209.258355
+L 754.057055 209.258355
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_44">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="557.9975" y="209.258355" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_33">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="550.9975" y="213.437066" transform="rotate(-0 550.9975 213.437066)">20</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_20">
+     <g id="p7-matched-baseline-line2d_45">
+      <path d="M 557.9975 180.253619
+L 754.057055 180.253619
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_46">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="557.9975" y="180.253619" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_34">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="550.9975" y="184.43233" transform="rotate(-0 550.9975 184.43233)">30</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_21">
+     <g id="p7-matched-baseline-line2d_47">
+      <path d="M 557.9975 151.248883
+L 754.057055 151.248883
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_48">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="557.9975" y="151.248883" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_35">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="550.9975" y="155.427594" transform="rotate(-0 550.9975 155.427594)">40</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_22">
+     <g id="p7-matched-baseline-line2d_49">
+      <path d="M 557.9975 122.244146
+L 754.057055 122.244146
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_50">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="557.9975" y="122.244146" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_36">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="550.9975" y="126.422857" transform="rotate(-0 550.9975 126.422857)">50</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_23">
+     <g id="p7-matched-baseline-line2d_51">
+      <path d="M 557.9975 93.23941
+L 754.057055 93.23941
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_52">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="557.9975" y="93.23941" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_37">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="550.9975" y="97.418121" transform="rotate(-0 550.9975 97.418121)">60</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_24">
+     <g id="p7-matched-baseline-line2d_53">
+      <path d="M 557.9975 64.234674
+L 754.057055 64.234674
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_54">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="557.9975" y="64.234674" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_38">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="550.9975" y="68.413385" transform="rotate(-0 550.9975 68.413385)">70</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-ytick_25">
+     <g id="p7-matched-baseline-line2d_55">
+      <path d="M 557.9975 35.229938
+L 754.057055 35.229938
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-matched-baseline-line2d_56">
+      <g>
+       <use xlink:href="#p7-matched-baseline-m4c1d226a0a" x="557.9975" y="35.229938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-matched-baseline-text_39">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="550.9975" y="39.408648" transform="rotate(-0 550.9975 39.408648)">80</text>
+     </g>
+    </g>
+    <g id="p7-matched-baseline-text_40">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="530.357422" y="151.248883" transform="rotate(-90 530.357422 151.248883)">Tasks (%)</text>
+    </g>
+   </g>
+   <g id="p7-matched-baseline-patch_13">
+    <path d="M 566.909298 267.267828
+L 624.715555 267.267828
+L 624.715555 122.244146
+L 566.909298 122.244146
+z
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-matched-baseline-patch_14">
+    <path d="M 687.339 267.267828
+L 745.145257 267.267828
+L 745.145257 91.789173
+L 687.339 91.789173
+z
+" clip-path="url(#p7-matched-baseline-p0191e237b3)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p7-matched-baseline-patch_15">
+    <path d="M 557.9975 267.267828
+L 557.9975 35.229938
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-matched-baseline-patch_16">
+    <path d="M 557.9975 267.267828
+L 754.057055 267.267828
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-matched-baseline-text_41">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="595.812426" y="116.443199" transform="rotate(-0 595.812426 116.443199)">50</text>
+   </g>
+   <g id="p7-matched-baseline-text_42">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="716.242128" y="85.988226" transform="rotate(-0 716.242128 85.988226)">60.5</text>
+   </g>
+   <g id="p7-matched-baseline-text_43">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="557.9975" y="17.229938" transform="rotate(-0 557.9975 17.229938)">Any nonzero score</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p7-matched-baseline-p9ec5dc73d9">
+   <rect x="43.1975" y="35.229938" width="196.059555" height="232.037891"/>
+  </clipPath>
+  <clipPath id="p7-matched-baseline-pa9f593e347">
+   <rect x="300.5975" y="35.229938" width="196.059555" height="232.037891"/>
+  </clipPath>
+  <clipPath id="p7-matched-baseline-p0191e237b3">
+   <rect x="557.9975" y="35.229938" width="196.059555" height="232.037891"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Same 172 problems, five samples each; score scale 0–100.</strong> E3 minus checkpoint 84: mean score −7.03 [−9.89, −4.43]; Best@5 −1.45 [−5.52, +2.60]. A similar Best@5 is not evidence of equivalent algorithms or equal coverage: 50.0% versus 60.5% of tasks obtained any nonzero score. E3 compiled 69.1% versus 94.2%. One repeated grading failure was retained as zero under the baseline rule; even a score of 100 on it would not close the mean-score gap.</figcaption></figure></div><div class="prose"><p>The missing matched evaluation has now landed. Flash-SFT e3 was evaluated with the same original prompt and 172-problem ×5 packet as the strongest earlier RL checkpoint. It is much less reliable per sample, but its best-of-five score comes close.</p></div><div class="prose">
+<p>Here, Avg@5 means the task-averaged mean of five scores; Best@5 means the task-averaged maximum. They measure different things. A sparse tail of good answers can coexist with poor average reliability. Nonzero credit is also a much weaker condition than a fully solved task.</p>
+<p>The earlier small-seed SFT → RL branch showed the same need for separate readouts: checkpoint 114 compiled more often than 84 and produced some timed loops, but lost 2.96 average-score points on the matched packet. None of these aggregate metrics alone certifies correct simulated annealing.</p>
+<p class="takeaway">A demonstration can change what the student sometimes produces without making that capability reliable.</p></div></section><section id="methods"><div class="prose"><h2>What we train on changes what the teacher can teach</h2></div><div class="prose">
+<p>The desired skill is concrete: write a correct solver that can use simulated annealing, local search or another advanced algorithm, then improve that solver from execution feedback. In our earlier samples, the 9B rarely produced the target time-budgeted search behavior. Fixed-iteration local search did exist. The gap is reliable implementation of stronger search, rather than knowledge of the words.</p>
+<p>We used three different learning signals. Off-policy SFT copies a saved teacher response. On-policy distillation (OPD) scores a response sampled by the current student. Verifiable-reward RL scores what the resulting program actually does. They expose different mistakes.</p></div><div class="wide"><figure id="figure-2"><div class="fig-title"><span class="kind">Interactive training contract</span>Figure 2 · Whose trajectory supplies the next training example?</div><div class="controls" data-group="learning"><button type="button" data-index="0" aria-pressed="true">Off-policy SFT</button><button type="button" data-index="1" aria-pressed="false">On-policy distillation</button><button type="button" data-index="2" aria-pressed="false">Verifiable RL</button><button type="button" class="play" data-play="learning" aria-pressed="false">Play steps</button></div>
+<div class="flow" id="learning-flow"><span class="active">Teacher writes a full trace</span><i>→</i><span>Freeze and filter the dataset</span><i>→</i><span>Student predicts its tokens</span></div>
+<div class="stage" id="learning-stage" aria-live="polite"><h3 class="stage-title">Learn under the teacher’s prefix</h3><p>At every supervised position, the preceding reasoning and code come from the saved teacher trace. The data stays fixed while the student changes.</p></div>
+<p class="small" id="learning-objective">Signal: negative log-likelihood of demonstrated thinking and answer tokens. Prompt tokens receive zero weight.</p><figcaption><strong>Mechanism comparison, not three matched experimental arms.</strong> Our OPD uses teacher log-probabilities on student-sampled tokens. The later retry adds a distinct anchor to a frozen student checkpoint. RL uses executed-program reward; its behavioral bonuses and near-miss credits are additional interventions.</figcaption></figure></div><div class="prose">
+<p>This round deliberately narrowed the episode to one complete program per response. It does not yet teach the whole long-horizon agent loop of editing, submitting, reading feedback and surviving compactions. It tries to establish a construction skill that the longer loop can improve.</p>
+<p>That gives the curriculum two separate tests: can the model generate a sound advanced solver in one shot, and can it hill-climb that solver without breaking correctness? Neither a good imitation loss nor a higher aggregate RL reward answers both.</p></div></section><section id="voice"><div class="prose"><h2>The student found the teacher’s voice first</h2></div><div class="prose"><p>I then tried a larger set of Kimi K3 demonstrations. The 9B adopted terse planning and short thinking. Its final programs became much smaller than the teacher’s, often with undeclared names, type errors or unfinished sketches.</p><p>On FrontierCS, that SFT checkpoint scored 0.33 Avg@5 and compiled only 21.9% of its answers. Passing teacher demonstrations were not enough to make the student generate passing programs.</p></div><div class="wide"><figure id="figure-3"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 3 · Similar thinking length; very different programs</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="Student after K3 SFT: median thinking 17.4 thousand tokens and program 53 lines. K3 passing demonstrations: 14.5 thousand tokens and 277 lines." xmlns:xlink="http://www.w3.org/1999/xlink" width="694.564531pt" height="269.950797pt" viewBox="0 0 694.564531 269.950797" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>Student after K3 SFT: median thinking 17.4 thousand tokens and program 53 lines. K3 passing demonstrations: 14.5 thousand tokens and 277 lines.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:02.966487</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p7-style-figure_1">
+  <g id="p7-style-patch_1">
+   <path d="M 0 269.950797
+L 694.564531 269.950797
+L 694.564531 0
+L 0 0
+L 0 269.950797
+z
+" style="fill: none"/>
+  </g>
+  <g id="p7-style-axes_1">
+   <g id="p7-style-patch_2">
+    <path d="M 124.562031 233.249937
+L 337.264531 233.249937
+L 337.264531 35.229938
+L 124.562031 35.229938
+L 124.562031 233.249937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-style-patch_3">
+    <path d="M 124.562031 44.230847
+L 292.044315 44.230847
+L 292.044315 93.801071
+L 124.562031 93.801071
+z
+" clip-path="url(#p7-style-pbc10886351)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p7-style-patch_4">
+    <path d="M 124.562031 174.678804
+L 264.130601 174.678804
+L 264.130601 224.249028
+L 124.562031 224.249028
+z
+" clip-path="url(#p7-style-pbc10886351)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-style-matplotlib.axis_1">
+    <g id="p7-style-xtick_1">
+     <g id="p7-style-line2d_1">
+      <path d="M 124.562031 233.249937
+L 124.562031 35.229938
+" clip-path="url(#p7-style-pbc10886351)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-style-line2d_2"/>
+     <g id="p7-style-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="124.562031" y="245.107359" transform="rotate(-0 124.562031 245.107359)">0</text>
+     </g>
+    </g>
+    <g id="p7-style-xtick_2">
+     <g id="p7-style-line2d_3">
+      <path d="M 172.689124 233.249937
+L 172.689124 35.229938
+" clip-path="url(#p7-style-pbc10886351)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-style-line2d_4"/>
+     <g id="p7-style-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="172.689124" y="245.107359" transform="rotate(-0 172.689124 245.107359)">5</text>
+     </g>
+    </g>
+    <g id="p7-style-xtick_3">
+     <g id="p7-style-line2d_5">
+      <path d="M 220.816217 233.249937
+L 220.816217 35.229938
+" clip-path="url(#p7-style-pbc10886351)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-style-line2d_6"/>
+     <g id="p7-style-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="220.816217" y="245.107359" transform="rotate(-0 220.816217 245.107359)">10</text>
+     </g>
+    </g>
+    <g id="p7-style-xtick_4">
+     <g id="p7-style-line2d_7">
+      <path d="M 268.94331 233.249937
+L 268.94331 35.229938
+" clip-path="url(#p7-style-pbc10886351)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-style-line2d_8"/>
+     <g id="p7-style-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="268.94331" y="245.107359" transform="rotate(-0 268.94331 245.107359)">15</text>
+     </g>
+    </g>
+    <g id="p7-style-xtick_5">
+     <g id="p7-style-line2d_9">
+      <path d="M 317.070403 233.249937
+L 317.070403 35.229938
+" clip-path="url(#p7-style-pbc10886351)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-style-line2d_10"/>
+     <g id="p7-style-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="317.070403" y="245.107359" transform="rotate(-0 317.070403 245.107359)">20</text>
+     </g>
+    </g>
+    <g id="p7-style-text_6">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="230.913281" y="260.108219" transform="rotate(-0 230.913281 260.108219)">Median tokens (thousands)</text>
+    </g>
+   </g>
+   <g id="p7-style-matplotlib.axis_2">
+    <g id="p7-style-ytick_1">
+     <g id="p7-style-line2d_11"/>
+     <g id="p7-style-text_7">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="121.062031" y="73.195099" transform="rotate(-0 121.062031 73.195099)">Student after K3 SFT</text>
+     </g>
+    </g>
+    <g id="p7-style-ytick_2">
+     <g id="p7-style-line2d_12"/>
+     <g id="p7-style-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="121.062031" y="203.643057" transform="rotate(-0 121.062031 203.643057)">K3 demonstrations</text>
+     </g>
+    </g>
+   </g>
+   <g id="p7-style-text_9">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="296.231372" y="71.87338" transform="rotate(-0 296.231372 71.87338)">17.4</text>
+   </g>
+   <g id="p7-style-text_10">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="268.317658" y="202.321338" transform="rotate(-0 268.317658 202.321338)">14.5</text>
+   </g>
+   <g id="p7-style-text_11">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="124.562031" y="17.229938" transform="rotate(-0 124.562031 17.229938)">Thinking length</text>
+   </g>
+  </g>
+  <g id="p7-style-axes_2">
+   <g id="p7-style-patch_5">
+    <path d="M 474.662031 233.249937
+L 687.364531 233.249937
+L 687.364531 35.229938
+L 474.662031 35.229938
+L 474.662031 233.249937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-style-patch_6">
+    <path d="M 474.662031 44.230847
+L 506.707378 44.230847
+L 506.707378 93.801071
+L 474.662031 93.801071
+z
+" clip-path="url(#p7-style-p330315fb5d)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p7-style-patch_7">
+    <path d="M 474.662031 174.678804
+L 642.144315 174.678804
+L 642.144315 224.249028
+L 474.662031 224.249028
+z
+" clip-path="url(#p7-style-p330315fb5d)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-style-matplotlib.axis_3">
+    <g id="p7-style-xtick_6">
+     <g id="p7-style-line2d_13">
+      <path d="M 474.662031 233.249937
+L 474.662031 35.229938
+" clip-path="url(#p7-style-p330315fb5d)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-style-line2d_14"/>
+     <g id="p7-style-text_12">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="474.662031" y="245.107359" transform="rotate(-0 474.662031 245.107359)">0</text>
+     </g>
+    </g>
+    <g id="p7-style-xtick_7">
+     <g id="p7-style-line2d_15">
+      <path d="M 535.124949 233.249937
+L 535.124949 35.229938
+" clip-path="url(#p7-style-p330315fb5d)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-style-line2d_16"/>
+     <g id="p7-style-text_13">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="535.124949" y="245.107359" transform="rotate(-0 535.124949 245.107359)">100</text>
+     </g>
+    </g>
+    <g id="p7-style-xtick_8">
+     <g id="p7-style-line2d_17">
+      <path d="M 595.587868 233.249937
+L 595.587868 35.229938
+" clip-path="url(#p7-style-p330315fb5d)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-style-line2d_18"/>
+     <g id="p7-style-text_14">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="595.587868" y="245.107359" transform="rotate(-0 595.587868 245.107359)">200</text>
+     </g>
+    </g>
+    <g id="p7-style-xtick_9">
+     <g id="p7-style-line2d_19">
+      <path d="M 656.050786 233.249937
+L 656.050786 35.229938
+" clip-path="url(#p7-style-p330315fb5d)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-style-line2d_20"/>
+     <g id="p7-style-text_15">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="656.050786" y="245.107359" transform="rotate(-0 656.050786 245.107359)">300</text>
+     </g>
+    </g>
+    <g id="p7-style-text_16">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="581.013281" y="260.108219" transform="rotate(-0 581.013281 260.108219)">Median lines</text>
+    </g>
+   </g>
+   <g id="p7-style-matplotlib.axis_4">
+    <g id="p7-style-ytick_3">
+     <g id="p7-style-line2d_21"/>
+     <g id="p7-style-text_17">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="471.162031" y="73.195099" transform="rotate(-0 471.162031 73.195099)">Student after K3 SFT</text>
+     </g>
+    </g>
+    <g id="p7-style-ytick_4">
+     <g id="p7-style-line2d_22"/>
+     <g id="p7-style-text_18">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="471.162031" y="203.643057" transform="rotate(-0 471.162031 203.643057)">K3 demonstrations</text>
+     </g>
+    </g>
+   </g>
+   <g id="p7-style-text_19">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="510.894435" y="71.87338" transform="rotate(-0 510.894435 71.87338)">53</text>
+   </g>
+   <g id="p7-style-text_20">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="646.331372" y="202.321338" transform="rotate(-0 646.331372 202.321338)">277</text>
+   </g>
+   <g id="p7-style-text_21">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="474.662031" y="17.229938" transform="rotate(-0 474.662031 17.229938)">Final program length</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p7-style-pbc10886351">
+   <rect x="124.562031" y="35.229938" width="212.7025" height="198.02"/>
+  </clipPath>
+  <clipPath id="p7-style-p330315fb5d">
+   <rect x="474.662031" y="35.229938" width="212.7025" height="198.02"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Descriptive distributions, not a paired teacher–student evaluation.</strong> K3 rows are selected passing demonstrations; the student row is its generated evaluation output. Median lengths do not identify the cause of failure. The audit found all 93 unparseable student answers had ended inside thinking, rather than being lost by the code extractor.</figcaption></figure></div><div class="wide"><figure id="figure-4"><div class="fig-title"><span class="kind">Interactive explanation</span>Figure 4 · Predicting the teacher’s answer is not generating your own</div><div class="controls" data-group="context"><button type="button" data-index="0" aria-pressed="true">Teacher context</button><button type="button" data-index="1" aria-pressed="false">Student context</button><button type="button" class="play" data-play="context" aria-pressed="false">Play steps</button></div><div class="flow" id="context-flow"><span class="active">Teacher’s reasoning</span><i>→</i><span>Predict the final program</span></div><div class="stage" id="context-stage" aria-live="polite"><h3 class="stage-title">The training condition</h3><p>The answer loss is measured after the teacher’s reasoning. The student can predict that code reasonably well under a context it may not reproduce itself.</p></div><figcaption><strong>Mechanism illustration.</strong> This depicts the conditioning gap, not a recorded episode or a causal decomposition. In the audit, code prediction under teacher context was much easier than producing coherent code after the student’s own reasoning.</figcaption></figure></div></section><section id="loss"><div class="prose"><h2>Look at where the loss goes</h2></div><div class="prose"><p>The original K3 run gave each trace equal overall weight, then averaged its supervised tokens. Thinking occupied most of those tokens and was much harder for the student to predict. It accounted for nearly all the measured loss.</p><p>That is a loss-accounting fact, not a measurement of gradient importance. It still changes the practical question: how much of the objective is directly teaching the final program?</p></div><div class="wide"><figure id="figure-5"><div class="fig-title"><span class="kind">Recorded measurements · interactive view</span>Figure 5 · The code was a small slice of an already small slice</div><div class="controls" data-group="loss"><button type="button" data-index="0" aria-pressed="true">Count tokens</button><button type="button" data-index="1" aria-pressed="false">Count loss</button><button type="button" class="play" data-play="loss" aria-pressed="false">Play steps</button></div><div class="legend"><span>Thinking</span><span>Answer code</span></div><div class="bar" role="img" id="loss-bar" aria-label="Thinking 84.8 percent of tokens; answer code 15.2 percent"><span style="transform:scaleX(.848)"></span><span aria-hidden="true"></span></div><p class="measure" id="loss-number">Thinking: 84.8% · code: 15.2%</p><p class="small" id="loss-note">Share of supervised tokens in the diagnosed K3 data.</p><figcaption><strong>Saved diagnosis of the first K3 SFT run.</strong> Thinking was 84.8% of supervised tokens and 97.7% of loss mass. Code received the remaining 2.3% of loss mass. These are different denominators. Neither percentage estimates a fraction of the parameter gradient.</figcaption></figure></div><div class="prose"><p>The next recipe averaged thinking and answer losses separately:</p><div class="formula">L = ½ mean(NLL<sub>thinking</sub>) + ½ mean(NLL<sub>answer</sub>)</div><p>Equal coefficients remove the token-count imbalance. They do not make the two numerical losses—or their gradients—equal. More importantly, the balanced K3 retry still compiled only 7 of 84 dev outputs after one epoch. Weighting was a necessary design choice to inspect, not a demonstrated cure.</p></div></section><section id="reach"><div class="prose"><h2>Choose demonstrations the student can reach</h2></div><div class="prose"><p>The next useful measurement came before training: score each teacher’s demonstrations under the starting student. The Qwen Flash set was much closer to the 9B than the K3 set, for both thinking and code.</p><p>This is more informative than choosing a teacher only by its own benchmark score. But it is not a clean test of model family: prompting, selected problems, code length and which traces survived the filters also differed.</p></div><div class="wide"><figure id="figure-6"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 6 · Measure the distance before paying for the transfer</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="Starting student negative log likelihood: K3 thinking 1.876 and code 0.188; Qwen Flash thinking 0.547 and code 0.081; earlier 27B set thinking 0.401 and code 0.063 nats per token." xmlns:xlink="http://www.w3.org/1999/xlink" width="696.563437pt" height="291.550797pt" viewBox="0 0 696.563437 291.550797" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>Starting student negative log likelihood: K3 thinking 1.876 and code 0.188; Qwen Flash thinking 0.547 and code 0.081; earlier 27B set thinking 0.401 and code 0.063 nats per token.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.018724</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p7-reach-figure_1">
+  <g id="p7-reach-patch_1">
+   <path d="M 0 291.550797
+L 696.563437 291.550797
+L 696.563437 0
+L 0 0
+L 0 291.550797
+z
+" style="fill: none"/>
+  </g>
+  <g id="p7-reach-axes_1">
+   <g id="p7-reach-patch_2">
+    <path d="M 91.663438 254.849937
+L 339.263438 254.849937
+L 339.263438 35.229938
+L 91.663438 35.229938
+L 91.663438 254.849937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-reach-patch_3">
+    <path d="M 91.663438 45.212665
+L 282.124976 45.212665
+L 282.124976 81.883908
+L 91.663438 81.883908
+z
+" clip-path="url(#p7-reach-p0a306d2d01)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-reach-patch_4">
+    <path d="M 91.663438 126.704316
+L 147.197799 126.704316
+L 147.197799 163.375559
+L 91.663438 163.375559
+z
+" clip-path="url(#p7-reach-p0a306d2d01)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p7-reach-patch_5">
+    <path d="M 91.663438 208.195967
+L 132.375099 208.195967
+L 132.375099 244.86721
+L 91.663438 244.86721
+z
+" clip-path="url(#p7-reach-p0a306d2d01)" style="fill: var(--pos, #397052)"/>
+   </g>
+   <g id="p7-reach-matplotlib.axis_1">
+    <g id="p7-reach-xtick_1">
+     <g id="p7-reach-line2d_1">
+      <path d="M 91.663438 254.849937
+L 91.663438 35.229938
+" clip-path="url(#p7-reach-p0a306d2d01)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-reach-line2d_2"/>
+     <g id="p7-reach-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="91.663438" y="266.707359" transform="rotate(-0 91.663438 266.707359)">0.0</text>
+     </g>
+    </g>
+    <g id="p7-reach-xtick_2">
+     <g id="p7-reach-line2d_3">
+      <path d="M 142.426108 254.849937
+L 142.426108 35.229938
+" clip-path="url(#p7-reach-p0a306d2d01)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-reach-line2d_4"/>
+     <g id="p7-reach-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="142.426108" y="266.707359" transform="rotate(-0 142.426108 266.707359)">0.5</text>
+     </g>
+    </g>
+    <g id="p7-reach-xtick_3">
+     <g id="p7-reach-line2d_5">
+      <path d="M 193.188778 254.849937
+L 193.188778 35.229938
+" clip-path="url(#p7-reach-p0a306d2d01)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-reach-line2d_6"/>
+     <g id="p7-reach-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="193.188778" y="266.707359" transform="rotate(-0 193.188778 266.707359)">1.0</text>
+     </g>
+    </g>
+    <g id="p7-reach-xtick_4">
+     <g id="p7-reach-line2d_7">
+      <path d="M 243.951448 254.849937
+L 243.951448 35.229938
+" clip-path="url(#p7-reach-p0a306d2d01)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-reach-line2d_8"/>
+     <g id="p7-reach-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="243.951448" y="266.707359" transform="rotate(-0 243.951448 266.707359)">1.5</text>
+     </g>
+    </g>
+    <g id="p7-reach-xtick_5">
+     <g id="p7-reach-line2d_9">
+      <path d="M 294.714118 254.849937
+L 294.714118 35.229938
+" clip-path="url(#p7-reach-p0a306d2d01)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-reach-line2d_10"/>
+     <g id="p7-reach-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="294.714118" y="266.707359" transform="rotate(-0 294.714118 266.707359)">2.0</text>
+     </g>
+    </g>
+    <g id="p7-reach-text_6">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="215.463437" y="281.708219" transform="rotate(-0 215.463437 281.708219)">Student starting NLL (nats / token)</text>
+    </g>
+   </g>
+   <g id="p7-reach-matplotlib.axis_2">
+    <g id="p7-reach-ytick_1">
+     <g id="p7-reach-line2d_11"/>
+     <g id="p7-reach-text_7">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="88.163438" y="67.726997" transform="rotate(-0 88.163438 67.726997)">K3</text>
+     </g>
+    </g>
+    <g id="p7-reach-ytick_2">
+     <g id="p7-reach-line2d_12"/>
+     <g id="p7-reach-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="88.163438" y="149.219078" transform="rotate(-0 88.163438 149.219078)">Qwen Flash</text>
+     </g>
+    </g>
+    <g id="p7-reach-ytick_3">
+     <g id="p7-reach-line2d_13"/>
+     <g id="p7-reach-text_9">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="88.163438" y="230.710729" transform="rotate(-0 88.163438 230.710729)">Earlier 27B set</text>
+     </g>
+    </g>
+   </g>
+   <g id="p7-reach-text_10">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="286.886514" y="66.405708" transform="rotate(-0 286.886514 66.405708)">1.876</text>
+   </g>
+   <g id="p7-reach-text_11">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="151.959337" y="147.897359" transform="rotate(-0 151.959337 147.897359)">0.547</text>
+   </g>
+   <g id="p7-reach-text_12">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="137.136637" y="229.389011" transform="rotate(-0 137.136637 229.389011)">0.401</text>
+   </g>
+   <g id="p7-reach-text_13">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="91.663438" y="17.229938" transform="rotate(-0 91.663438 17.229938)">Thinking</text>
+   </g>
+  </g>
+  <g id="p7-reach-axes_2">
+   <g id="p7-reach-patch_6">
+    <path d="M 441.763437 254.849937
+L 689.363437 254.849937
+L 689.363437 35.229938
+L 441.763437 35.229938
+L 441.763437 254.849937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-reach-patch_7">
+    <path d="M 441.763437 45.212665
+L 632.224976 45.212665
+L 632.224976 81.883908
+L 441.763437 81.883908
+z
+" clip-path="url(#p7-reach-p17427471ef)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-reach-patch_8">
+    <path d="M 441.763437 126.704316
+L 523.823994 126.704316
+L 523.823994 163.375559
+L 441.763437 163.375559
+z
+" clip-path="url(#p7-reach-p17427471ef)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p7-reach-patch_9">
+    <path d="M 441.763437 208.195967
+L 505.588315 208.195967
+L 505.588315 244.86721
+L 441.763437 244.86721
+z
+" clip-path="url(#p7-reach-p17427471ef)" style="fill: var(--pos, #397052)"/>
+   </g>
+   <g id="p7-reach-matplotlib.axis_3">
+    <g id="p7-reach-xtick_6">
+     <g id="p7-reach-line2d_14">
+      <path d="M 441.763437 254.849937
+L 441.763437 35.229938
+" clip-path="url(#p7-reach-p17427471ef)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-reach-line2d_15"/>
+     <g id="p7-reach-text_14">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="441.763437" y="266.707359" transform="rotate(-0 441.763437 266.707359)">0.00</text>
+     </g>
+    </g>
+    <g id="p7-reach-xtick_7">
+     <g id="p7-reach-line2d_16">
+      <path d="M 492.418102 254.849937
+L 492.418102 35.229938
+" clip-path="url(#p7-reach-p17427471ef)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-reach-line2d_17"/>
+     <g id="p7-reach-text_15">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="492.418102" y="266.707359" transform="rotate(-0 492.418102 266.707359)">0.05</text>
+     </g>
+    </g>
+    <g id="p7-reach-xtick_8">
+     <g id="p7-reach-line2d_18">
+      <path d="M 543.072766 254.849937
+L 543.072766 35.229938
+" clip-path="url(#p7-reach-p17427471ef)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-reach-line2d_19"/>
+     <g id="p7-reach-text_16">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="543.072766" y="266.707359" transform="rotate(-0 543.072766 266.707359)">0.10</text>
+     </g>
+    </g>
+    <g id="p7-reach-xtick_9">
+     <g id="p7-reach-line2d_20">
+      <path d="M 593.727431 254.849937
+L 593.727431 35.229938
+" clip-path="url(#p7-reach-p17427471ef)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-reach-line2d_21"/>
+     <g id="p7-reach-text_17">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="593.727431" y="266.707359" transform="rotate(-0 593.727431 266.707359)">0.15</text>
+     </g>
+    </g>
+    <g id="p7-reach-xtick_10">
+     <g id="p7-reach-line2d_22">
+      <path d="M 644.382095 254.849937
+L 644.382095 35.229938
+" clip-path="url(#p7-reach-p17427471ef)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-reach-line2d_23"/>
+     <g id="p7-reach-text_18">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="644.382095" y="266.707359" transform="rotate(-0 644.382095 266.707359)">0.20</text>
+     </g>
+    </g>
+    <g id="p7-reach-text_19">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="565.563437" y="281.708219" transform="rotate(-0 565.563437 281.708219)">Student starting NLL (nats / token)</text>
+    </g>
+   </g>
+   <g id="p7-reach-matplotlib.axis_4">
+    <g id="p7-reach-ytick_4">
+     <g id="p7-reach-line2d_24"/>
+     <g id="p7-reach-text_20">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="438.263437" y="67.726997" transform="rotate(-0 438.263437 67.726997)">K3</text>
+     </g>
+    </g>
+    <g id="p7-reach-ytick_5">
+     <g id="p7-reach-line2d_25"/>
+     <g id="p7-reach-text_21">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="438.263437" y="149.219078" transform="rotate(-0 438.263437 149.219078)">Qwen Flash</text>
+     </g>
+    </g>
+    <g id="p7-reach-ytick_6">
+     <g id="p7-reach-line2d_26"/>
+     <g id="p7-reach-text_22">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="438.263437" y="230.710729" transform="rotate(-0 438.263437 230.710729)">Earlier 27B set</text>
+     </g>
+    </g>
+   </g>
+   <g id="p7-reach-text_23">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="636.986514" y="66.405708" transform="rotate(-0 636.986514 66.405708)">0.188</text>
+   </g>
+   <g id="p7-reach-text_24">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="528.585532" y="147.897359" transform="rotate(-0 528.585532 147.897359)">0.081</text>
+   </g>
+   <g id="p7-reach-text_25">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="510.349853" y="229.389011" transform="rotate(-0 510.349853 229.389011)">0.063</text>
+   </g>
+   <g id="p7-reach-text_26">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="441.763437" y="17.229938" transform="rotate(-0 441.763437 17.229938)">Answer code</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p7-reach-p0a306d2d01">
+   <rect x="91.663438" y="35.229938" width="247.6" height="219.62"/>
+  </clipPath>
+  <clipPath id="p7-reach-p17427471ef">
+   <rect x="441.763437" y="35.229938" width="247.6" height="219.62"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Student starting NLL on three demonstration sets; lower means easier to predict.</strong> K3: 1,704 diagnosed traces. Flash: 1,247 kept traces before the later training filter. The earlier 27B set is a reference, not a matched control. Low starting NLL is a useful screen, not proof that a teacher will improve held-out capability.</figcaption></figure></div><div class="prose"><p>We kept distinct passing programs, filtered answer-code placeholders, checked tokenizer round trips and full lengths, and inspected the actual first-batch loss. Those checks made the training target reviewable. They did not establish a winning recipe.</p><p class="takeaway">The teacher’s skill and the student’s ability to absorb its demonstrations are different quantities.</p><details><summary>What the Flash data and loss checks actually establish</summary><p>The kept set covered 275 of 291 generation problems. The training filter left 1,110 traces on 268 problems. The balanced first-step loss matched its expected value, 0.3684. The source later reported thinking still contributed 88% of numerical loss under balanced coefficients; equal weighting is not equal realized loss. The cancelled code-only experiment produced no checkpoint, so it supplies no positive evidence for answer-only SFT.</p></details></div></section><section id="sft-record"><div class="prose"><h2>The SFT attempts, including the ones that did not help</h2></div><div class="prose">
+<p>The mitigation sequence was not “more of the same data.” We changed which traces survived, which tokens carried loss, how far the teacher was from the student, and how long we trained. The table keeps those changes and their outcomes together.</p></div><div class="wide"><figure id="figure-7"><div class="fig-title"><span class="kind">Experiment record · off-policy SFT</span>Figure 7 · A recipe change needs its own outcome column</div><div class="scroll" role="region" aria-label="Detailed comparison; scroll horizontally on small screens" tabindex="0"><table><thead><tr><th scope="col">Attempt</th><th scope="col">What we changed</th><th scope="col">What we actually learned</th></tr></thead><tbody><tr><td>K3, original joint SFT</td><td>1,704 passing traces · 278 problems. One epoch, LR 5×10<sup>−6</sup>, batch 16; equal weight per trace, then a mean over its supervised tokens.</td><td>FCS-172 ×5: Avg@5 0.33; 21.9% compile. Shorter thinking and teacher-like planning transferred; coherent final programs did not.</td></tr><tr><td>K3, answer-only SFT</td><td>Keep teacher thinking as context, put loss only on final code. Filter answer placeholders and the hardest tenth of answers under the starting student.</td><td><strong>Cancelled before producing a checkpoint.</strong> It is an untested alternative, not a failed or successful result.</td></tr><tr><td>K3, balanced segments</td><td>1,524 traces · 274 problems. ½ mean thinking NLL + ½ mean answer NLL. Three epochs planned; the active retry used LR 5×10<sup>−6</sup>.</td><td>Stopped after the first epoch. Dev21 ×4: 7/84 compile (8.3%); Avg@4 0.83. This small dev packet differs from the first row’s full evaluation.</td></tr><tr><td>Qwen Flash, balanced SFT</td><td>1,247 kept traces → 1,110 training traces on 268 problems. Same segment weighting; three epochs, LR 10<sup>−5</sup>, batch 16, clip threshold 1.0.</td><td>First-batch loss 0.3684 matched the intended objective. On the matched original prompt, FCS-172 ×5 later gave Avg@5 6.88, Best@5 20.20 and 69.1% compile. E3 seeded RL and OPD.</td></tr></tbody></table></div><figcaption><strong>Different datasets, evaluation packets and checkpoints.</strong> Read each row as an experiment record, not a controlled ranking. The answer-only attempt has no checkpoint. The balanced K3 retry was stopped after e1, so its planned three-epoch recipe was not completed.</figcaption></figure></div><div class="prose">
+<h3>Selection made the data cleaner, not automatically teachable</h3>
+<p>For K3, we kept up to eight distinct passing programs per problem. A trace had to finish naturally, pass all checked cases, score above zero and fit the sequence limits. Duplicate programs within a problem were collapsed. The training build also checked tokenizer round trips and prompt + thinking + answer length.</p>
+<p>The K3 limits were 65,536 thinking tokens, 32,768 answer tokens and 139,264 total tokens. The longest retained full sequence was about 106K tokens. All 1,704 examples were trained; the later collapse was not explained by silently dropping long traces.</p>
+<p>For the balanced retries, we removed final answers containing literal <code>...</code> placeholders and the tenth of answers with highest starting NLL. Sketches inside the thinking were retained. This reduced one obvious source of broken code, but also changed the difficulty distribution: the removed traces were not a random holdout.</p>
+<h3>The dataset count hides two different kinds of coverage</h3>
+<p>Eight solutions to one problem can provide algorithmic variety. They are still eight examples of the same problem. The K3 set’s 1,704 traces covered 278 problems; the final Flash training set’s 1,110 traces covered 268. Trace count and independent task coverage should be reported separately.</p>
+<p>Long traces add many prediction targets, including planning prose and intermediate code sketches. More tokens do not guarantee more examples of the capability we want. Here, the student sometimes moved sketches from the thinking into the final program. That is a concrete form of target ambiguity to inspect, rather than evidence that every long trace is noisy.</p>
+<h3>Clipping was a diagnosis, not a verdict</h3>
+<p>The first K3 run clipped 103 of 104 steps. We retried with a lower learning rate, but clipping tests the gradient norm before that learning rate scales the update. In a later window, norms were mostly near the 1.0 threshold; a norm of 1.21 meant a roughly 17% reduction. The clipping rate alone did not establish instability, and lowering LR did not rescue the measured dev compilation result.</p>
+<p class="takeaway">The useful practice is to verify the loss and inspect free generation. Filtering, balanced coefficients and a smaller learning rate are interventions to test, not a checklist that guarantees transfer.</p></div></section><section id="feedback"><div class="prose"><h2>RL can repair code while removing the target behavior</h2></div><div class="prose"><p>After Flash SFT, early RL shortened repeated drafts and improved compilation. On recurring training problems, compile rate rose from 54% to 65%, while scores among compiled programs stayed almost flat: 26.2 → 26.4. The apparent lead over earlier pure RL was mostly easier compilation.</p><p>Another continuation added search bonuses and near-miss credit. Later, reward rose while timed search vanished. A bonus that pays only qualifying search cannot help once the policy stops sampling any.</p></div><div class="wide"><figure id="figure-8"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 8 · The reward curve can hide a disappearing skill</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="Later RL updates 27 through 32: reward 0.169, 0.218, 0.198, 0.198, 0.257, 0.286; strict loop counts 6, 5, 3, 2, 2, zero out of 192 samples per update." xmlns:xlink="http://www.w3.org/1999/xlink" width="694.093047pt" height="269.950797pt" viewBox="0 0 694.093047 269.950797" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>Later RL updates 27 through 32: reward 0.169, 0.218, 0.198, 0.198, 0.257, 0.286; strict loop counts 6, 5, 3, 2, 2, zero out of 192 samples per update.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.175046</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p7-erasure-figure_1">
+  <g id="p7-erasure-patch_1">
+   <path d="M 0 269.950797
+L 694.093047 269.950797
+L 694.093047 0
+L 0 0
+L 0 269.950797
+z
+" style="fill: none"/>
+  </g>
+  <g id="p7-erasure-axes_1">
+   <g id="p7-erasure-patch_2">
+    <path d="M 53.693047 229.749937
+L 345.793047 229.749937
+L 345.793047 35.229938
+L 53.693047 35.229938
+L 53.693047 229.749937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-erasure-matplotlib.axis_1">
+    <g id="p7-erasure-xtick_1">
+     <g id="p7-erasure-line2d_1">
+      <defs>
+       <path id="p7-erasure-m5799000086" d="M 0 0
+L 0 3.5
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="66.97032" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="66.97032" y="245.107359" transform="rotate(-0 66.97032 245.107359)">27</text>
+     </g>
+    </g>
+    <g id="p7-erasure-xtick_2">
+     <g id="p7-erasure-line2d_2">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="120.079411" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="120.079411" y="245.107359" transform="rotate(-0 120.079411 245.107359)">28</text>
+     </g>
+    </g>
+    <g id="p7-erasure-xtick_3">
+     <g id="p7-erasure-line2d_3">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="173.188501" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="173.188501" y="245.107359" transform="rotate(-0 173.188501 245.107359)">29</text>
+     </g>
+    </g>
+    <g id="p7-erasure-xtick_4">
+     <g id="p7-erasure-line2d_4">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="226.297592" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="226.297592" y="245.107359" transform="rotate(-0 226.297592 245.107359)">30</text>
+     </g>
+    </g>
+    <g id="p7-erasure-xtick_5">
+     <g id="p7-erasure-line2d_5">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="279.406683" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="279.406683" y="245.107359" transform="rotate(-0 279.406683 245.107359)">31</text>
+     </g>
+    </g>
+    <g id="p7-erasure-xtick_6">
+     <g id="p7-erasure-line2d_6">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="332.515774" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_6">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="332.515774" y="245.107359" transform="rotate(-0 332.515774 245.107359)">32</text>
+     </g>
+    </g>
+    <g id="p7-erasure-text_7">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="199.743047" y="260.108219" transform="rotate(-0 199.743047 260.108219)">Later RL sequence · update</text>
+    </g>
+   </g>
+   <g id="p7-erasure-matplotlib.axis_2">
+    <g id="p7-erasure-ytick_1">
+     <g id="p7-erasure-line2d_7">
+      <path d="M 53.693047 229.749937
+L 345.793047 229.749937
+" clip-path="url(#p7-erasure-p13506c0d34)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_8">
+      <defs>
+       <path id="p7-erasure-m59bb629ddd" d="M 0 0
+L -3.5 0
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="53.693047" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="46.693047" y="233.928648" transform="rotate(-0 46.693047 233.928648)">0.00</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_2">
+     <g id="p7-erasure-line2d_9">
+      <path d="M 53.693047 201.144055
+L 345.793047 201.144055
+" clip-path="url(#p7-erasure-p13506c0d34)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_10">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="53.693047" y="201.144055" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_9">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="46.693047" y="205.322766" transform="rotate(-0 46.693047 205.322766)">0.05</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_3">
+     <g id="p7-erasure-line2d_11">
+      <path d="M 53.693047 172.538173
+L 345.793047 172.538173
+" clip-path="url(#p7-erasure-p13506c0d34)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_12">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="53.693047" y="172.538173" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_10">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="46.693047" y="176.716884" transform="rotate(-0 46.693047 176.716884)">0.10</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_4">
+     <g id="p7-erasure-line2d_13">
+      <path d="M 53.693047 143.93229
+L 345.793047 143.93229
+" clip-path="url(#p7-erasure-p13506c0d34)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_14">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="53.693047" y="143.93229" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_11">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="46.693047" y="148.111001" transform="rotate(-0 46.693047 148.111001)">0.15</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_5">
+     <g id="p7-erasure-line2d_15">
+      <path d="M 53.693047 115.326408
+L 345.793047 115.326408
+" clip-path="url(#p7-erasure-p13506c0d34)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_16">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="53.693047" y="115.326408" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_12">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="46.693047" y="119.505119" transform="rotate(-0 46.693047 119.505119)">0.20</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_6">
+     <g id="p7-erasure-line2d_17">
+      <path d="M 53.693047 86.720526
+L 345.793047 86.720526
+" clip-path="url(#p7-erasure-p13506c0d34)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_18">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="53.693047" y="86.720526" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_13">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="46.693047" y="90.899237" transform="rotate(-0 46.693047 90.899237)">0.25</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_7">
+     <g id="p7-erasure-line2d_19">
+      <path d="M 53.693047 58.114643
+L 345.793047 58.114643
+" clip-path="url(#p7-erasure-p13506c0d34)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_20">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="53.693047" y="58.114643" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_14">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="46.693047" y="62.293354" transform="rotate(-0 46.693047 62.293354)">0.30</text>
+     </g>
+    </g>
+    <g id="p7-erasure-text_15">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="15.558281" y="132.489937" transform="rotate(-90 15.558281 132.489937)">Reward (normalized)</text>
+    </g>
+   </g>
+   <g id="p7-erasure-line2d_21">
+    <path d="M 66.97032 133.062055
+L 120.079411 105.02829
+L 173.188501 116.470643
+L 226.297592 116.470643
+L 279.406683 82.715702
+L 332.515774 66.12429
+" clip-path="url(#p7-erasure-p13506c0d34)" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 2; stroke-linecap: square"/>
+    <defs>
+     <path id="p7-erasure-ma87c54b28f" d="M 0 3
+C 0.795609 3 1.55874 2.683901 2.12132 2.12132
+C 2.683901 1.55874 3 0.795609 3 0
+C 3 -0.795609 2.683901 -1.55874 2.12132 -2.12132
+C 1.55874 -2.683901 0.795609 -3 0 -3
+C -0.795609 -3 -1.55874 -2.683901 -2.12132 -2.12132
+C -2.683901 -1.55874 -3 -0.795609 -3 0
+C -3 0.795609 -2.683901 1.55874 -2.12132 2.12132
+C -1.55874 2.683901 -0.795609 3 0 3
+z
+" style="stroke: var(--accent, #3a5f8a)"/>
+    </defs>
+    <g clip-path="url(#p7-erasure-p13506c0d34)">
+     <use xlink:href="#p7-erasure-ma87c54b28f" x="66.97032" y="133.062055" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p7-erasure-ma87c54b28f" x="120.079411" y="105.02829" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p7-erasure-ma87c54b28f" x="173.188501" y="116.470643" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p7-erasure-ma87c54b28f" x="226.297592" y="116.470643" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p7-erasure-ma87c54b28f" x="279.406683" y="82.715702" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p7-erasure-ma87c54b28f" x="332.515774" y="66.12429" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="p7-erasure-patch_3">
+    <path d="M 53.693047 229.749937
+L 53.693047 35.229938
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-erasure-patch_4">
+    <path d="M 53.693047 229.749937
+L 345.793047 229.749937
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-erasure-text_16">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="284.717592" y="51.821349" transform="rotate(-0 284.717592 51.821349)">0.286</text>
+   </g>
+   <g id="p7-erasure-text_17">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="53.693047" y="17.229938" transform="rotate(-0 53.693047 17.229938)">Recorded training reward</text>
+   </g>
+  </g>
+  <g id="p7-erasure-axes_2">
+   <g id="p7-erasure-patch_5">
+    <path d="M 394.793047 229.749937
+L 686.893047 229.749937
+L 686.893047 35.229938
+L 394.793047 35.229938
+L 394.793047 229.749937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-erasure-matplotlib.axis_3">
+    <g id="p7-erasure-xtick_7">
+     <g id="p7-erasure-line2d_22">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="422.295969" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_18">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="422.295969" y="245.107359" transform="rotate(-0 422.295969 245.107359)">27</text>
+     </g>
+    </g>
+    <g id="p7-erasure-xtick_8">
+     <g id="p7-erasure-line2d_23">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="469.7148" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_19">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="469.7148" y="245.107359" transform="rotate(-0 469.7148 245.107359)">28</text>
+     </g>
+    </g>
+    <g id="p7-erasure-xtick_9">
+     <g id="p7-erasure-line2d_24">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="517.133631" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_20">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="517.133631" y="245.107359" transform="rotate(-0 517.133631 245.107359)">29</text>
+     </g>
+    </g>
+    <g id="p7-erasure-xtick_10">
+     <g id="p7-erasure-line2d_25">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="564.552462" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_21">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="564.552462" y="245.107359" transform="rotate(-0 564.552462 245.107359)">30</text>
+     </g>
+    </g>
+    <g id="p7-erasure-xtick_11">
+     <g id="p7-erasure-line2d_26">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="611.971294" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_22">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="611.971294" y="245.107359" transform="rotate(-0 611.971294 245.107359)">31</text>
+     </g>
+    </g>
+    <g id="p7-erasure-xtick_12">
+     <g id="p7-erasure-line2d_27">
+      <g>
+       <use xlink:href="#p7-erasure-m5799000086" x="659.390125" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_23">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="659.390125" y="245.107359" transform="rotate(-0 659.390125 245.107359)">32</text>
+     </g>
+    </g>
+    <g id="p7-erasure-text_24">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="540.843047" y="260.108219" transform="rotate(-0 540.843047 260.108219)">Later RL sequence · update</text>
+    </g>
+   </g>
+   <g id="p7-erasure-matplotlib.axis_4">
+    <g id="p7-erasure-ytick_8">
+     <g id="p7-erasure-line2d_28">
+      <path d="M 394.793047 229.749937
+L 686.893047 229.749937
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_29">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="394.793047" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_25">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="387.793047" y="233.928648" transform="rotate(-0 387.793047 233.928648)">0</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_9">
+     <g id="p7-erasure-line2d_30">
+      <path d="M 394.793047 205.434937
+L 686.893047 205.434937
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_31">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="394.793047" y="205.434937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_26">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="387.793047" y="209.613648" transform="rotate(-0 387.793047 209.613648)">1</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_10">
+     <g id="p7-erasure-line2d_32">
+      <path d="M 394.793047 181.119937
+L 686.893047 181.119937
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_33">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="394.793047" y="181.119937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_27">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="387.793047" y="185.298648" transform="rotate(-0 387.793047 185.298648)">2</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_11">
+     <g id="p7-erasure-line2d_34">
+      <path d="M 394.793047 156.804937
+L 686.893047 156.804937
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_35">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="394.793047" y="156.804937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_28">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="387.793047" y="160.983648" transform="rotate(-0 387.793047 160.983648)">3</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_12">
+     <g id="p7-erasure-line2d_36">
+      <path d="M 394.793047 132.489937
+L 686.893047 132.489937
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_37">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="394.793047" y="132.489937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_29">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="387.793047" y="136.668648" transform="rotate(-0 387.793047 136.668648)">4</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_13">
+     <g id="p7-erasure-line2d_38">
+      <path d="M 394.793047 108.174937
+L 686.893047 108.174937
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_39">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="394.793047" y="108.174937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_30">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="387.793047" y="112.353648" transform="rotate(-0 387.793047 112.353648)">5</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_14">
+     <g id="p7-erasure-line2d_40">
+      <path d="M 394.793047 83.859938
+L 686.893047 83.859938
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_41">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="394.793047" y="83.859938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_31">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="387.793047" y="88.038648" transform="rotate(-0 387.793047 88.038648)">6</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_15">
+     <g id="p7-erasure-line2d_42">
+      <path d="M 394.793047 59.544938
+L 686.893047 59.544938
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_43">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="394.793047" y="59.544938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_32">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="387.793047" y="63.723648" transform="rotate(-0 387.793047 63.723648)">7</text>
+     </g>
+    </g>
+    <g id="p7-erasure-ytick_16">
+     <g id="p7-erasure-line2d_44">
+      <path d="M 394.793047 35.229938
+L 686.893047 35.229938
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-erasure-line2d_45">
+      <g>
+       <use xlink:href="#p7-erasure-m59bb629ddd" x="394.793047" y="35.229938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-erasure-text_33">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="387.793047" y="39.408648" transform="rotate(-0 387.793047 39.408648)">8</text>
+     </g>
+    </g>
+    <g id="p7-erasure-text_34">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="374.151719" y="132.489937" transform="rotate(-90 374.151719 132.489937)">Count out of 192 samples / step</text>
+    </g>
+   </g>
+   <g id="p7-erasure-patch_6">
+    <path d="M 408.07032 229.749937
+L 436.521618 229.749937
+L 436.521618 83.859938
+L 408.07032 83.859938
+z
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-erasure-patch_7">
+    <path d="M 455.489151 229.749937
+L 483.940449 229.749937
+L 483.940449 108.174937
+L 455.489151 108.174937
+z
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-erasure-patch_8">
+    <path d="M 502.907982 229.749937
+L 531.359281 229.749937
+L 531.359281 156.804937
+L 502.907982 156.804937
+z
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-erasure-patch_9">
+    <path d="M 550.326813 229.749937
+L 578.778112 229.749937
+L 578.778112 181.119937
+L 550.326813 181.119937
+z
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-erasure-patch_10">
+    <path d="M 597.745644 229.749937
+L 626.196943 229.749937
+L 626.196943 181.119937
+L 597.745644 181.119937
+z
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-erasure-patch_11">
+    <path d="M 645.164475 229.749937
+L 673.615774 229.749937
+L 673.615774 229.749937
+L 645.164475 229.749937
+z
+" clip-path="url(#p7-erasure-p7e6cbe46e6)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-erasure-patch_12">
+    <path d="M 394.793047 229.749937
+L 394.793047 35.229938
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-erasure-patch_13">
+    <path d="M 394.793047 229.749937
+L 686.893047 229.749937
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-erasure-text_35">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="659.390125" y="223.671187" transform="rotate(-0 659.390125 223.671187)">0</text>
+   </g>
+   <g id="p7-erasure-text_36">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="394.793047" y="17.229938" transform="rotate(-0 394.793047 17.229938)">Strict timed-loop programs</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p7-erasure-p13506c0d34">
+   <rect x="53.693047" y="35.229938" width="292.1" height="194.52"/>
+  </clipPath>
+  <clipPath id="p7-erasure-p7e6cbe46e6">
+   <rect x="394.793047" y="35.229938" width="292.1" height="194.52"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Training readouts from a separate, evolving continuation—not held-out scores.</strong> Task draws change at each update. Update 27 used a 0.05 search bonus; 28–32 used 0.15. Strict-loop counts are a proxy, not a census of all search. Earlier, an audit also found rewarded clock-bounded greedy constructions without an improvement step. This is evidence to inspect the programs, not to infer algorithms from reward alone.</figcaption></figure></div><div class="prose"><p>The curriculum still needs two gates: first generate a correct advanced algorithm often enough to learn from it; then reward improvements that preserve that construction. The current runs do not show that those gates have both been cleared.</p></div><div class="prose">
+<h3>The fixes we tried were aimed at different failure modes</h3>
+<p>A compile-check sentence in the prompt barely moved search-attempt compile failures in the first 192-sample batch: 69% → 66% on the trained rows, within the uncertainty of that small comparison. It was not a demonstrated repair for names, types or inconsistent program state.</p>
+<p>Near-miss credit tried to recognize repairable failed search. Static guards tried to prevent paying a timer wrapped around a non-improving construction. The later increase from a 0.05 to a 0.15 search bonus still paid nothing once the policy stopped sampling qualifying programs. Those mechanisms changed incentives, but did not establish preservation of the target behavior.</p>
+<p>We also considered removing negative advantage from failed search attempts. A plain floor was rejected: adding a superficial timer to broken code could earn protection from a penalty. An offline replay can expose that incentive, but it cannot predict what a newly trained policy will sample.</p>
+<p>A rollback with a much stronger reference anchor was built later. That is a proposed preservation intervention, not a positive result in this article. The central bottleneck remains whether correct advanced-search programs occur often enough to learn from.</p></div></section><section id="opd-record"><div class="prose"><h2>OPD had already taught us to watch the stopping boundary</h2></div><div class="prose">
+<p>OPD was not a fresh switch we assumed would fix SFT. Earlier attempts had already produced a recurring failure: the student kept thinking, then ran out of room to write a usable answer. One lower-learning-rate variant kept length stable, so we reused its general recipe for the Flash-teacher attempt.</p></div><div class="wide"><figure id="figure-9"><div class="fig-title"><span class="kind">Experiment record · on-policy distillation</span>Figure 9 · The earlier OPD record contained a warning, not a winning recipe</div><div class="scroll" role="region" aria-label="Detailed comparison; scroll horizontally on small screens" tabindex="0"><table><thead><tr><th scope="col">Attempt family</th><th scope="col">Observed result</th><th scope="col">Interpretation</th></tr></thead><tbody><tr><td>Earlier agent OPD variants</td><td>One eval-mini readout fell 3.8 points; another shifted toward longer thinking after about four updates.</td><td>Teacher guidance can change an agent’s behavior while reducing the measured outcome.</td></tr><tr><td>One-shot OPD with a 27B teacher at high effort</td><td>Stopped at step 3 with 95% forced closure and 0% compilation.</td><td>A stronger reasoning signal did not preserve the student’s ability to finish.</td></tr><tr><td>Another one-shot continuation</td><td>Thinking median grew from about 24K to 50K tokens.</td><td>Length drift recurred across more than one configuration.</td></tr><tr><td>Earlier low-LR one-shot variant</td><td>Thinking stayed around 21–29K, with 0% forced closure on dev. Step 4 FCS single-sample: 8.71 versus 7.26 at its SFT start; difference +1.45 [−1.7, +4.6]. Step 6 was worse.</td><td>This was the most stable earlier candidate, but its held-out gain was not statistically established.</td></tr></tbody></table></div><figcaption><strong>Historical readouts with different tasks and protocols.</strong> Agent eval-mini, dev scores and FCS single-sample scores are not interchangeable. The interval in the last row includes zero. No earlier OPD in this record established a significant held-out gain.</figcaption></figure></div><div class="prose">
+<p>The distinction matters for early stopping. A clean intermediate checkpoint can be more useful than the last one: in the stable variant, step 4 beat step 6. We therefore saved every update and treated rising thinking length together with forced closure as a reason to stop, even if the teacher-divergence metric improved.</p></div></section><section id="stopping"><div class="prose"><h2>Stopping is part of the behavior being distilled</h2></div><div class="prose"><p>On-policy distillation lets the teacher score the student’s own sampled tokens. That addresses one conditioning gap, but introduces another control problem: learning when to end thinking.</p><p>Our Flash teacher generated shorter reasoning in a probe. Even so, the student’s OPD outputs grew rapidly. Lower teacher–student divergence did not guarantee a usable response length.</p></div><div class="wide"><figure id="figure-10"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 10 · Three rollout batches were enough to reveal the drift</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="OPD batches one through three: thinking median 39.9, 54.0 and 81.2 thousand tokens; forced closure 6.3, 17.2 and 34.4 percent." xmlns:xlink="http://www.w3.org/1999/xlink" width="693.205161pt" height="269.950797pt" viewBox="0 0 693.205161 269.950797" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>OPD batches one through three: thinking median 39.9, 54.0 and 81.2 thousand tokens; forced closure 6.3, 17.2 and 34.4 percent.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.245616</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p7-opd-figure_1">
+  <g id="p7-opd-patch_1">
+   <path d="M 0 269.950797
+L 693.205161 269.950797
+L 693.205161 0
+L 0 0
+L 0 269.950797
+z
+" style="fill: none"/>
+  </g>
+  <g id="p7-opd-axes_1">
+   <g id="p7-opd-patch_2">
+    <path d="M 50.197109 229.749937
+L 339.066035 229.749937
+L 339.066035 35.229938
+L 50.197109 35.229938
+L 50.197109 229.749937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-opd-matplotlib.axis_1">
+    <g id="p7-opd-xtick_1">
+     <g id="p7-opd-line2d_1">
+      <defs>
+       <path id="p7-opd-m426b541084" d="M 0 0
+L 0 3.5
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#p7-opd-m426b541084" x="63.327515" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="63.327515" y="245.107359" transform="rotate(-0 63.327515 245.107359)">1</text>
+     </g>
+    </g>
+    <g id="p7-opd-xtick_2">
+     <g id="p7-opd-line2d_2">
+      <g>
+       <use xlink:href="#p7-opd-m426b541084" x="194.631572" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="194.631572" y="245.107359" transform="rotate(-0 194.631572 245.107359)">2</text>
+     </g>
+    </g>
+    <g id="p7-opd-xtick_3">
+     <g id="p7-opd-line2d_3">
+      <g>
+       <use xlink:href="#p7-opd-m426b541084" x="325.935629" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="325.935629" y="245.107359" transform="rotate(-0 325.935629 245.107359)">3</text>
+     </g>
+    </g>
+    <g id="p7-opd-text_4">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="194.631572" y="260.108219" transform="rotate(-0 194.631572 260.108219)">OPD rollout batch</text>
+    </g>
+   </g>
+   <g id="p7-opd-matplotlib.axis_2">
+    <g id="p7-opd-ytick_1">
+     <g id="p7-opd-line2d_4">
+      <path d="M 50.197109 229.749937
+L 339.066035 229.749937
+" clip-path="url(#p7-opd-p9e2c6d16be)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_5">
+      <defs>
+       <path id="p7-opd-m65b0865912" d="M 0 0
+L -3.5 0
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="50.197109" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="43.197109" y="233.928648" transform="rotate(-0 43.197109 233.928648)">0</text>
+     </g>
+    </g>
+    <g id="p7-opd-ytick_2">
+     <g id="p7-opd-line2d_6">
+      <path d="M 50.197109 190.845937
+L 339.066035 190.845937
+" clip-path="url(#p7-opd-p9e2c6d16be)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_7">
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="50.197109" y="190.845937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_6">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="43.197109" y="195.024648" transform="rotate(-0 43.197109 195.024648)">20</text>
+     </g>
+    </g>
+    <g id="p7-opd-ytick_3">
+     <g id="p7-opd-line2d_8">
+      <path d="M 50.197109 151.941937
+L 339.066035 151.941937
+" clip-path="url(#p7-opd-p9e2c6d16be)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_9">
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="50.197109" y="151.941937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_7">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="43.197109" y="156.120648" transform="rotate(-0 43.197109 156.120648)">40</text>
+     </g>
+    </g>
+    <g id="p7-opd-ytick_4">
+     <g id="p7-opd-line2d_10">
+      <path d="M 50.197109 113.037937
+L 339.066035 113.037937
+" clip-path="url(#p7-opd-p9e2c6d16be)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_11">
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="50.197109" y="113.037937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="43.197109" y="117.216648" transform="rotate(-0 43.197109 117.216648)">60</text>
+     </g>
+    </g>
+    <g id="p7-opd-ytick_5">
+     <g id="p7-opd-line2d_12">
+      <path d="M 50.197109 74.133937
+L 339.066035 74.133937
+" clip-path="url(#p7-opd-p9e2c6d16be)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_13">
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="50.197109" y="74.133937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_9">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="43.197109" y="78.312648" transform="rotate(-0 43.197109 78.312648)">80</text>
+     </g>
+    </g>
+    <g id="p7-opd-ytick_6">
+     <g id="p7-opd-line2d_14">
+      <path d="M 50.197109 35.229938
+L 339.066035 35.229938
+" clip-path="url(#p7-opd-p9e2c6d16be)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_15">
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="50.197109" y="35.229938" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_10">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="43.197109" y="39.408648" transform="rotate(-0 43.197109 39.408648)">100</text>
+     </g>
+    </g>
+    <g id="p7-opd-text_11">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="15.558281" y="132.489937" transform="rotate(-90 15.558281 132.489937)">Median tokens (thousands)</text>
+    </g>
+   </g>
+   <g id="p7-opd-line2d_16">
+    <path d="M 63.327515 152.136457
+L 194.631572 124.709137
+L 325.935629 71.799697
+" clip-path="url(#p7-opd-p9e2c6d16be)" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 2; stroke-linecap: square"/>
+    <defs>
+     <path id="p7-opd-m075792b810" d="M 0 3
+C 0.795609 3 1.55874 2.683901 2.12132 2.12132
+C 2.683901 1.55874 3 0.795609 3 0
+C 3 -0.795609 2.683901 -1.55874 2.12132 -2.12132
+C 1.55874 -2.683901 0.795609 -3 0 -3
+C -0.795609 -3 -1.55874 -2.683901 -2.12132 -2.12132
+C -2.683901 -1.55874 -3 -0.795609 -3 0
+C -3 0.795609 -2.683901 1.55874 -2.12132 2.12132
+C -1.55874 2.683901 -0.795609 3 0 3
+z
+" style="stroke: var(--accent, #3a5f8a)"/>
+    </defs>
+    <g clip-path="url(#p7-opd-p9e2c6d16be)">
+     <use xlink:href="#p7-opd-m075792b810" x="63.327515" y="152.136457" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p7-opd-m075792b810" x="194.631572" y="124.709137" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p7-opd-m075792b810" x="325.935629" y="71.799697" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="p7-opd-patch_3">
+    <path d="M 50.197109 229.749937
+L 50.197109 35.229938
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-opd-patch_4">
+    <path d="M 50.197109 229.749937
+L 339.066035 229.749937
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-opd-text_12">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="63.327515" y="142.136457" transform="rotate(-0 63.327515 142.136457)">39.9</text>
+   </g>
+   <g id="p7-opd-text_13">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="194.631572" y="114.709137" transform="rotate(-0 194.631572 114.709137)">54</text>
+   </g>
+   <g id="p7-opd-text_14">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="325.935629" y="61.799697" transform="rotate(-0 325.935629 61.799697)">81.2</text>
+   </g>
+   <g id="p7-opd-text_15">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="50.197109" y="17.229938" transform="rotate(-0 50.197109 17.229938)">Thinking length</text>
+   </g>
+  </g>
+  <g id="p7-opd-axes_2">
+   <g id="p7-opd-patch_5">
+    <path d="M 396.697109 229.749937
+L 685.566035 229.749937
+L 685.566035 35.229938
+L 396.697109 35.229938
+L 396.697109 229.749937
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-opd-matplotlib.axis_3">
+    <g id="p7-opd-xtick_4">
+     <g id="p7-opd-line2d_17">
+      <g>
+       <use xlink:href="#p7-opd-m426b541084" x="409.827515" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_16">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="409.827515" y="245.107359" transform="rotate(-0 409.827515 245.107359)">1</text>
+     </g>
+    </g>
+    <g id="p7-opd-xtick_5">
+     <g id="p7-opd-line2d_18">
+      <g>
+       <use xlink:href="#p7-opd-m426b541084" x="541.131572" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_17">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="541.131572" y="245.107359" transform="rotate(-0 541.131572 245.107359)">2</text>
+     </g>
+    </g>
+    <g id="p7-opd-xtick_6">
+     <g id="p7-opd-line2d_19">
+      <g>
+       <use xlink:href="#p7-opd-m426b541084" x="672.435629" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_18">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="672.435629" y="245.107359" transform="rotate(-0 672.435629 245.107359)">3</text>
+     </g>
+    </g>
+    <g id="p7-opd-text_19">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="541.131572" y="260.108219" transform="rotate(-0 541.131572 260.108219)">OPD rollout batch</text>
+    </g>
+   </g>
+   <g id="p7-opd-matplotlib.axis_4">
+    <g id="p7-opd-ytick_7">
+     <g id="p7-opd-line2d_20">
+      <path d="M 396.697109 229.749937
+L 685.566035 229.749937
+" clip-path="url(#p7-opd-p755f09027f)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_21">
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="396.697109" y="229.749937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_20">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="389.697109" y="233.928648" transform="rotate(-0 389.697109 233.928648)">0</text>
+     </g>
+    </g>
+    <g id="p7-opd-ytick_8">
+     <g id="p7-opd-line2d_22">
+      <path d="M 396.697109 186.523271
+L 685.566035 186.523271
+" clip-path="url(#p7-opd-p755f09027f)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_23">
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="396.697109" y="186.523271" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_21">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="389.697109" y="190.701982" transform="rotate(-0 389.697109 190.701982)">10</text>
+     </g>
+    </g>
+    <g id="p7-opd-ytick_9">
+     <g id="p7-opd-line2d_24">
+      <path d="M 396.697109 143.296604
+L 685.566035 143.296604
+" clip-path="url(#p7-opd-p755f09027f)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_25">
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="396.697109" y="143.296604" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_22">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="389.697109" y="147.475315" transform="rotate(-0 389.697109 147.475315)">20</text>
+     </g>
+    </g>
+    <g id="p7-opd-ytick_10">
+     <g id="p7-opd-line2d_26">
+      <path d="M 396.697109 100.069937
+L 685.566035 100.069937
+" clip-path="url(#p7-opd-p755f09027f)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_27">
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="396.697109" y="100.069937" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_23">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="389.697109" y="104.248648" transform="rotate(-0 389.697109 104.248648)">30</text>
+     </g>
+    </g>
+    <g id="p7-opd-ytick_11">
+     <g id="p7-opd-line2d_28">
+      <path d="M 396.697109 56.843271
+L 685.566035 56.843271
+" clip-path="url(#p7-opd-p755f09027f)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-opd-line2d_29">
+      <g>
+       <use xlink:href="#p7-opd-m65b0865912" x="396.697109" y="56.843271" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="p7-opd-text_24">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="389.697109" y="61.021982" transform="rotate(-0 389.697109 61.021982)">40</text>
+     </g>
+    </g>
+    <g id="p7-opd-text_25">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="369.057031" y="132.489937" transform="rotate(-90 369.057031 132.489937)">Samples (%)</text>
+    </g>
+   </g>
+   <g id="p7-opd-line2d_30">
+    <path d="M 409.827515 202.517137
+L 541.131572 155.400071
+L 672.435629 81.050204
+" clip-path="url(#p7-opd-p755f09027f)" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 2; stroke-linecap: square"/>
+    <g clip-path="url(#p7-opd-p755f09027f)">
+     <use xlink:href="#p7-opd-m075792b810" x="409.827515" y="202.517137" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p7-opd-m075792b810" x="541.131572" y="155.400071" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#p7-opd-m075792b810" x="672.435629" y="81.050204" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="p7-opd-patch_6">
+    <path d="M 396.697109 229.749937
+L 396.697109 35.229938
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-opd-patch_7">
+    <path d="M 396.697109 229.749937
+L 685.566035 229.749937
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="p7-opd-text_26">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="409.827515" y="192.517137" transform="rotate(-0 409.827515 192.517137)">6.3</text>
+   </g>
+   <g id="p7-opd-text_27">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="541.131572" y="145.400071" transform="rotate(-0 541.131572 145.400071)">17.2</text>
+   </g>
+   <g id="p7-opd-text_28">
+    <text style="font-weight: 700; font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="672.435629" y="71.050204" transform="rotate(-0 672.435629 71.050204)">34.4</text>
+   </g>
+   <g id="p7-opd-text_29">
+    <text style="font-weight: 600; font-size: 13.2px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="396.697109" y="17.229938" transform="rotate(-0 396.697109 17.229938)">Forced thinking closure</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p7-opd-p9e2c6d16be">
+   <rect x="50.197109" y="35.229938" width="288.868926" height="194.52"/>
+  </clipPath>
+  <clipPath id="p7-opd-p755f09027f">
+   <rect x="396.697109" y="35.229938" width="288.868926" height="194.52"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Rollout batch 1 uses the initial checkpoint; later batches reflect prior updates.</strong> The run was stopped at the fourth-step boundary. Token alignment had passed a long-sequence check. That rules out one alignment failure, not every cause of length drift. No significant held-out OPD gain is established here.</figcaption></figure></div><div class="wide"><figure id="figure-11"><div class="fig-title"><span class="kind">Interactive mechanism · follow-up below</span>Figure 11 · Separate the teacher signal from the stopping anchor</div><div class="controls" data-group="mask"><button type="button" data-index="0" aria-pressed="true">Earlier clamp</button><button type="button" data-index="1" aria-pressed="false">Corrected retry</button><button type="button" class="play" data-play="mask" aria-pressed="false">Play steps</button></div><div class="token-grid" id="mask-grid"><span>Token group</span><span>Teacher term</span><span>Reference anchor</span><span>Ordinary text</span><span class="on">Active*</span><span>Not this new anchor</span><span>Stop-equivalent</span><span>Two tokens clamped ≥ 0</span><span>Not this new anchor</span></div><div class="stage" id="mask-stage" aria-live="polite"><h3 class="stage-title">Clamping did not stop the length drift</h3><p>Preventing negative teacher credit on two termination tokens was not enough in this run. Other tokens and the rest of the update still changed stopping behavior.</p></div><figcaption><strong>Two different contracts, not a successful before/after result.</strong> *The teacher term covers a bounded thinking prefix and the answer. The retry masks that term on all special-token targets while retaining a separate reference-KL anchor, including on those positions. The retry subsequently ran; its length drift and the matched-task audit are reported below. The mask plus an anchor is not shown sufficient.</figcaption></figure></div><div class="prose"><p><a href="https://arxiv.org/abs/2608.14277">SimpleOPD</a> motivates a student reference anchor and termination-token masking. <a href="https://arxiv.org/abs/2609.20511">When EOS Tokens Disagree</a> shows why declared stopping sets can still hide probability mismatches. These are relevant mechanisms; neither paper validates our coding recipe.</p></div><div class="prose">
+<h3>What was already in the Flash OPD recipe</h3>
+<p>We started from Flash-SFT e3, used the original one-shot prompt, sampled 16 tasks ×4 completions per batch and took one update per batch at LR 3×10<sup>−7</sup>. The planned ten updates used 96K thinking and 32K answer caps. Teacher credit covered only the first 42,778 thinking tokens of each response, while answer tokens stayed included.</p>
+<p>The teacher signal on the thinking-close and end-of-message targets was clamped to be nonnegative. This is weaker than removing the teacher term at those targets, and it is different from anchoring the student to its own starting termination probabilities. Despite the clamp and prefix cap, the first three batches drifted longer.</p>
+<p>We checked shared token IDs, prompt rendering and next-token log-probability alignment on a 96K sequence. We also confirmed the actual LR: a readout had rounded 3×10<sup>−7</sup> to 0.0. The optimizer step, nonzero gradient norm and changed weights ruled out that display error as a no-update explanation.</p>
+<p>Teacher reverse-KL fell from 0.135 to 0.119 while forced closure rose from 6.3% to 34.4%. The desired teacher agreement and the undesired stopping drift happened together. A shorter-generating teacher, verified alignment, low LR and a bounded thinking prefix were therefore insufficient safeguards in this run.</p>
+<h3>What the corrected retries change</h3>
+<p>The new recipe zeros the teacher term on <em>all</em> special-token targets. Separately, a reference-KL penalty with coefficient 0.5 pulls toward frozen e3, including at those positions. The coefficient is a configuration choice; the actual KL contribution has to be measured as training proceeds.</p>
+<p>Those retries retained the same low LR, batch shape, prefix cap and original stepwise stop rule. We ran them with anchor coefficients 0.5 and 2.0. Both initially triggered the old length rule; the updated section below reports the matched-task audit and first held-out quality check. Answer-only OPD was discussed but not run. It must not be confused with the cancelled answer-only SFT attempt.</p></div></section><section id="fairness"><div class="prose"><h2>The stop rule needed a control, too</h2></div><div class="prose">
+<p>The two mask-and-anchor retries subsequently ran. Both initially got longer. It was tempting to call that another OPD failure. A retrospective audit changed the interpretation.</p>
+<p>All three OPD runs drew the same tasks at each step, but consecutive steps shared only one or two tasks. Even with unchanged e3 weights on the same sixteen tasks, a 64-sample draw’s thinking median ranged from 31.9K to 45.9K in the saved 95% noise band. The first rise in the KL-0.5 retry started from an unusually short baseline draw.</p></div><div class="wide"><figure id="figure-12"><div class="fig-title"><span class="kind">Updated experiment record · October 31</span>Figure 12 · Mitigations that ran, and the quality checks that followed</div><div class="scroll" role="region" aria-label="Detailed comparison; scroll horizontally on small screens" tabindex="0"><table><thead><tr><th scope="col">Intervention</th><th scope="col">Readout</th><th scope="col">What it establishes</th></tr></thead><tbody><tr><td>Special-target mask + reference KL 0.5</td><td>Thinking median 33.8K → 42.8K → 66.8K; forced closure 9.4% → 15.6% → 21.9%.</td><td>The mask ran correctly. This combination did not stabilize length in the observed batches.</td></tr><tr><td>Same mask + reference KL 2.0</td><td>Median 42.4K → 48.8K → 63.8K, then back to 46.1K at step 4.</td><td>The original rule stopped it, but step 4’s reversion made a length-only verdict premature.</td></tr><tr><td>First held-out check, OPD step 4</td><td>FCS-172 ×1, paired against e3: score change −0.70 [−3.97, +2.54]; compile change −8.7 pp [−18.0, +0.6].</td><td>No demonstrated benefit in this initial check; the intervals include zero. This is not a proof that OPD cannot help.</td></tr><tr><td>RL from e3, step 18</td><td>Same ×1 check: score change +1.39 [−2.31, +5.18]; compilation 82.6%, +8.7 pp [0.0, +17.4].</td><td>Validity improved more clearly than the score. Training readouts and held-out results remain distinct.</td></tr></tbody></table></div><figcaption><strong>These rows use different comparisons.</strong> The first two are changing-task training batches. The latter two are an initial held-out, single-sample packet. The ×1 score intervals include zero; do not substitute them for the completed ×5 e3 baseline above.</figcaption></figure></div><div class="prose">
+<p>Matched-task reads still found real length growth by step 3, so the entire effect was not noise. But the KL-2.0 run reverted at step 4, and those matched comparisons covered only four to six tasks. Length was a useful alarm; it was not a sufficient quality verdict.</p>
+<p>The revised rule compares each checkpoint with e3 on the same tasks and looks for harm: excess forced closure or reduced compilation across two successive steps, with extreme-failure backstops. We still log length and entropy. We no longer let an unmatched length median stand in for “this method works.”</p></div></section><section id="target"><div class="prose"><h2>The teacher’s sampling distribution became part of the recipe</h2></div><div class="prose">
+<p>We then tested a combined teacher-and-outcome objective. It still grew longer. An audit of code, token alignment, loss sign, masks and aggregation did not reveal a simple implementation error that accounted for the pattern. A proposed “fidelity cliff” was not supported either: token-level divergence did not predict compilation or score within a task.</p>
+<p>The next hypothesis concerned the target distribution. The teacher’s raw probabilities and the distribution it actually samples after truncation are not the same target. A student can be pushed toward a more diffuse distribution even when that teacher’s own sampled answers are shorter.</p></div><div class="wide"><figure id="figure-13"><div class="fig-title"><span class="kind">Recorded measurements</span>Figure 13 · The target was more diffuse than the starting student</div><div class="plot" role="region" tabindex="0" aria-label="Graph; scroll horizontally on small screens"><svg role="img" aria-label="At one set of common token positions, top-20 entropy was Flash 0.796, student after six combined updates 0.738, and starting e3 0.669. After card-sampler truncation the values were 0.686, 0.631 and 0.569." xmlns:xlink="http://www.w3.org/1999/xlink" width="694.911562pt" height="261.667899pt" viewBox="0 0 694.911562 261.667899" xmlns="http://www.w3.org/2000/svg" version="1.1"><title>At one set of common token positions, top-20 entropy was Flash 0.796, student after six combined updates 0.738, and starting e3 0.669. After card-sampler truncation the values were 0.686, 0.631 and 0.569.</title>
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T12:28:03.530858</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="p7-entropy-target-figure_1">
+  <g id="p7-entropy-target-patch_1">
+   <path d="M -0 261.667899
+L 694.911562 261.667899
+L 694.911562 0
+L -0 0
+L -0 261.667899
+z
+" style="fill: none"/>
+  </g>
+  <g id="p7-entropy-target-axes_1">
+   <g id="p7-entropy-target-patch_2">
+    <path d="M 150.300312 224.96704
+L 687.711563 224.96704
+L 687.711563 39.32784
+L 150.300312 39.32784
+L 150.300312 224.96704
+z
+" style="fill: none"/>
+   </g>
+   <g id="p7-entropy-target-matplotlib.axis_1">
+    <g id="p7-entropy-target-xtick_1">
+     <g id="p7-entropy-target-line2d_1">
+      <path d="M 150.300312 224.96704
+L 150.300312 39.32784
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-entropy-target-line2d_2"/>
+     <g id="p7-entropy-target-text_1">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="150.300312" y="236.824462" transform="rotate(-0 150.300312 236.824462)">0.0</text>
+     </g>
+    </g>
+    <g id="p7-entropy-target-xtick_2">
+     <g id="p7-entropy-target-line2d_3">
+      <path d="M 253.64863 224.96704
+L 253.64863 39.32784
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-entropy-target-line2d_4"/>
+     <g id="p7-entropy-target-text_2">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="253.64863" y="236.824462" transform="rotate(-0 253.64863 236.824462)">0.2</text>
+     </g>
+    </g>
+    <g id="p7-entropy-target-xtick_3">
+     <g id="p7-entropy-target-line2d_5">
+      <path d="M 356.996947 224.96704
+L 356.996947 39.32784
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-entropy-target-line2d_6"/>
+     <g id="p7-entropy-target-text_3">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="356.996947" y="236.824462" transform="rotate(-0 356.996947 236.824462)">0.4</text>
+     </g>
+    </g>
+    <g id="p7-entropy-target-xtick_4">
+     <g id="p7-entropy-target-line2d_7">
+      <path d="M 460.345264 224.96704
+L 460.345264 39.32784
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-entropy-target-line2d_8"/>
+     <g id="p7-entropy-target-text_4">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="460.345264" y="236.824462" transform="rotate(-0 460.345264 236.824462)">0.6</text>
+     </g>
+    </g>
+    <g id="p7-entropy-target-xtick_5">
+     <g id="p7-entropy-target-line2d_9">
+      <path d="M 563.693582 224.96704
+L 563.693582 39.32784
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-entropy-target-line2d_10"/>
+     <g id="p7-entropy-target-text_5">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="563.693582" y="236.824462" transform="rotate(-0 563.693582 236.824462)">0.8</text>
+     </g>
+    </g>
+    <g id="p7-entropy-target-xtick_6">
+     <g id="p7-entropy-target-line2d_11">
+      <path d="M 667.041899 224.96704
+L 667.041899 39.32784
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.12; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="p7-entropy-target-line2d_12"/>
+     <g id="p7-entropy-target-text_6">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="667.041899" y="236.824462" transform="rotate(-0 667.041899 236.824462)">1.0</text>
+     </g>
+    </g>
+    <g id="p7-entropy-target-text_7">
+     <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="419.005937" y="251.825321" transform="rotate(-0 419.005937 251.825321)">Reported distribution entropy (nats)</text>
+    </g>
+   </g>
+   <g id="p7-entropy-target-matplotlib.axis_2">
+    <g id="p7-entropy-target-ytick_1">
+     <g id="p7-entropy-target-line2d_13"/>
+     <g id="p7-entropy-target-text_8">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="146.800312" y="71.417769" transform="rotate(-0 146.800312 71.417769)">Flash teacher</text>
+     </g>
+    </g>
+    <g id="p7-entropy-target-ytick_2">
+     <g id="p7-entropy-target-line2d_14"/>
+     <g id="p7-entropy-target-text_9">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="146.800312" y="136.326581" transform="rotate(-0 146.800312 136.326581)">Student after six updates</text>
+     </g>
+    </g>
+    <g id="p7-entropy-target-ytick_3">
+     <g id="p7-entropy-target-line2d_15"/>
+     <g id="p7-entropy-target-text_10">
+      <text style="font-size: 11px; font-family: system-ui, -apple-system, sans-serif; text-anchor: end; fill: var(--ink-soft, #27313d)" x="146.800312" y="201.235392" transform="rotate(-0 146.800312 201.235392)">Starting e3</text>
+     </g>
+    </g>
+   </g>
+   <g id="p7-entropy-target-patch_3">
+    <path d="M 150.300312 47.765985
+L 561.626615 47.765985
+L 561.626615 65.940453
+L 150.300312 65.940453
+z
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p7-entropy-target-patch_4">
+    <path d="M 150.300312 112.674797
+L 531.655603 112.674797
+L 531.655603 130.849264
+L 150.300312 130.849264
+z
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p7-entropy-target-patch_5">
+    <path d="M 150.300312 177.583608
+L 496.000434 177.583608
+L 496.000434 195.758075
+L 150.300312 195.758075
+z
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="p7-entropy-target-patch_6">
+    <path d="M 150.300312 68.536805
+L 504.785041 68.536805
+L 504.785041 86.711272
+L 150.300312 86.711272
+z
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-entropy-target-patch_7">
+    <path d="M 150.300312 133.445616
+L 476.364254 133.445616
+L 476.364254 151.620083
+L 150.300312 151.620083
+z
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-entropy-target-patch_8">
+    <path d="M 150.300312 198.354427
+L 444.326275 198.354427
+L 444.326275 216.528895
+L 150.300312 216.528895
+z
+" clip-path="url(#p7-entropy-target-p13eef73b03)" style="fill: var(--gold, #a9781f)"/>
+   </g>
+   <g id="p7-entropy-target-text_11">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="567.827514" y="59.450875" transform="rotate(-0 567.827514 59.450875)">0.796</text>
+   </g>
+   <g id="p7-entropy-target-text_12">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="537.856502" y="124.359686" transform="rotate(-0 537.856502 124.359686)">0.738</text>
+   </g>
+   <g id="p7-entropy-target-text_13">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="502.201333" y="189.268498" transform="rotate(-0 502.201333 189.268498)">0.669</text>
+   </g>
+   <g id="p7-entropy-target-text_14">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="510.98594" y="80.221695" transform="rotate(-0 510.98594 80.221695)">0.686</text>
+   </g>
+   <g id="p7-entropy-target-text_15">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="482.565153" y="145.130506" transform="rotate(-0 482.565153 145.130506)">0.631</text>
+   </g>
+   <g id="p7-entropy-target-text_16">
+    <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="450.527174" y="210.039317" transform="rotate(-0 450.527174 210.039317)">0.569</text>
+   </g>
+   <g id="p7-entropy-target-legend_1">
+    <g id="p7-entropy-target-patch_9">
+     <path d="M 270.861406 18.798437
+L 290.861406 18.798437
+L 290.861406 11.798437
+L 270.861406 11.798437
+z
+" style="fill: var(--accent, #3a5f8a)"/>
+    </g>
+    <g id="p7-entropy-target-text_17">
+     <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="298.861406" y="18.798437" transform="rotate(-0 298.861406 18.798437)">Top-20 distribution</text>
+    </g>
+    <g id="p7-entropy-target-patch_10">
+     <path d="M 412.234844 18.798437
+L 432.234844 18.798437
+L 432.234844 11.798437
+L 412.234844 11.798437
+z
+" style="fill: var(--gold, #a9781f)"/>
+    </g>
+    <g id="p7-entropy-target-text_18">
+     <text style="font-size: 10px; font-family: system-ui, -apple-system, sans-serif; text-anchor: start; fill: var(--ink-soft, #27313d)" x="440.234844" y="18.798437" transform="rotate(-0 440.234844 18.798437)">Sampler-truncated target</text>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p7-entropy-target-p13eef73b03">
+   <rect x="150.300312" y="39.32784" width="537.41125" height="185.6392"/>
+  </clipPath>
+ </defs>
+</svg>
+</div><figcaption><strong>Same-position diagnostic, not a generation-length experiment.</strong> These are entropies of the reported top-20 and sampler-truncated distributions; they are not interchangeable with the rollout entropy curve. Their ordering supports a target-distribution hypothesis. It does not establish that entropy caused the length growth.</figcaption></figure></div><div class="wide"><figure id="figure-14"><div class="fig-title"><span class="kind">Mitigation record · November 1</span>Figure 14 · A control can change the interpretation of a mitigation</div><div class="scroll" role="region" aria-label="Detailed comparison; scroll horizontally on small screens" tabindex="0"><table><thead><tr><th scope="col">Attempt</th><th scope="col">What changed or happened</th><th scope="col">Status at the snapshot</th></tr></thead><tbody><tr><td>Sampled-token teacher term + outcome reward</td><td>Teacher signal on an early thinking window and all final code, combined with outcome reward. The six-step run reached the thinking cap in its median and 65.6% forced closure.</td><td>Adding outcome reward did not prevent the growth. A code audit found no sign, alignment or masking failure that explained it.</td></tr><tr><td>Self-teacher control</td><td>Use frozen e3 as teacher. Its teacher term was effectively zero. Length rose at step 2 and then fell at step 3.</td><td>An early length increase can happen without the stronger teacher. The sustained six-step pattern still needs an explanation beyond that control.</td></tr><tr><td>Truncated top-20 teacher target</td><td>Replace the sampled-token term with forward KL toward the teacher’s sampler-truncated, renormalized top-20 distribution; retain the outcome term.</td><td>The short initial comparison did not separate it from e3 on length, reward or forced closure. A continuation was still running at the snapshot.</td></tr></tbody></table></div><figcaption><strong>No clean three-way causal comparison.</strong> The self-teacher control used eight tasks per step; the original combined run used sixteen. The matched seven-task read at step 2 had wide intervals. The continued top-20 run restarted from saved weights with fresh optimizer state, so it is not an uninterrupted optimizer resume.</figcaption></figure></div><div class="prose">
+<p>The continuation’s third-batch comparison looked encouraging on eight matched tasks: compilation and reward exceeded e3. On the next eight tasks, both differences were within noise again. Entropy also rose sharply. That is an unresolved experiment, not a success to extrapolate.</p>
+<p class="takeaway">The working practice is to specify the teacher distribution, keep a self-teacher control, and judge matched-task validity and reward alongside length. The top-20 change is a hypothesis under test.</p></div></section><section id="practice"><div class="prose"><h2>The practices we would carry into the next attempt</h2></div><div class="prose"><div class="practice"><strong>Screen the transfer, not just the teacher.</strong><p>Measure starting NLL by thinking and code, then test free generation. Easy teacher-conditioned code prediction can coexist with broken student-written programs.</p></div><div class="practice"><strong>Audit the objective that actually runs.</strong><p>Check masks, normalization and first-batch loss. Inspect clipping magnitude rather than treating every clipped step as instability. Balanced coefficients are a control, not a success result.</p></div><div class="practice"><strong>Keep skill, correctness and reward on separate axes.</strong><p>Show compilation, advanced-algorithm execution and held-out score. Read the programs behind any search proxy; a timer can bound a greedy construction.</p></div><div class="practice"><strong>Preserve a matched evaluation packet.</strong><p>Prompt, sampler, thinking and answer caps, seeds and grader matter. The original-prompt Flash-SFT result now separates average reliability from Best@5. Changed-prompt runs remain separate comparisons.</p></div><div class="practice"><strong>Give drift an explicit stop rule.</strong><p>Track thinking length and forced closure from the first OPD batch, alongside code quality. A self-teacher control and matched-task quality checks changed the interpretation of the early rises. The top-20-target continuation remains unresolved.</p></div><p>For the curriculum, a construction gate should check that generated programs execute the intended improvement loop, maintain their objective and best-so-far state, and write back a valid result. Only then does a feedback gate ask whether subsequent hill-climbing improves a matched result without discarding that structure. These are proposed acceptance criteria, not gates the current runs have already passed.</p><p class="takeaway">These runs produced better diagnostic habits. They have not yet produced a validated recipe for transferring reliable advanced search into the 9B.</p></div></section></main><footer><div class="prose"><h3>Evidence and limits</h3><p>Evidence was refreshed through November 1, 2026, about 12:20 Pacific. All numbers come from saved experiment readouts; no training or grading was run to author this article. The small-seed sequence, K3 SFT, Flash SFT, later reward continuations and OPD retry are distinct lineages. Sampled behavior proxies are not interchangeable with executed advanced search. Changed prompts and changing task draws limit comparisons. The matched original-prompt Flash-SFT evaluation is complete. Earlier OPD, combined teacher/outcome and top-20-target runs are different lineages. The continued top-20 experiment had reached its fourth rollout batch, with no held-out gain established.</p><p>Graphs are reproducible SVG exports from recorded values. Interactive diagrams explain mechanisms; they do not simulate or invent experimental outcomes. Play controls pause when the page is hidden and respect reduced-motion preferences.</p><div class="foot-links"><a href="../">Part 1 · The Harness Is Part of the Model</a><a href="../part-2/">Part 2 · The Wall, the Compile Tax, and the Oracle</a><a href="../part-3/">Part 3 · Climbing From Zero Without a Teacher</a><a href="../part-4/">Part 4 · Borrowing a Foothold</a><a href="../part-5/">Part 5 · When the Reward Misses the Algorithm</a><a href="../part-6/">Part 6 · Fork, Talk, Submit</a><a href="../part-8/">Part 8 · One Harness, Six Ways to Work</a><a href="https://github.com/MaCoredroid/collective-intelligence">Repository</a><a href="#top">Back to top ↑</a></div></div></footer><script>
+(()=>{
+ const root=document.documentElement,theme=document.querySelector('.theme');
+ try{const saved=localStorage.getItem('ci-visual-theme');if(saved)root.dataset.theme=saved}catch(e){}
+ theme?.addEventListener('click',()=>{const dark=root.dataset.theme==='dark'||(!root.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('ci-visual-theme',root.dataset.theme)}catch(e){}});
+ const states={},timers={},motion=matchMedia('(prefers-reduced-motion:reduce)');
+ function animate(el){if(!el)return;el.classList.remove('changed');requestAnimationFrame(()=>el.classList.add('changed'))}
+ function stage(id,title,copy){const e=document.getElementById(id);if(!e)return;e.querySelector('h3').textContent=title;e.querySelector('p').textContent=copy;animate(e)}
+ const evolution=[{"title": "Make improved work survive", "flow": ["Separate working copies", "Exact graded artifact", "One team result"], "text": "Part 6 exposed a preservation problem: a team could test a better program and deliver a worse one. The next design bound proposals to graded bytes and protected peer work. Those safeguards made selection more explicit, but did not themselves teach cooperation."}, {"title": "Separate public feedback from the final outcome", "flow": ["Public cases or self-score", "Candidate proposal", "Hidden-case score"], "text": "Later arms changed the feedback channel. Public scoring could become the whole testing strategy; self-scores could become confidence claims. Across the audited A/B episodes, neither arm developed much genuine peer work. A low regret value was often the result of producing only one candidate."}, {"title": "Make a commit the unit of submission", "flow": ["Independent branches", "Recorded commits", "submit_final(commit)"], "text": "A commit identifies exactly what is shipped. But any agent could end the entire episode early, before a peer had committed its work. Preservation helped only after the candidate entered the ledger. This is a mechanism illustration, not a replay of one episode."}, {"title": "Add a work protocol and realistic local tests", "flow": ["Split approaches", "Measure and compare", "Agree on the exact commit"], "text": "The SOP asked agents to explore distinct approaches, test code, publish measurements, inspect peer commits and coordinate the final choice. Version 7 also made local execution respect the final judge\u2019s resource limits. Its behavioral rules remained prompt instructions, not hard submission gates."}],models=[{"name": "Qwen 9B", "solo": 20, "four": 14, "agents": 2.29, "clock": 27, "story": "Forks could happen quickly, but comparisons and final agreement often did not. Only 7 of 48 episodes used the constrained runner; 45 submitted before the merge point. A few episodes did propagate peer code. Fast branching did not reliably become a team loop."}, {"name": "Qwen 27B", "solo": 22, "four": 6, "agents": 2.1, "clock": 97, "story": "This model waited much later. Peers often appeared only after a long solo start, leaving little time to compare. Serving throughput also limited the run: 17 episodes timed out during generation. Its low score cannot be read as a clean model-size or cooperation result."}, {"name": "Qwen Flash", "solo": 1, "four": 25, "agents": 3.46, "clock": 78, "story": "Flash usually formed a larger team and used the constrained runner in 47 of 48 episodes. It often re-ran peer commits, yet could choose between nearly tied or incomparable local numbers. More active teamwork did not remove measurement and selection errors."}, {"name": "Haiku 5.5", "solo": 29, "four": 0, "agents": 1.48, "clock": 38, "story": "Haiku worked alone in most episodes. When it forked, the peer was often a checker. Early stopping and idle waits were common in the selected reads. Within-task later submissions scored better, but that observational association is not a randomized test of waiting."}, {"name": "Sonnet 5.5", "solo": 25, "four": 0, "agents": 1.67, "clock": 37, "story": "Sonnet split into two modes: very short solo solutions on some tasks, and small teams on others. Its as-graded score matched Opus despite far more solo episodes. This is the clearest warning that a strong score with team tools available is not a measurement of cooperation."}, {"name": "Opus 5.5", "solo": 3, "four": 0, "agents": 2.19, "clock": 68, "story": "Opus forked in 45 of 48 episodes, usually one peer. All 39 early team submissions had explicit agreement from every peer on the commit. Checking was concrete, but peers often tested or polished one algorithm rather than preserving a distinct competing approach."}];
+ const render={
+ learning(i){const data=[{flow:['Teacher writes a full trace','Freeze and filter the dataset','Student predicts its tokens'],title:'Learn under the teacher’s prefix',text:'At every supervised position, the preceding reasoning and code come from the saved teacher trace. The data stays fixed while the student changes.',signal:'Signal: negative log-likelihood of demonstrated thinking and answer tokens. Prompt tokens receive zero weight.'},{flow:['Student samples a response','Teacher scores those tokens','Update the student'],title:'Learn on the student’s own prefix',text:'The teacher evaluates tokens the student actually sampled, including prefixes the teacher might not have generated. This addresses one SFT conditioning gap, while still requiring explicit control of length and termination.',signal:'Signal: teacher log-probability versus student log-probability on sampled tokens; the corrected retry adds a separate frozen-student reference-KL term.'},{flow:['Student writes a program','Compile and execute it','Compare rewards within a group'],title:'Learn from the program’s outcome',text:'A verifier measures whether the program runs and how well it solves the task. Reward can favor safer construction even when the research goal is richer search; the behavioral target needs its own audit.',signal:'Signal: executed-program reward; some continuations also add guarded search bonuses or near-miss repair credit.'}][i];document.getElementById('learning-flow').innerHTML=data.flow.map((x,k)=>`<span class="${k===i?'active':''}">${x}</span>`).join('<i>→</i>');stage('learning-stage',data.title,data.text);document.getElementById('learning-objective').textContent=data.signal;},
+ episode(i){const data=[{flow:['A · current conversation + files','B · copied context, own branch','Both continue under one clock'],title:'A peer starts from a snapshot',text:'A direction asks for a distinct approach. The peer inherits the current context and files, then develops separately. Later edits do not synchronize automatically.'},{flow:['A and B commit candidates','Read messages and peer files','Re-run and adopt a measured candidate'],title:'Messages exchange evidence; commits identify code',text:'A message can point to a commit and explain its measurement. Any peer can inspect or copy the code. The message itself neither merges files nor certifies the local score.'},{flow:['A calls submit_final(B’s commit)','Freeze B’s solution.cpp','Every agent stops; one answer is graded'],title:'Any peer can finalize the whole team',text:'The tool selects the recorded bytes and ends all work immediately. Agreement and timing are SOP instructions; the runtime does not wait for peers to approve.'}][i];document.getElementById('episode-flow').innerHTML=data.flow.map((x,k)=>`<span class="${k===i?'active':''}">${x}</span>`).join('<i>→</i>');stage('episode-stage',data.title,data.text);},
+ context(i){const flow=document.getElementById('context-flow');flow.innerHTML=i?'<span class="active">Student’s own reasoning</span><i>→</i><span>Write and execute a program</span>':'<span class="active">Teacher’s reasoning</span><i>→</i><span>Predict the final program</span>';stage('context-stage',i?'The deployment condition':'The training condition',i?'At generation time the student must create its own prefix, keep names and invariants coherent, and finish a valid program. Low answer NLL under teacher context does not establish that entire capability.':'The answer loss is measured after the teacher’s reasoning. The student can predict that code reasonably well under a context it may not reproduce itself.');},
+ loss(i){const a=i?97.7:84.8,b=100-a;const bar=document.getElementById('loss-bar');bar.children[0].style.transform=`scaleX(${a/100})`;bar.setAttribute('aria-label',`Thinking ${a} percent; answer code ${b.toFixed(1)} percent of ${i?'loss mass':'tokens'}`);document.getElementById('loss-number').textContent=`Thinking: ${a}% · code: ${b.toFixed(1)}%`;document.getElementById('loss-note').textContent=i?'Share of measured loss mass. This is not a gradient attribution.':'Share of supervised tokens in the diagnosed K3 data.';},
+ mask(i){document.getElementById('mask-grid').innerHTML=i?'<span>Token group</span><span>Teacher term</span><span>Reference anchor</span><span>Ordinary text</span><span class="on">Active*</span><span class="on">Active</span><span>All special targets</span><span class="off">Zero</span><span class="on">Active</span>':'<span>Token group</span><span>Teacher term</span><span>Reference anchor</span><span>Ordinary text</span><span class="on">Active*</span><span>Not this new anchor</span><span>Stop-equivalent</span><span>Two tokens clamped ≥ 0</span><span>Not this new anchor</span>';stage('mask-stage',i?'The retry separates two signals':'Clamping did not stop the length drift',i?'Teacher credit is zeroed on special-token targets. A separate reference-KL term still anchors those positions to the starting student. This recipe subsequently ran with anchor coefficients 0.5 and 2.0. Both initially drifted longer; the matched-task follow-up below shows why that is not a complete quality verdict.':'Preventing negative teacher credit on two termination tokens was not enough in this run. Other tokens and the rest of the update still changed stopping behavior.');},
+ evolution(i){const d=evolution[i];document.getElementById('evolution-flow').innerHTML=d.flow.map((x,k)=>`<span class="${k===i%3?'active':''}">${x}</span>`).join('<i>→</i>');document.querySelectorAll('#evolution-list li').forEach((e,k)=>e.classList.toggle('current',k===i));stage('evolution-stage',d.title,d.text);},
+ ending(i){document.getElementById('ending-flow').innerHTML=i?'<span class="active">A · commit shipped</span><span class="faded">B · work stopped</span><span class="faded">C · test stopped</span>':'<span class="active">A · committed candidate</span><span>B · work in progress</span><span>C · testing an edit</span>';document.getElementById('ending-note').textContent=i?'The ledger can report no lost committed candidate while uncommitted peer work disappears. Its quality remains unknown.':'Illustration: only A’s committed candidate is visible to a commit-based regret measure.';animate(document.getElementById('ending-flow'));},
+ cpu(i){document.getElementById('cpu-number').textContent=i?'Summed CPU time ≈ 1.2 · exceeds 1.0':'Elapsed wall time ≈ 0.6 · within 1.0';document.getElementById('cpu-note').textContent=i?'The judge charges both threads. Local tests need the same accounting if they are to predict this failure.':'Overlapping work looks safe if the local check only watches elapsed time.';document.querySelector('.lane.total .track b').style.transform=i?'scaleX(.857143)':'scaleX(.428571)';document.querySelector('.lane.total .track b').style.background=i?'var(--neg)':'var(--accent)';document.getElementById('cpu-total-name').textContent=i?'CPU total':'Wall total';document.getElementById('cpu-total-label').textContent=i?'1.2':'0.6';},
+ models(i){const d=models[i],mid=48-d.solo-d.four,w=document.getElementById('model-waffle');Array.from(w.children).forEach((e,k)=>e.className=k<d.solo?'solo':k<d.solo+mid?'middle':'four');w.setAttribute('aria-label',`${d.name}: ${d.solo} solo, ${mid} two-or-three-agent and ${d.four} four-agent episodes`);document.getElementById('model-info').innerHTML=`<span>${d.solo} solo · ${mid} with 2–3 agents · ${d.four} with 4 agents</span><span>Mean agents: ${d.agents.toFixed(2)}</span><span>Median submit: ${d.clock}% of clock</span>`;stage('model-stage',d.name,d.story);}
+ };
+ function select(key,i){const group=document.querySelector(`[data-group="${key}"]`);if(!group)return;const options=[...group.querySelectorAll('[data-index]')];states[key]=i;options.forEach((b,k)=>b.setAttribute('aria-pressed',String(k===i)));render[key]?.(i)}
+ document.querySelectorAll('[data-group]').forEach(group=>{const key=group.dataset.group;states[key]=0;group.querySelectorAll('[data-index]').forEach(b=>b.addEventListener('click',()=>select(key,+b.dataset.index)));const play=group.querySelector('[data-play]');if(play)play.addEventListener('click',()=>{if(timers[key]){clearInterval(timers[key]);delete timers[key];play.textContent='Play steps';play.setAttribute('aria-pressed','false');return}if(motion.matches){select(key,(states[key]+1)%group.querySelectorAll('[data-index]').length);return}play.textContent='Pause';play.setAttribute('aria-pressed','true');timers[key]=setInterval(()=>select(key,(states[key]+1)%group.querySelectorAll('[data-index]').length),key==='models'?7000:2600)});});
+ function stop(){Object.keys(timers).forEach(k=>{clearInterval(timers[k]);delete timers[k]});document.querySelectorAll('[data-play]').forEach(b=>{b.textContent='Play steps';b.setAttribute('aria-pressed','false')})}motion.addEventListener('change',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});window.addEventListener('pagehide',stop);
+})();
+</script></body></html>
