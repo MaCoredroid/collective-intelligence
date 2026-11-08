@@ -24,3 +24,4 @@ The page is a single static file in [`docs/index.html`](docs/index.html), served
 - [Part 6 · Fork, Talk, Submit](https://macoredroid.github.io/collective-intelligence/part-6/)
 - [Part 7 · The Distance to a Teacher](https://macoredroid.github.io/collective-intelligence/part-7/)
 - [Part 8 · One Harness, Six Ways to Work](https://macoredroid.github.io/collective-intelligence/part-8/)
+- [Part 9 · What Did the Teacher Actually Transfer?](https://macoredroid.github.io/collective-intelligence/part-9/)

@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="On-policy distillation from Qwen Flash into a 9B FrontierCS student. What the teacher improved, what went wrong with stopping, and how the recipes compared."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-9/"><meta property="og:type" content="article"><meta property="og:site_name" content="Collective Intelligence"><meta property="og:title" content="What Did the Teacher Actually Transfer?"><meta property="og:description" content="On-policy distillation from Qwen Flash into a 9B FrontierCS student. What the teacher improved, what went wrong with stopping, and how the recipes compared."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-9/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="What Did the Teacher Actually Transfer?"><meta name="twitter:description" content="On-policy distillation from Qwen Flash into a 9B FrontierCS student. What the teacher improved, what went wrong with stopping, and how the recipes compared."><title>What Did the Teacher Actually Transfer?</title><style>
+:root{--bg:#f7f8f9;--surface:#fff;--surface-2:#edf0f3;--ink:#1a1c1f;--ink-soft:#414b56;--muted:#626d79;--rule:#d5dae0;--accent:#3a5f8a;--gold:#8a611c;--pos:#397052;--neg:#ad5140;--serif:Georgia,"Iowan Old Style",Charter,serif;--sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
+:root[data-theme=dark]{--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}}
+*{box-sizing:border-box}html{scroll-behavior:auto;scroll-padding-top:2rem}body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.65 var(--serif);-webkit-font-smoothing:antialiased}p{color:var(--ink-soft);margin:1.05em 0;text-wrap:pretty}h1,h2,h3{text-wrap:balance;line-height:1.15}h1{font-size:clamp(2.3rem,5.4vw,3.65rem);letter-spacing:-.025em;font-weight:600;margin:.8rem 0 1.2rem}h2{font-size:clamp(1.65rem,3.5vw,2.3rem);font-weight:600;letter-spacing:-.015em;margin:0 0 1.4rem}h3{font-size:1.14rem;margin:0 0 .6rem}a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:4px}a:hover{text-decoration-style:dotted}.prose{max-width:45rem;margin:auto;padding:0 1.5rem}.wide{max-width:68rem;margin:auto;padding:0 1.5rem}header{padding:4.6rem 0 1rem}.series{font:12px/1.7 var(--mono);color:var(--muted);letter-spacing:.07em}.subtitle{font-size:1.2rem;color:var(--accent);margin:0 0 1.8rem}.deck{font-size:1.22rem;line-height:1.55}.publication{font:13px/1.65 var(--sans);color:var(--muted);padding:.8rem 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:1.8rem 0}.contents{display:flex;gap:.45rem 1rem;flex-wrap:wrap;font:13px/1.7 var(--sans);margin:1.6rem 0 0}.theme{position:fixed;right:1rem;top:1rem;z-index:10;background:var(--surface);border:1px solid var(--rule);color:var(--ink-soft);border-radius:20px;padding:.4rem .8rem;font:12px var(--mono);cursor:pointer}.skip{position:fixed;left:1rem;top:-5rem;z-index:20;background:var(--surface);padding:.7rem}.skip:focus{top:1rem}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}section{padding-top:4rem;margin-top:2.7rem;border-top:1px solid var(--rule)}section:first-of-type{margin-top:1.7rem}.takeaway{font-size:1.13rem;color:var(--ink);margin:1.6rem 0;font-style:italic}figure{margin:2rem 0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.5rem;min-width:0}.fig-title{font:600 15px/1.5 var(--sans);margin:0 0 1.1rem}.kind{font:11px var(--mono);color:var(--muted);display:block;margin-bottom:.35rem;letter-spacing:.03em}.plot{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}.plot svg{display:block;width:100%;height:auto;min-width:650px}figcaption{font:13px/1.65 var(--sans);color:var(--muted);border-top:1px solid var(--rule);padding-top:1rem;margin-top:1.2rem}figcaption strong{color:var(--ink-soft)}.controls{display:flex;flex-wrap:wrap;gap:.5rem 1rem;margin:1rem 0 1.3rem}button{font-family:var(--sans)}.controls button{font:13px/1.5 var(--sans);color:var(--ink-soft);border:1px solid var(--rule);background:var(--surface);padding:.55rem .8rem;border-radius:4px;cursor:pointer}.controls button[aria-pressed=true]{color:var(--accent);border-color:var(--accent);background:var(--surface-2)}.controls button:hover{border-color:var(--accent)}.controls .play{margin-left:auto}.stage{padding:1.1rem 0 .2rem;min-height:8rem}.stage p{font-size:1.03rem;margin:.5rem 0}.stage-title{font:600 16px var(--sans);color:var(--accent)}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:1.2rem 0}.flow span{font:14px/1.6 var(--sans);padding:.6rem .8rem;background:var(--surface-2);border:1px solid var(--rule);border-radius:4px}.flow i{font-style:normal;color:var(--accent)}.flow .faded{opacity:.45}.flow .active{border-color:var(--accent);color:var(--accent)}.changed{animation:enter .26s ease-out}@keyframes enter{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}.small{font:13px/1.7 var(--sans);color:var(--muted)}.measure{font:600 18px/1.6 var(--mono);margin:.7rem 0;color:var(--ink)}.bar{display:block;position:relative;min-height:2.4rem;border-radius:4px;overflow:hidden;margin:1rem 0;background:var(--gold)}.bar span{background:var(--accent);display:block;position:absolute;inset:0;transform-origin:left;transition:transform .5s cubic-bezier(.16,1,.3,1)}.bar span:last-child{display:none}.legend{display:flex;gap:1rem;flex-wrap:wrap;font:13px var(--sans);color:var(--ink-soft)}.legend span::before{content:'';display:inline-block;width:.65rem;height:.65rem;background:var(--accent);margin-right:.4rem}.legend span:last-child::before{background:var(--gold)}.formula{font:16px/1.8 var(--mono);padding:1rem 0;color:var(--ink);overflow-wrap:anywhere}.prompt-source{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.85 var(--mono);background:var(--surface-2);padding:1.25rem;border-radius:4px;color:var(--ink-soft)}.scroll table{min-width:740px}.scroll:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.practice{padding:1.1rem 0;border-top:1px solid var(--rule)}.practice strong{display:block;font:600 16px var(--sans);margin-bottom:.5rem}.practice p{font-size:1rem;margin:.3rem 0}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font:14px/1.6 var(--sans)}th,td{padding:.7rem .8rem;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}th{color:var(--ink);font-weight:600}td{color:var(--ink-soft)}.mono{font-family:var(--mono)}details{border-top:1px solid var(--rule);padding:1rem 0;margin-top:1.4rem;font-size:.95rem}summary{cursor:pointer;color:var(--accent);font:14px/1.5 var(--sans)}details p{font-size:.95rem}.waffle{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;margin:1rem 0;max-width:38rem}.waffle span{aspect-ratio:1;background:var(--rule);border-radius:2px;transition:background-color .2s}.waffle .solo{background:var(--gold)}.waffle .middle{background:var(--accent)}.waffle .four{background:var(--pos)}.model-info{display:flex;flex-wrap:wrap;gap:.5rem 2rem;font:14px/1.7 var(--sans);color:var(--ink-soft);padding:.9rem 0;border-bottom:1px solid var(--rule)}.model-story{font-size:1.02rem;max-width:48rem}.legend span.solo::before{background:var(--gold)}.legend span.middle::before{background:var(--accent)}.legend span.four::before{background:var(--pos)}.token-grid{display:grid;grid-template-columns:minmax(9rem,1.2fr) 1fr 1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);font:13px/1.6 var(--mono)}.token-grid>span{background:var(--surface);padding:.7rem}.token-grid .on{color:var(--pos)}.token-grid .off{color:var(--muted)}.lane{display:flex;align-items:center;gap:.7rem;font:13px var(--sans);margin:.7rem 0}.lane>span{min-width:6rem}.track{height:18px;background:var(--surface-2);flex:1;position:relative;border:1px solid var(--rule)}.track b{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(.428571);transition:transform .5s cubic-bezier(.16,1,.3,1)}.track::after{content:"";position:absolute;left:71.4286%;top:-4px;bottom:-4px;border-left:1px dashed var(--ink-soft)}.lane.total .track b{background:var(--accent)}.lane.total .track{overflow:visible}.deadline{font:14px/1.65 var(--sans);padding:.7rem 0}.step-list{display:flex;flex-wrap:wrap;gap:.6rem;list-style:none;margin:1rem 0;padding:0}.step-list li{font:13px var(--sans);color:var(--muted);border-bottom:2px solid var(--rule);padding:.4rem 0;flex:1 1 8rem}.step-list li.current{color:var(--accent);border-color:var(--accent)}footer{margin:4rem auto 0;padding:2.2rem 0 3rem;border-top:1px solid var(--rule)}footer p{font-size:.92rem}.foot-links{display:flex;gap:.8rem 1.6rem;flex-wrap:wrap;font:13px var(--sans)}.index-list{list-style:none;padding:0}.index-list li{padding:1.5rem 0;border-top:1px solid var(--rule)}.index-list h2{margin:.3rem 0 .7rem}.index-list p{margin:.4rem 0}
+@media(max-width:640px){body{font-size:18px}.prose,.wide{padding-left:1.15rem;padding-right:1.15rem}header{padding-top:4rem}.deck{font-size:1.1rem}.subtitle{font-size:1.03rem}figure{padding:1.1rem .85rem;margin:1.5rem 0}.controls{gap:.45rem}.controls button{padding:.5rem .6rem;font-size:12px}.controls .play{margin-left:0}.stage{min-height:10.5rem}.token-grid{grid-template-columns:minmax(5rem,1.1fr) 1fr 1fr;font-size:11px}.token-grid>span{padding:.6rem .4rem}.model-info{gap:.3rem 1rem}.waffle{gap:4px}.flow span{padding:.5rem .6rem;font-size:13px}section{padding-top:2.8rem;margin-top:2rem}.fig-title{font-size:14px}.plot svg{min-width:630px}.practice p{font-size:1rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+@media print{.theme,.controls,.contents,.skip{display:none}body{background:#fff;color:#111}figure{break-inside:avoid}.plot{overflow:visible}.plot svg{min-width:0}details{display:block}}
+
+::selection{background:var(--accent);color:var(--surface)}
+.paper-header .series{margin:0 0 .7rem}.paper-header .publication{margin-top:1.5rem}
+.readout-values{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;text-align:right;font-variant-numeric:tabular-nums}
+.readout-labels,.readout-row{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:.2rem .85rem}
+.readout-labels{font:600 .8rem/1.4 var(--sans);color:var(--muted);padding:.45rem 0 .6rem}
+.readout-labels .readout-values{grid-column:2}.readout-labels .readout-values span{white-space:normal;color:inherit}
+.readout-row{align-items:center;border-top:1px solid var(--rule);padding:.68rem 0;font:1rem/1.35 var(--sans)}
+.readout-row small{grid-column:1/-1;color:var(--muted);font-size:.78rem}.readout-values span:last-child{font-weight:700;color:var(--accent)}
+.readout-values span{white-space:nowrap}
+.walk-content{border-top:1px solid var(--rule);padding-top:.9rem}.walk-stage{min-height:10.4rem}
+.walk-stage h3{margin:.25rem 0 .7rem}.walk-stage p{margin:.6rem 0}
+.formula{padding:.75rem .9rem;background:var(--surface-2);border-radius:.5rem;font:.86rem/1.5 var(--mono);overflow-wrap:anywhere}
+.article-plot svg{display:block;width:100%;height:auto;max-width:710px;margin:0 auto;overflow:visible}
+.episode-grid{display:grid;grid-template-columns:repeat(29,minmax(0,1fr));gap:4px;max-width:680px;margin:1rem auto}
+.episode-grid span{aspect-ratio:1;border-radius:2px}.episode-grid .budget,.legend .budget{background:var(--accent)}
+.episode-grid .idle,.legend .idle{border:1.5px solid var(--gold);background:var(--surface)}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem 1.3rem;list-style:none;padding:0;font: .86rem/1.45 var(--sans)}
+.legend b{display:inline-block;width:.7rem;height:.7rem;margin-right:.45rem;border-radius:2px}
+.marker-row{padding:.55rem 0 .7rem;border-top:1px solid var(--rule);font:.9rem/1.4 var(--sans)}
+.marker-line{display:grid;grid-template-columns:2.75rem minmax(0,1fr) 3.1rem;gap:.5rem;align-items:center;margin-top:.26rem;font-variant-numeric:tabular-nums}
+.marker-track{height:8px;background:var(--surface-2);border-radius:2px}.marker-track b{display:block;height:100%;background:var(--accent);border-radius:2px}.marker-track.teacher b{background:var(--gold)}
+.path-row{display:grid;grid-template-columns:9.3rem minmax(0,1fr);gap:.45rem 1rem;padding:.8rem 0;border-top:1px solid var(--rule);font:.93rem/1.5 var(--sans)}
+.path-row p{margin:0}.table-scroll{overflow-x:auto}.table-scroll table{min-width:34rem}
+.theme{z-index:5}.room-list{list-style:none;padding:0}.room-list li{padding:1.25rem 0;border-top:1px solid var(--rule)}.room-list h2{margin:.1rem 0;font-size:1.65rem}
+@media(max-width:640px){.theme{position:absolute}.episode-grid{grid-template-columns:repeat(23,minmax(0,1fr));gap:3px}.path-row{grid-template-columns:1fr}.readout-row{font-size:.9rem}.readout-labels{font-size:.73rem}.walk-stage{min-height:12rem}}
+@media(prefers-reduced-motion:reduce){[data-play]{display:none}}
+@media print{.walk-stage[hidden]{display:block!important}.walk-stage{min-height:0}.walk-content{border-top:0}}
+</style></head>
+<body id="top"><a class="skip" href="#article">Skip to content</a><button type="button" class="theme" aria-label="Toggle color theme">Theme</button><header class="paper-header"><div class="prose">
+<p class="series">Collective Intelligence · Part 9<br><a href="../">Part 1</a> · <a href="../part-2/">Part 2</a> · <a href="../part-3/">Part 3</a> · <a href="../part-4/">Part 4</a> · <a href="../part-5/">Part 5</a> · <a href="../part-6/">Part 6</a> · <a href="../part-7/">Part 7</a> · <a href="../part-8/">Part 8</a></p>
+<h1>What Did the Teacher Actually Transfer?</h1><p class="subtitle">On-policy distillation from Qwen Flash into a 9B coding model</p><p class="deck">I asked a larger teacher to score the 9B’s own reasoning and code on FrontierCS. Average score rose, while the share of tasks with any positive score stayed at half. The gains were concentrated where the student already worked with shorter reasoning, and many more attempts ran to the thinking cap. That split changed what I wanted the teacher to teach next.</p>
+<p class="publication">Published <time datetime="2026-11-08">November 8, 2026</time> · Evidence through November 8, 2026</p>
+<nav class="contents" aria-label="Article sections"><a href="#result">The result</a><a href="#method">Teacher signal</a><a href="#recipes">What we tried</a><a href="#loops">Why loops matter</a><a href="#coverage">Where the gain came from</a><a href="#budget">Training budget</a><a href="#next">Next experiment</a></nav></div></header><main id="article"><section id="result">
+  <div class="prose"><h2>Five attempts tell three different stories</h2></div>
+  <div class="wide"><figure id="figure-1">
+    <div class="fig-title">Figure 1 · The mean moved first</div>
+    <div class="readout-labels"><div class="readout-values"><span>SFT start</span><span>After 5 OPD updates</span></div></div>
+    <div class="readout-row"><strong>Avg@5</strong><div class="readout-values"><span>6.88</span><span>8.86</span></div><small>Paired gain +1.98 points, 95% interval +0.51 to +3.62.</small></div><div class="readout-row"><strong>Best@5</strong><div class="readout-values"><span>20.20</span><span>20.82</span></div><small>Paired gain +0.62 points. The interval includes zero.</small></div><div class="readout-row"><strong>Any positive score</strong><div class="readout-values"><span>50%</span><span>50%</span></div><small>86 of 172 tasks on each checkpoint.</small></div><div class="readout-row"><strong>Forced thinking close</strong><div class="readout-values"><span>23.6%</span><span>57.4%</span></div><small>Fraction of 860 samples reaching the thinking cap on each checkpoint.</small></div>
+    <figcaption>Paired FrontierCS evaluation, 172 tasks and five attempts per task at the same thinking cap. Score is on a 0–100 scale. Intervals resample tasks, keeping each task’s attempts together.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>In Part 7, we tried to teach a 9B coding model advanced search, including simulated annealing. The student could imitate a strong teacher’s long derivation and still produce a program that failed to compile. This time, I wanted the teacher to see the states the student would actually encounter. We let the 9B write its own reasoning, asked a larger Qwen Flash teacher to score it token by token, and updated the student with that signal.</p>
+    <p>The strongest measured OPD run improved the average of five attempts by 1.98 points over the Flash-SFT starting checkpoint. It also improved compilation by about six percentage points. The best attempt out of five moved only 0.62 points, with substantial uncertainty. Half the tasks earned some credit before training and half did afterward. These are three different questions about a model that will be sampled repeatedly.</p>
+    <p><strong>Avg@5</strong> tells me what a randomly selected attempt is worth on average. <strong>Best@5</strong> asks how much a scorer can recover if I have five attempts to choose from. <strong>Coverage</strong> counts tasks with at least one positive score. Here a positive score means some benchmark credit. A task can earn credit with a simple construction, and better optimization can raise the score without introducing a new algorithm.</p>
+    <p>The evaluation uses our frozen 172-task FrontierCS packet and one-shot code generation. Each checkpoint generates five programs per task with a 98,304-token thinking cap. One unavailable grade in the OPD packet was counted as zero. The benchmark provides executable scores for open-ended programs, which lets us track quality across attempts without treating every positive score as a full solution.</p>
+    <p>There are two baselines. The immediate starting policy is the third epoch of Flash SFT: 1,110 demonstrations from 268 tasks, with thinking and code given equal loss weight. A separate 9B policy trained with direct RL from the base reached 13.91 Avg@5 and 21.65 Best@5, with 60.5% coverage. I use the SFT baseline to ask what the teacher signal changed and the direct RL baseline to ask what another training path bought.</p>
+    <p class="related"><a href="https://macoredroid.github.io/collective-intelligence/part-7/">Part 7 · The Distance to a Teacher</a> · <a href="https://github.com/FrontierCS/Frontier-CS">FrontierCS benchmark</a></p>
+  </div>
+</section>
+
+<section id="method">
+  <div class="prose"><h2>The teacher reads the student’s prefix</h2>
+    <p>Supervised fine-tuning gives the student a complete teacher demonstration. It learns to predict the next token with the teacher’s preceding text already in context. On-policy distillation changes who writes that context. The student samples a continuation, and the frozen teacher scores the tokens the student actually chose, conditioned on that same history.</p>
+  </div>
+  <div class="wide"><figure id="figure-2">
+    <div class="fig-title">Figure 2 · Follow a student rollout through OPD</div>
+    <div class="walk" data-walk>
+<div class="controls" role="group" aria-label="Walkthrough steps"><button type="button" data-step="0" aria-controls="opd-0" aria-pressed="true">Sample</button><button type="button" data-step="1" aria-controls="opd-1" aria-pressed="false">Score</button><button type="button" data-step="2" aria-controls="opd-2" aria-pressed="false">Assign credit</button><button type="button" data-step="3" aria-controls="opd-3" aria-pressed="false">Evaluate</button><button type="button" class="play" data-play aria-pressed="false">Play steps</button></div>
+<div class="walk-content" aria-live="polite"><div class="walk-stage" id="opd-0" data-stage="0"><h3>The student takes a path</h3><p>For one problem, the current 9B writes its reasoning and code. Save the probability it assigned each sampled token.</p><p class="formula">prefix → student token → longer prefix</p></div><div class="walk-stage" id="opd-1" data-stage="1" hidden><h3>The teacher reads the same prefix</h3><p>Flash scores the token the student actually wrote. The local signal is the teacher’s log probability minus the student’s log probability. An ordinary token can have little discrepancy even inside a poor trajectory.</p><p class="formula">d<sub>t</sub> = log p<sub>teacher</sub>(x<sub>t</sub> | prefix) − log p<sub>student</sub>(x<sub>t</sub> | prefix)</p></div><div class="walk-stage" id="opd-2" data-stage="2" hidden><h3>Later tokens can change the credit for a choice</h3><p>The stronger arm adds a discounted return of later teacher signals. In the audited batches, a long tail of mildly penalized repeat tokens can make entering the loop costly even when each repeat is cheap.</p><p class="formula">Immediate teacher signal + weighted future teacher signals</p></div><div class="walk-stage" id="opd-3" data-stage="3" hidden><h3>Run the student on fresh problems</h3><p>At evaluation, the 9B produces programs without Flash. The compiler and benchmark judge score them. We record how often it finishes, the mean score of five tries, the best of five, and task coverage.</p></div></div>
+</div>
+    <figcaption>Mechanism walkthrough. The teacher supplies a training signal. The student runs on its own during evaluation.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>For a sampled token, the local signal is <code>log p<sub>teacher</sub> − log p<sub>student</sub></code>. Averaged over the student’s token choices at a given prefix, this is the negative reverse KL at that prefix. In the experiment, we score both thinking and code, mask special tokens, and keep a small reference penalty to the starting student. The teacher signal is available throughout the rollout, including on attempts that would never earn useful benchmark reward.</p>
+    <p>The difficult part is deciding how much credit to assign to a choice when its consequences come thousands of tokens later. In the strongest arm we add a weighted, discounted return of subsequent teacher signals. Think of that as a way to give a choice some credit for what follows it. When subsequent tokens are mostly penalized, a long continuation can carry a cumulative cost even if each token by itself carries a small one.</p>
+    <details><summary>Recipe and measurement details</summary>
+      <p>The starting policy was the third epoch of the earlier Flash SFT run. The larger teacher was Flash in FP8. We used a sampled-token reverse-KL signal with the teacher re-tempered to 0.8 using a top-logprob reconstruction with a tail estimate. The stronger-return arm used a coefficient of 0.01 and discount 0.9999 for the teacher return, learning rate 10<sup>−6</sup>, and a reference KL coefficient of 0.001. It used eight training tasks with eight student samples each per update and ran for five updates. Its objective did not include outcome reward.</p>
+      <p>A plain teacher-only arm at the same teacher temperature was near the SFT baseline on Avg@5 and fell 4.72 points on Best@5. The stronger-return arm improved the mean and recovered the best-of-five loss. Both arms encountered long rollouts. The run comparisons describe these specific recipes and checkpoints.</p>
+    </details>
+    <p class="related"><a href="https://thinkingmachines.ai/blog/on-policy-distillation/">Thinking Machines Lab · On-Policy Distillation</a></p>
+  </div>
+</section>
+
+<section id="recipes">
+  <div class="prose"><h2>The first teacher signal made the student worse</h2>
+    <p>Our first try used the teacher’s original temperature. On the one-sample screen, mean score fell from 7.58 to 3.64. Compile rate fell from 73.8% to 55.8%, and median thinking grew from 57.5K to 94.3K tokens. Adding verifiable outcome reward brought the score back to 4.43, with even more attempts reaching the thinking cap. Both paired score intervals were below zero. Outcome feedback could still distinguish finished programs, but it did little to rescue this recipe’s ability to reach one.</p>
+    <p>We sharpened the teacher to temperature 0.8. Early in training, one batch had student entropy close to the starting policy and still thought about 23K tokens longer. A model can be just as decisive at each token and keep making decisions for much longer. On five samples, that arm came back to the SFT mean, but the best attempt fell by 4.72 points and roughly 72% of attempts hit the cap.</p>
+  </div>
+  <div class="wide"><figure id="figure-3">
+    <div class="fig-title">Figure 3 · A better first draw can coexist with a weaker best draw</div>
+    <div class="article-plot"><svg role="img" aria-label="Expected best from one to five draws. SFT start: 6.88, 11.44, 14.93, 17.76, 20.20. Teacher at 0.8: 7.09, 10.59, 12.77, 14.28, 15.47. 0.8 with stronger return: 8.86, 13.63, 16.72, 18.97, 20.82." xmlns:xlink="http://www.w3.org/1999/xlink" width="376.310937pt" height="242.455531pt" viewBox="0 0 376.310937 242.455531" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-08T14:53:08.454001</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="best-curve-figure_1">
+  <g id="best-curve-patch_1">
+   <path d="M 0 242.455531
+L 376.310937 242.455531
+L 376.310937 0
+L 0 0
+L 0 242.455531
+z
+" style="fill: none"/>
+  </g>
+  <g id="best-curve-axes_1">
+   <g id="best-curve-patch_2">
+    <path d="M 45.470938 200.254594
+L 369.110937 200.254594
+L 369.110937 11.758594
+L 45.470938 11.758594
+L 45.470938 200.254594
+z
+" style="fill: none"/>
+   </g>
+   <g id="best-curve-matplotlib.axis_1">
+    <g id="best-curve-xtick_1">
+     <g id="best-curve-line2d_1">
+      <defs>
+       <path id="best-curve-m5667c8750c" d="M 0 0
+L 0 3.5
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#best-curve-m5667c8750c" x="61.507154" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_1">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="61.507154" y="216.371781" transform="rotate(-0 61.507154 216.371781)">1</text>
+     </g>
+    </g>
+    <g id="best-curve-xtick_2">
+     <g id="best-curve-line2d_2">
+      <g>
+       <use xlink:href="#best-curve-m5667c8750c" x="134.399046" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_2">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="134.399046" y="216.371781" transform="rotate(-0 134.399046 216.371781)">2</text>
+     </g>
+    </g>
+    <g id="best-curve-xtick_3">
+     <g id="best-curve-line2d_3">
+      <g>
+       <use xlink:href="#best-curve-m5667c8750c" x="207.290938" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_3">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="207.290938" y="216.371781" transform="rotate(-0 207.290938 216.371781)">3</text>
+     </g>
+    </g>
+    <g id="best-curve-xtick_4">
+     <g id="best-curve-line2d_4">
+      <g>
+       <use xlink:href="#best-curve-m5667c8750c" x="280.182829" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_4">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="280.182829" y="216.371781" transform="rotate(-0 280.182829 216.371781)">4</text>
+     </g>
+    </g>
+    <g id="best-curve-xtick_5">
+     <g id="best-curve-line2d_5">
+      <g>
+       <use xlink:href="#best-curve-m5667c8750c" x="353.074721" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_5">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="353.074721" y="216.371781" transform="rotate(-0 353.074721 216.371781)">5</text>
+     </g>
+    </g>
+    <g id="best-curve-text_6">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="207.290937" y="232.372719" transform="rotate(-0 207.290937 232.372719)">Attempts available (k)</text>
+    </g>
+   </g>
+   <g id="best-curve-matplotlib.axis_2">
+    <g id="best-curve-ytick_1">
+     <g id="best-curve-line2d_6">
+      <path d="M 45.470938 200.254594
+L 369.110937 200.254594
+" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="best-curve-line2d_7">
+      <defs>
+       <path id="best-curve-m8a05b9efd7" d="M 0 0
+L -3.5 0
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_7">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.470938" y="204.813187" transform="rotate(-0 38.470938 204.813187)">0</text>
+     </g>
+    </g>
+    <g id="best-curve-ytick_2">
+     <g id="best-curve-line2d_8">
+      <path d="M 45.470938 168.838594
+L 369.110937 168.838594
+" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="best-curve-line2d_9">
+      <g>
+       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="168.838594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_8">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.470938" y="173.397187" transform="rotate(-0 38.470938 173.397187)">4</text>
+     </g>
+    </g>
+    <g id="best-curve-ytick_3">
+     <g id="best-curve-line2d_10">
+      <path d="M 45.470938 137.422594
+L 369.110937 137.422594
+" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="best-curve-line2d_11">
+      <g>
+       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="137.422594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_9">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.470938" y="141.981187" transform="rotate(-0 38.470938 141.981187)">8</text>
+     </g>
+    </g>
+    <g id="best-curve-ytick_4">
+     <g id="best-curve-line2d_12">
+      <path d="M 45.470938 106.006594
+L 369.110937 106.006594
+" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="best-curve-line2d_13">
+      <g>
+       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="106.006594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_10">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.470938" y="110.565187" transform="rotate(-0 38.470938 110.565187)">12</text>
+     </g>
+    </g>
+    <g id="best-curve-ytick_5">
+     <g id="best-curve-line2d_14">
+      <path d="M 45.470938 74.590594
+L 369.110937 74.590594
+" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="best-curve-line2d_15">
+      <g>
+       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="74.590594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_11">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.470938" y="79.149187" transform="rotate(-0 38.470938 79.149187)">16</text>
+     </g>
+    </g>
+    <g id="best-curve-ytick_6">
+     <g id="best-curve-line2d_16">
+      <path d="M 45.470938 43.174594
+L 369.110937 43.174594
+" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="best-curve-line2d_17">
+      <g>
+       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="43.174594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_12">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.470938" y="47.733187" transform="rotate(-0 38.470938 47.733187)">20</text>
+     </g>
+    </g>
+    <g id="best-curve-ytick_7">
+     <g id="best-curve-line2d_18">
+      <path d="M 45.470938 11.758594
+L 369.110937 11.758594
+" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="best-curve-line2d_19">
+      <g>
+       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="11.758594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="best-curve-text_13">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.470938" y="16.317187" transform="rotate(-0 38.470938 16.317187)">24</text>
+     </g>
+    </g>
+    <g id="best-curve-text_14">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="16.318125" y="106.006594" transform="rotate(-90 16.318125 106.006594)">Expected best score</text>
+    </g>
+   </g>
+   <g id="best-curve-line2d_20">
+    <path d="M 61.507154 146.219074
+L 134.399046 110.404834
+L 207.290938 82.994374
+L 280.182829 60.767554
+L 353.074721 41.603794
+" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke-dasharray: 7.03,3.04; stroke-dashoffset: 0; stroke: var(--gold, #8a611c); stroke-width: 1.9"/>
+    <defs>
+     <path id="best-curve-me2a22950ba" d="M -3 3
+L 3 3
+L 3 -3
+L -3 -3
+z
+" style="stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+    </defs>
+    <g clip-path="url(#best-curve-pf99790f3b3)">
+     <use xlink:href="#best-curve-me2a22950ba" x="61.507154" y="146.219074" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-me2a22950ba" x="134.399046" y="110.404834" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-me2a22950ba" x="207.290938" y="82.994374" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-me2a22950ba" x="280.182829" y="60.767554" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-me2a22950ba" x="353.074721" y="41.603794" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="best-curve-line2d_21">
+    <path d="M 61.507154 144.569734
+L 134.399046 117.080734
+L 207.290938 99.959014
+L 280.182829 88.099474
+L 353.074721 78.753214
+" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke-dasharray: 1.9,3.135; stroke-dashoffset: 0; stroke: var(--neg, #ad5140); stroke-width: 1.9"/>
+    <defs>
+     <path id="best-curve-m1d4a6a9403" d="M 0 -3
+L -3 3
+L 3 3
+z
+" style="stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+    </defs>
+    <g clip-path="url(#best-curve-pf99790f3b3)">
+     <use xlink:href="#best-curve-m1d4a6a9403" x="61.507154" y="144.569734" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-m1d4a6a9403" x="134.399046" y="117.080734" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-m1d4a6a9403" x="207.290938" y="99.959014" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-m1d4a6a9403" x="280.182829" y="88.099474" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-m1d4a6a9403" x="353.074721" y="78.753214" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+    </g>
+   </g>
+   <g id="best-curve-line2d_22">
+    <path d="M 61.507154 130.668154
+L 134.399046 93.204574
+L 207.290938 68.935714
+L 280.182829 51.264214
+L 353.074721 36.734314
+" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 1.9; stroke-linecap: square"/>
+    <defs>
+     <path id="best-curve-m2ec2ef7d4b" d="M 0 3
+C 0.795609 3 1.55874 2.683901 2.12132 2.12132
+C 2.683901 1.55874 3 0.795609 3 0
+C 3 -0.795609 2.683901 -1.55874 2.12132 -2.12132
+C 1.55874 -2.683901 0.795609 -3 0 -3
+C -0.795609 -3 -1.55874 -2.683901 -2.12132 -2.12132
+C -2.683901 -1.55874 -3 -0.795609 -3 0
+C -3 0.795609 -2.683901 1.55874 -2.12132 2.12132
+C -1.55874 2.683901 -0.795609 3 0 3
+z
+" style="stroke: var(--accent, #3a5f8a)"/>
+    </defs>
+    <g clip-path="url(#best-curve-pf99790f3b3)">
+     <use xlink:href="#best-curve-m2ec2ef7d4b" x="61.507154" y="130.668154" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#best-curve-m2ec2ef7d4b" x="134.399046" y="93.204574" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#best-curve-m2ec2ef7d4b" x="207.290938" y="68.935714" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#best-curve-m2ec2ef7d4b" x="280.182829" y="51.264214" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#best-curve-m2ec2ef7d4b" x="353.074721" y="36.734314" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="best-curve-patch_3">
+    <path d="M 45.470938 200.254594
+L 45.470938 11.758594
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="best-curve-patch_4">
+    <path d="M 45.470938 200.254594
+L 369.110938 200.254594
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="best-curve-legend_1">
+    <g id="best-curve-line2d_23">
+     <path d="M 55.370938 26.166875
+L 66.370937 26.166875
+L 77.370937 26.166875
+" style="fill: none; stroke-dasharray: 7.03,3.04; stroke-dashoffset: 0; stroke: var(--gold, #8a611c); stroke-width: 1.9"/>
+     <g>
+      <use xlink:href="#best-curve-me2a22950ba" x="66.370937" y="26.166875" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+     </g>
+    </g>
+    <g id="best-curve-text_15">
+     <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="86.170938" y="30.016875" transform="rotate(-0 86.170938 30.016875)">SFT start</text>
+    </g>
+    <g id="best-curve-line2d_24">
+     <path d="M 55.370938 42.667734
+L 66.370937 42.667734
+L 77.370937 42.667734
+" style="fill: none; stroke-dasharray: 1.9,3.135; stroke-dashoffset: 0; stroke: var(--neg, #ad5140); stroke-width: 1.9"/>
+     <g>
+      <use xlink:href="#best-curve-m1d4a6a9403" x="66.370937" y="42.667734" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+     </g>
+    </g>
+    <g id="best-curve-text_16">
+     <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="86.170938" y="46.517734" transform="rotate(-0 86.170938 46.517734)">Teacher at 0.8</text>
+    </g>
+    <g id="best-curve-line2d_25">
+     <path d="M 55.370938 59.168594
+L 66.370937 59.168594
+L 77.370937 59.168594
+" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 1.9; stroke-linecap: square"/>
+     <g>
+      <use xlink:href="#best-curve-m2ec2ef7d4b" x="66.370937" y="59.168594" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     </g>
+    </g>
+    <g id="best-curve-text_17">
+     <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="86.170938" y="63.018594" transform="rotate(-0 86.170938 63.018594)">0.8 + stronger return</text>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="best-curve-pf99790f3b3">
+   <rect x="45.470938" y="11.758594" width="323.64" height="188.496"/>
+  </clipPath>
+ </defs>
+</svg>
+</div>
+    <figcaption>Expected best score from a subset of <em>k</em> of the five evaluated attempts, averaged over tasks. At <em>k</em> = 1 this is Avg@5; it is separate from the independent one-sample screens. All three curves use the same 172 tasks.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>Adding the stronger discounted return changed the curve. Compared with SFT, it improved the expected first draw by 1.98 points, then gave up most of that margin as more samples were available. Compared with plain 0.8 OPD, it recovered much of the upper tail. This was the recipe we kept. It was also a reason to look inside the rollout: we had a teacher signal that improved answers on average while sending many more attempts to the cap.</p>
+    <details><summary>Recipe comparisons and evaluation scope</summary>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="OPD recipe comparisons"><table>
+      <thead><tr><th scope="col">Recipe</th><th scope="col">Attempts per task</th><th scope="col">Mean</th><th scope="col">Best of five</th><th scope="col">Forced close</th></tr></thead>
+      <tbody>
+      <tr><th scope="row">SFT start</th><td>1</td><td>7.58</td><td>—</td><td>26.7%</td></tr>
+      <tr><th scope="row">Raw teacher</th><td>1</td><td>3.64</td><td>—</td><td>45.9%</td></tr>
+      <tr><th scope="row">Raw teacher + outcome</th><td>1</td><td>4.43</td><td>—</td><td>58.7%</td></tr>
+      <tr><th scope="row">SFT start</th><td>5</td><td>6.88</td><td>20.20</td><td>23.6%</td></tr>
+      <tr><th scope="row">Teacher at 0.8</th><td>5</td><td>7.09</td><td>15.47</td><td>~72%</td></tr>
+      <tr><th scope="row">Teacher at 0.8 + stronger return</th><td>5</td><td>8.86</td><td>20.82</td><td>57.4%</td></tr>
+      </tbody></table></div>
+      <p>The paired Best@5 difference for plain 0.8 OPD was −4.72 points, with a 95% interval of −8.54 to −1.06. Its Avg@5 difference was +0.21, with an interval of −1.53 to +2.09. Teacher temperature changes the training target. Student decoding settings, discussed below, change which tokens the student actually samples.</p>
+    </details>
+  </div>
+</section>
+
+<section id="loops">
+  <div class="prose"><h2>Once the student starts repeating, the next token is easy to predict</h2>
+    <p>Imagine a student that has settled on a candidate solution. It repeats its complexity analysis, then repeats the same plan in slightly different words. The teacher is now judging a familiar continuation to a repetitive prefix. It can assign high probability to another repeat even if its own independent solution would have moved on.</p>
+    <p>We saw this in the rollout audit. Repeat lines often carried a much smaller teacher–student log-probability gap than first-occurrence reasoning. In the audited batches, retaining repeated lines reduced the mean per-token penalty relative to computing the mean without those lines. The effect is a property of the tokens and the reduction rule. It does not identify why any particular sample entered a loop.</p>
+  </div>
+  <div class="wide"><figure id="figure-4">
+    <div class="fig-title">Figure 4 · Answers are stronger when thinking closes naturally</div>
+    <div class="readout-labels"><div class="readout-values"><span>SFT start</span><span>After 5 OPD updates</span></div></div>
+    <div class="readout-row"><strong>Natural close</strong><div class="readout-values"><span>8.25</span><span>15.96</span></div><small>Mean program score among samples that closed thinking on their own.</small></div>
+    <div class="readout-row"><strong>Forced close</strong><div class="readout-values"><span>2.44</span><span>3.60</span></div><small>Mean score among samples pushed to the answer phase at the thinking cap.</small></div>
+    <figcaption>Conditional means on the same evaluation packet. Each checkpoint induces its own split between natural and forced endings. The groups contain different samples and the comparison is descriptive.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>That split helps explain why the improvement was hard to use. When the distilled model closed its reasoning on its own, its programs scored nearly twice as well on average as the starting student’s naturally closed programs. At the same time, forced closes rose from about 24% to 57% of attempts. In a group of five we went from about 3.8 natural closes to 2.1. Some forced answers still scored, but we had fewer of the kind that tended to score well.</p>
+    <p>We also looked for the point where more thinking stopped helping. In 16 selected traces, we used the final answer to find an earlier code block already close to the emitted program. On review, 15 looked ready to finish and 14 spent further tokens without a useful change. The median extra reasoning was about 15K tokens. At those points the teacher gave the closing token a median probability near one in a million. The first code block was usually much less like the final program, so closing at the first sight of code would be a bad rule. This audit uses hindsight to find a decision point; it gives us a test case, not a detector we can use at inference.</p>
+    <p>We tried cutting the loop in two places. Cutting its tail out of the training return also removed negative return that had reached the decisions just before loop onset. On one audited batch the pre-loop return moved from −7.94 to −0.37 under the cut. That made the lead-in cheaper under this objective, and the training variant continued to loop. The result is specific to how we formed and masked the return.</p>
+    <p>We also changed decoding on the same checkpoint. Tightening the sampling distribution to the teacher’s card settings increased repetition and forced closes in a one-sample sweep. Cutting repetition at inference cut thinking length, but the run still scored about seven points on average against 10.33 with the original sampler. Ending a loop early saved tokens without restoring the original score in this screen.</p>
+    <p>Perhaps the policy simply needed to train under the sampler it would use at test time. We continued for three updates using the coding sampler with a thinking-only presence penalty, then evaluated both checkpoints with that sampler. The score moved from 7.33 to 6.27 and forced closes from 65.1% to 79.1%. The score interval still crossed zero. The original sampler also gave a lower point estimate after retraining. Matching train and test sampling was a reasonable fix to try; it did not produce a recovery here.</p>
+    <p>Two more changes separated exposure from skill. Continuing with a 64K <em>training</em> cap gave a 5.48 one-sample score under the usual 98K evaluation cap, versus 10.33 before that continuation. The cap controlled what the policy saw during training. It did not provide a label for when to finish. A windowed experiment generated rollouts but stopped before a completed update, so it has no held-out result.</p>
+    <details><summary>One-sample decoding sweep</summary>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Decoding sweep table"><table>
+        <thead><tr><th scope="col">Sampling condition</th><th scope="col">Avg@1</th><th scope="col">Forced close</th><th scope="col">Repeated lines</th></tr></thead>
+        <tbody><tr><th scope="row">Original sampler</th><td>10.33</td><td>55.2%</td><td>13.1%</td></tr>
+        <tr><th scope="row">Teacher card sampler</th><td>7.09</td><td>70.9%</td><td>47.2%</td></tr>
+        <tr><th scope="row">Card sampler with loop cut</th><td>7.19</td><td>83.1%</td><td>9.3%</td></tr>
+        <tr><th scope="row">Coding sampler with presence penalty</th><td>7.33</td><td>65.1%</td><td>47.3%</td></tr></tbody>
+      </table></div>
+      <p>Each setting generated once on the 172 tasks. The loop cut changes the denominator for repeated lines by ending the continuation early. The coding sampler used temperature 0.6 and a presence penalty of 1.5 on thinking only. Paired score intervals for the three decoding alternatives included zero. The continued-training run is a separate checkpoint comparison.</p>
+    </details>
+  </div>
+</section>
+
+<section id="coverage">
+  <div class="prose"><h2>The gain came mostly from tasks the student already handled quickly</h2>
+    <p>I grouped tasks by how long the starting 9B thought, using the median of its five attempts. This fixes the grouping before looking at the distilled model’s score. The largest improvement came from tasks where the starting student took fewer than 16,000 thinking tokens.</p>
+  </div>
+  <div class="wide"><figure id="figure-5">
+    <div class="fig-title">Figure 5 · Gains by starting-student thinking length</div>
+    <div class="article-plot"><svg role="img" aria-label="Gain by starting student median thinking length. Under 16K plus 7.0, 16–32K plus 2.5, 32–64K plus 2.1, 64K to cap minus 0.1, at cap minus 1.0 points." xmlns:xlink="http://www.w3.org/1999/xlink" width="375.23375pt" height="201.132937pt" viewBox="0 0 375.23375 201.132937" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-08T14:53:08.481871</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="buckets-figure_1">
+  <g id="buckets-patch_1">
+   <path d="M 0 201.132937
+L 375.23375 201.132937
+L 375.23375 0
+L 0 0
+L 0 201.132937
+z
+" style="fill: none"/>
+  </g>
+  <g id="buckets-axes_1">
+   <g id="buckets-patch_2">
+    <path d="M 75.08375 162.432
+L 368.03375 162.432
+L 368.03375 7.2
+L 75.08375 7.2
+L 75.08375 162.432
+z
+" style="fill: none"/>
+   </g>
+   <g id="buckets-matplotlib.axis_1">
+    <g id="buckets-xtick_1">
+     <g id="buckets-line2d_1">
+      <path d="M 84.5775 162.432
+L 84.5775 7.2
+" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="buckets-line2d_2"/>
+     <g id="buckets-text_1">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="84.5775" y="175.049187" transform="rotate(-0 84.5775 175.049187)">−2</text>
+     </g>
+    </g>
+    <g id="buckets-xtick_2">
+     <g id="buckets-line2d_3">
+      <path d="M 138.8275 162.432
+L 138.8275 7.2
+" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="buckets-line2d_4"/>
+     <g id="buckets-text_2">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="138.8275" y="175.049187" transform="rotate(-0 138.8275 175.049187)">0</text>
+     </g>
+    </g>
+    <g id="buckets-xtick_3">
+     <g id="buckets-line2d_5">
+      <path d="M 193.0775 162.432
+L 193.0775 7.2
+" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="buckets-line2d_6"/>
+     <g id="buckets-text_3">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="193.0775" y="175.049187" transform="rotate(-0 193.0775 175.049187)">2</text>
+     </g>
+    </g>
+    <g id="buckets-xtick_4">
+     <g id="buckets-line2d_7">
+      <path d="M 247.3275 162.432
+L 247.3275 7.2
+" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="buckets-line2d_8"/>
+     <g id="buckets-text_4">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="247.3275" y="175.049187" transform="rotate(-0 247.3275 175.049187)">4</text>
+     </g>
+    </g>
+    <g id="buckets-xtick_5">
+     <g id="buckets-line2d_9">
+      <path d="M 301.5775 162.432
+L 301.5775 7.2
+" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="buckets-line2d_10"/>
+     <g id="buckets-text_5">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="301.5775" y="175.049187" transform="rotate(-0 301.5775 175.049187)">6</text>
+     </g>
+    </g>
+    <g id="buckets-xtick_6">
+     <g id="buckets-line2d_11">
+      <path d="M 355.8275 162.432
+L 355.8275 7.2
+" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="buckets-line2d_12"/>
+     <g id="buckets-text_6">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="355.8275" y="175.049187" transform="rotate(-0 355.8275 175.049187)">8</text>
+     </g>
+    </g>
+    <g id="buckets-text_7">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="221.55875" y="191.050125" transform="rotate(-0 221.55875 191.050125)">Avg@5 change (points)</text>
+    </g>
+   </g>
+   <g id="buckets-matplotlib.axis_2">
+    <g id="buckets-ytick_1">
+     <g id="buckets-line2d_13"/>
+     <g id="buckets-text_8">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="71.58375" y="25.807495" transform="rotate(-0 71.58375 25.807495)">Under 16K</text>
+     </g>
+    </g>
+    <g id="buckets-ytick_2">
+     <g id="buckets-line2d_14"/>
+     <g id="buckets-text_9">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="71.58375" y="57.59081" transform="rotate(-0 71.58375 57.59081)">16–32K</text>
+     </g>
+    </g>
+    <g id="buckets-ytick_3">
+     <g id="buckets-line2d_15"/>
+     <g id="buckets-text_10">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="71.58375" y="89.374594" transform="rotate(-0 71.58375 89.374594)">32–64K</text>
+     </g>
+    </g>
+    <g id="buckets-ytick_4">
+     <g id="buckets-line2d_16"/>
+     <g id="buckets-text_11">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="71.58375" y="121.158378" transform="rotate(-0 71.58375 121.158378)">64K to cap</text>
+     </g>
+    </g>
+    <g id="buckets-ytick_5">
+     <g id="buckets-line2d_17"/>
+     <g id="buckets-text_12">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="71.58375" y="152.942161" transform="rotate(-0 71.58375 152.942161)">At cap</text>
+     </g>
+    </g>
+   </g>
+   <g id="buckets-patch_3">
+    <path d="M 138.8275 14.256
+L 328.7025 14.256
+L 328.7025 28.240865
+L 138.8275 28.240865
+z
+" clip-path="url(#buckets-pd678b29bae)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="buckets-patch_4">
+    <path d="M 138.8275 46.039784
+L 206.64 46.039784
+L 206.64 60.024649
+L 138.8275 60.024649
+z
+" clip-path="url(#buckets-pd678b29bae)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="buckets-patch_5">
+    <path d="M 138.8275 77.823568
+L 195.79 77.823568
+L 195.79 91.808432
+L 138.8275 91.808432
+z
+" clip-path="url(#buckets-pd678b29bae)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="buckets-patch_6">
+    <path d="M 138.8275 109.607351
+L 136.115 109.607351
+L 136.115 123.592216
+L 138.8275 123.592216
+z
+" clip-path="url(#buckets-pd678b29bae)" style="fill: var(--gold, #8a611c)"/>
+   </g>
+   <g id="buckets-patch_7">
+    <path d="M 138.8275 141.391135
+L 111.7025 141.391135
+L 111.7025 155.376
+L 138.8275 155.376
+z
+" clip-path="url(#buckets-pd678b29bae)" style="fill: var(--gold, #8a611c)"/>
+   </g>
+   <g id="buckets-line2d_18">
+    <path d="M 138.8275 162.432
+L 138.8275 7.2
+" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 1.2; stroke-linecap: square"/>
+   </g>
+   <g id="buckets-text_13">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="332.5" y="24.36562" transform="rotate(-0 332.5 24.36562)">+7.0</text>
+   </g>
+   <g id="buckets-text_14">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="210.4375" y="56.149404" transform="rotate(-0 210.4375 56.149404)">+2.5</text>
+   </g>
+   <g id="buckets-text_15">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="199.5875" y="87.933187" transform="rotate(-0 199.5875 87.933187)">+2.1</text>
+   </g>
+   <g id="buckets-text_16">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="132.3175" y="119.716971" transform="rotate(-0 132.3175 119.716971)">-0.1</text>
+   </g>
+   <g id="buckets-text_17">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="107.905" y="151.500755" transform="rotate(-0 107.905 151.500755)">-1.0</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="buckets-pd678b29bae">
+   <rect x="75.08375" y="7.2" width="292.95" height="155.232"/>
+  </clipPath>
+ </defs>
+</svg>
+</div>
+    <figcaption>Task-paired differences in Avg@5, bucketed by the SFT starting checkpoint’s median thinking length on each task. The under-16K bucket accounts for about 62% of the overall gain. Thinking length here is a descriptive grouping, and the buckets contain different tasks.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>The teacher can improve decisions within a path the student already visits. On tasks where the student often fills its reasoning window, the local signal can see many tokens inside a failing path. A useful correction might live at an early choice of algorithm, far away from the point where the judge reports a zero. The score-by-length plot is consistent with this explanation. A paired program audit would be needed to identify which algorithm families actually changed.</p>
+    <p>There is another clue in the audit. Within a group of attempts on the same task, the teacher’s answer-token signal correlated modestly with the judge score, around +0.20 in the stronger-return arm. The aggregate thinking-token signal was about +0.07, with uncertainty including zero. That average can wash out an important early token or reflect how long the model stays in a familiar loop. I would use the answer-side signal as a diagnostic and inspect decision points directly before treating either aggregate as a process score.</p>
+  </div>
+</section>
+
+<section id="budget">
+  <div class="prose"><h2>What did the extra training buy?</h2>
+    <p>We carried the improved checkpoint into longer experiments. The <strong>hybrid</strong> kept teacher feedback and added verifiable outcomes. It reached 9.21 Avg@5 and later fell to 8.83. The gain at the earlier checkpoint was small relative to the uncertainty. It looked more encouraging on selected training tasks than on the held-out packet.</p>
+    <p>The <strong>alternating</strong> run separated the signals into blocks. After 20 outcome-RL updates, it scored 8.34 Avg@5 and brought forced closes down to 32.3%. Five more OPD updates moved the score to 8.69, with longer thinking and more forced closes again. The paired change was +0.35 with a 95% interval of −0.78 to +1.51. A later RL leg reached 9.18. Alternating let us see the stopping behavior move as we changed objectives, but the best mean remained close to the original five-update checkpoint.</p>
+    <p>A separate <strong>supervised anchor</strong> added likelihood training on teacher answers. Early rollouts stopped more often, which was the immediate goal. On held-out one-sample screens, mean score fell from 8.16 at the first readout to 5.78 and 5.24 at later ones. These are separate from the five-sample hybrid results. Teaching from a good answer made some trajectories easier to close; we still needed the policy’s own continuation to produce a good program.</p>
+  </div>
+  <div class="wide"><figure id="figure-6">
+    <div class="fig-title">Figure 6 · Selected checkpoints and cumulative training tokens</div>
+    <div class="article-plot"><svg role="img" aria-label="Selected checkpoints. SFT 103.5 million tokens and 6.88, hybrid 280 million and 9.21, alternating RL and OPD 436 million and 9.18, RL from base about 747 million and 13.91." xmlns:xlink="http://www.w3.org/1999/xlink" width="363.570947pt" height="232.352937pt" viewBox="0 0 363.570947 232.352937" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-08T14:53:08.503046</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="ledger-figure_1">
+  <g id="ledger-patch_1">
+   <path d="M 0 232.352937
+L 363.570947 232.352937
+L 363.570947 0
+L 0 0
+L 0 232.352937
+z
+" style="fill: none"/>
+  </g>
+  <g id="ledger-axes_1">
+   <g id="ledger-patch_2">
+    <path d="M 45.47 190.152
+L 346.79 190.152
+L 346.79 7.2
+L 45.47 7.2
+L 45.47 190.152
+z
+" style="fill: none"/>
+   </g>
+   <g id="ledger-matplotlib.axis_1">
+    <g id="ledger-xtick_1">
+     <g id="ledger-line2d_1">
+      <path d="M 45.47 190.152
+L 45.47 7.2
+" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="ledger-line2d_2">
+      <defs>
+       <path id="ledger-me5eae3b2e2" d="M 0 0
+L 0 3.5
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#ledger-me5eae3b2e2" x="45.47" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="ledger-text_1">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="45.47" y="206.269187" transform="rotate(-0 45.47 206.269187)">0</text>
+     </g>
+    </g>
+    <g id="ledger-xtick_2">
+     <g id="ledger-line2d_3">
+      <path d="M 120.332112 190.152
+L 120.332112 7.2
+" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="ledger-line2d_4">
+      <g>
+       <use xlink:href="#ledger-me5eae3b2e2" x="120.332112" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="ledger-text_2">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="120.332112" y="206.269187" transform="rotate(-0 120.332112 206.269187)">200</text>
+     </g>
+    </g>
+    <g id="ledger-xtick_3">
+     <g id="ledger-line2d_5">
+      <path d="M 195.194224 190.152
+L 195.194224 7.2
+" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="ledger-line2d_6">
+      <g>
+       <use xlink:href="#ledger-me5eae3b2e2" x="195.194224" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="ledger-text_3">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="195.194224" y="206.269187" transform="rotate(-0 195.194224 206.269187)">400</text>
+     </g>
+    </g>
+    <g id="ledger-xtick_4">
+     <g id="ledger-line2d_7">
+      <path d="M 270.056335 190.152
+L 270.056335 7.2
+" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="ledger-line2d_8">
+      <g>
+       <use xlink:href="#ledger-me5eae3b2e2" x="270.056335" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="ledger-text_4">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="270.056335" y="206.269187" transform="rotate(-0 270.056335 206.269187)">600</text>
+     </g>
+    </g>
+    <g id="ledger-xtick_5">
+     <g id="ledger-line2d_9">
+      <path d="M 344.918447 190.152
+L 344.918447 7.2
+" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="ledger-line2d_10">
+      <g>
+       <use xlink:href="#ledger-me5eae3b2e2" x="344.918447" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="ledger-text_5">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="344.918447" y="206.269187" transform="rotate(-0 344.918447 206.269187)">800</text>
+     </g>
+    </g>
+    <g id="ledger-text_6">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="196.13" y="222.270125" transform="rotate(-0 196.13 222.270125)">Training tokens (millions)</text>
+    </g>
+   </g>
+   <g id="ledger-matplotlib.axis_2">
+    <g id="ledger-ytick_1">
+     <g id="ledger-line2d_11">
+      <path d="M 45.47 190.152
+L 346.79 190.152
+" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="ledger-line2d_12">
+      <defs>
+       <path id="ledger-m5435e3c542" d="M 0 0
+L -3.5 0
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#ledger-m5435e3c542" x="45.47" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="ledger-text_7">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.47" y="194.710594" transform="rotate(-0 38.47 194.710594)">0</text>
+     </g>
+    </g>
+    <g id="ledger-ytick_2">
+     <g id="ledger-line2d_13">
+      <path d="M 45.47 147.104471
+L 346.79 147.104471
+" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="ledger-line2d_14">
+      <g>
+       <use xlink:href="#ledger-m5435e3c542" x="45.47" y="147.104471" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="ledger-text_8">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.47" y="151.663064" transform="rotate(-0 38.47 151.663064)">4</text>
+     </g>
+    </g>
+    <g id="ledger-ytick_3">
+     <g id="ledger-line2d_15">
+      <path d="M 45.47 104.056941
+L 346.79 104.056941
+" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="ledger-line2d_16">
+      <g>
+       <use xlink:href="#ledger-m5435e3c542" x="45.47" y="104.056941" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="ledger-text_9">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.47" y="108.615535" transform="rotate(-0 38.47 108.615535)">8</text>
+     </g>
+    </g>
+    <g id="ledger-ytick_4">
+     <g id="ledger-line2d_17">
+      <path d="M 45.47 61.009412
+L 346.79 61.009412
+" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="ledger-line2d_18">
+      <g>
+       <use xlink:href="#ledger-m5435e3c542" x="45.47" y="61.009412" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="ledger-text_10">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.47" y="65.568006" transform="rotate(-0 38.47 65.568006)">12</text>
+     </g>
+    </g>
+    <g id="ledger-ytick_5">
+     <g id="ledger-line2d_19">
+      <path d="M 45.47 17.961882
+L 346.79 17.961882
+" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="ledger-line2d_20">
+      <g>
+       <use xlink:href="#ledger-m5435e3c542" x="45.47" y="17.961882" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="ledger-text_11">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="38.47" y="22.520476" transform="rotate(-0 38.47 22.520476)">16</text>
+     </g>
+    </g>
+    <g id="ledger-text_12">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="16.317187" y="98.676" transform="rotate(-90 16.317187 98.676)">Avg@5</text>
+    </g>
+   </g>
+   <g id="ledger-patch_3">
+    <path d="M 45.47 190.152
+L 45.47 7.2
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="ledger-patch_4">
+    <path d="M 45.47 190.152
+L 346.79 190.152
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="ledger-PathCollection_1">
+    <defs>
+     <path id="ledger-ma7f17c9b95" d="M 0 3.872983
+C 1.027127 3.872983 2.012324 3.464901 2.738613 2.738613
+C 3.464901 2.012324 3.872983 1.027127 3.872983 0
+C 3.872983 -1.027127 3.464901 -2.012324 2.738613 -2.738613
+C 2.012324 -3.464901 1.027127 -3.872983 0 -3.872983
+C -1.027127 -3.872983 -2.012324 -3.464901 -2.738613 -2.738613
+C -3.464901 -2.012324 -3.872983 -1.027127 -3.872983 0
+C -3.872983 1.027127 -3.464901 2.012324 -2.738613 2.738613
+C -2.012324 3.464901 -1.027127 3.872983 0 3.872983
+z
+" style="stroke: var(--gold, #8a611c)"/>
+    </defs>
+    <g clip-path="url(#ledger-pfb7873d393)">
+     <use xlink:href="#ledger-ma7f17c9b95" x="84.211143" y="116.110249" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c)"/>
+    </g>
+   </g>
+   <g id="ledger-text_13">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="92.211143" y="118.110249" transform="rotate(-0 92.211143 118.110249)">SFT start · 6.88</text>
+   </g>
+   <g id="ledger-PathCollection_2">
+    <g clip-path="url(#ledger-pfb7873d393)">
+     <use xlink:href="#ledger-ma7f17c9b95" x="150.276957" y="91.035064" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c)"/>
+    </g>
+   </g>
+   <g id="ledger-text_14">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="150.276957" y="78.035064" transform="rotate(-0 150.276957 78.035064)">Hybrid · 9.21</text>
+   </g>
+   <g id="ledger-PathCollection_3">
+    <g clip-path="url(#ledger-pfb7873d393)">
+     <use xlink:href="#ledger-ma7f17c9b95" x="208.669404" y="91.35792" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c)"/>
+    </g>
+   </g>
+   <g id="ledger-text_15">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="208.669404" y="110.35792" transform="rotate(-0 208.669404 110.35792)">RL / OPD · 9.18</text>
+   </g>
+   <g id="ledger-PathCollection_4">
+    <defs>
+     <path id="ledger-m70d15e5726" d="M -0 5.477226
+L 5.477226 0
+L 0 -5.477226
+L -5.477226 -0
+z
+" style="stroke: var(--accent, #3a5f8a)"/>
+    </defs>
+    <g clip-path="url(#ledger-pfb7873d393)">
+     <use xlink:href="#ledger-m70d15e5726" x="325.079988" y="40.454216" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="ledger-text_16">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="318.079988" y="27.454216" transform="rotate(-0 318.079988 27.454216)">Direct RL · 13.91</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="ledger-pfb7873d393">
+   <rect x="45.47" y="7.2" width="301.32" height="182.952"/>
+  </clipPath>
+ </defs>
+</svg>
+</div>
+    <figcaption>Selected points from the experiment ledger. The distillation totals include teacher prefill as counted in that ledger. Some earlier RL token totals are estimates. These are separate runs with different training histories, so the plot does not connect them into a common learning curve.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>The direct-RL line starts from the same 9B base family and uses a different training path. At a nearby point in the ledger, the alternating run’s 436 million tokens were compared with a direct-RL checkpoint at about 480 million. The alternating run was 4.31 Avg@5 points lower, with a task-paired 95% interval from −6.54 to −2.29. The later direct-RL checkpoint scored 13.91. These totals are useful for deciding what to try next. Different rollout lengths, model serving costs and data curricula make them an imperfect comparison of wall time or accelerator cost.</p>
+    <p>I would separate the comparison with the immediate starting checkpoint from the comparison with an alternative use of the budget. The first tells us that the teacher signal improved this student’s average sample. The second asks whether this path was the best way to spend the training effort from the base. In these runs, direct RL was ahead on the latter comparison. We started setting up two follow-ups: skip SFT and distill from a stronger RL checkpoint into the base 9B before outcome RL, and use Flash feedback on a student already strengthened by RL. The first was still at a short mechanics check; neither had an efficacy result in this snapshot.</p>
+  </div>
+</section>
+
+<section id="next">
+  <div class="prose"><h2>Measure the algorithm before measuring the climb</h2>
+    <p>The capability I wanted was more specific than a higher score. Can the 9B write a correct implementation of simulated annealing or another advanced search procedure on a task where the starting policy seldom does? And once it has a working implementation, can it use feedback to improve the objective while preserving correctness?</p>
+    <p>I would split the next curriculum into those two skills. First ask for a single correct program, and inspect the actual search loop, objective delta and acceptance rule. Count correct implementations across several samples per held-out task and record which approaches the starting model already produces. Then give both policies the same verified starting program, submission feedback and search budget. Measure the score improvement and correctness of each accepted edit.</p>
+    <p>Our earlier one-shot audit shows why those checks need to be explicit. A clock read that looked like time-budgeted search was being used to seed the random number generator. There was real fixed-iteration local search elsewhere. A useful audit distinguishes fixed iterations, a clock that actually controls search, and a working annealing schedule that sometimes accepts a worse move. They are different capabilities and can earn similar program scores on a single input.</p>
+    <p>That design makes success visible at the point where it matters. Better one-shot construction would show up in the programs themselves. Better hill climbing would show up in a sequence of valid, measured improvements from the same starting point. The November 8 snapshot contains a stronger average OPD sample and a persistent stopping problem. The algorithm-level read is the next test.</p>
+  </div>
+</section>
+</main><footer><div class="prose"><nav class="contents" aria-label="Series navigation"><a href="../">Part 1 · The Harness Is Part of the Model</a><a href="../part-2/">Part 2 · The Wall, the Compile Tax, and the Oracle</a><a href="../part-3/">Part 3 · Climbing From Zero Without a Teacher</a><a href="../part-4/">Part 4 · Borrowing a Foothold</a><a href="../part-5/">Part 5 · When the Reward Misses the Algorithm</a><a href="../part-6/">Part 6 · Fork, Talk, Submit</a><a href="../part-7/">Part 7 · The Distance to a Teacher</a><a href="../part-8/">Part 8 · One Harness, Six Ways to Work</a><a href="https://github.com/MaCoredroid/collective-intelligence">Repository</a><a href="#top">Back to top ↑</a></nav></div></footer><script>
+const root = document.documentElement;
+const theme = document.querySelector('.theme');
+const dark = matchMedia('(prefers-color-scheme: dark)');
+let savedTheme;
+try { savedTheme = localStorage.getItem('ci-draft-theme'); } catch {}
+if (savedTheme === 'light' || savedTheme === 'dark') root.dataset.theme = savedTheme;
+theme.addEventListener('click', () => {
+  const current = root.dataset.theme || (dark.matches ? 'dark' : 'light');
+  const next = current === 'dark' ? 'light' : 'dark';
+  root.dataset.theme = next;
+  try { localStorage.setItem('ci-draft-theme', next); } catch {}
+});
+const motion = matchMedia('(prefers-reduced-motion: reduce)');
+document.querySelectorAll('[data-walk]').forEach(walk => {
+  const buttons = [...walk.querySelectorAll('[data-step]')];
+  const stages = [...walk.querySelectorAll('[data-stage]')];
+  const play = walk.querySelector('[data-play]');
+  let selected = 0;
+  let timer;
+  function select(index) {
+    selected = index;
+    buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
+    stages.forEach((stage, i) => { stage.hidden = i !== index; });
+  }
+  function stop() {
+    clearInterval(timer);
+    timer = undefined;
+    play.textContent = 'Play steps';
+    play.setAttribute('aria-pressed', 'false');
+  }
+  buttons.forEach((button, i) => button.addEventListener('click', () => { stop(); select(i); }));
+  play.addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (motion.matches) return;
+    select(0);
+    play.textContent = 'Pause steps';
+    play.setAttribute('aria-pressed', 'true');
+    timer = setInterval(() => {
+      if (selected + 1 === stages.length) { stop(); return; }
+      select(selected + 1);
+    }, 5200);
+  });
+  motion.addEventListener('change', stop);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+  window.addEventListener('pagehide', stop);
+});
+</script></body></html>
