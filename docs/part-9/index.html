@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="On-policy distillation from Qwen Flash into a 9B FrontierCS student. What the teacher improved, what went wrong with stopping, and how the recipes compared."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-9/"><meta property="og:type" content="article"><meta property="og:site_name" content="Collective Intelligence"><meta property="og:title" content="What Did the Teacher Actually Transfer?"><meta property="og:description" content="On-policy distillation from Qwen Flash into a 9B FrontierCS student. What the teacher improved, what went wrong with stopping, and how the recipes compared."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-9/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="What Did the Teacher Actually Transfer?"><meta name="twitter:description" content="On-policy distillation from Qwen Flash into a 9B FrontierCS student. What the teacher improved, what went wrong with stopping, and how the recipes compared."><title>What Did the Teacher Actually Transfer?</title><style>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="On-policy distillation from Qwen Flash into a 9B FrontierCS student. How we calibrated teacher temperature, what five updates bought, and how the training and inference budgets compared."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-9/"><meta property="og:type" content="article"><meta property="og:site_name" content="Collective Intelligence"><meta property="og:title" content="What Did Distillation Buy?"><meta property="og:description" content="On-policy distillation from Qwen Flash into a 9B FrontierCS student. How we calibrated teacher temperature, what five updates bought, and how the training and inference budgets compared."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-9/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="What Did Distillation Buy?"><meta name="twitter:description" content="On-policy distillation from Qwen Flash into a 9B FrontierCS student. How we calibrated teacher temperature, what five updates bought, and how the training and inference budgets compared."><title>What Did Distillation Buy?</title><style>
 :root{--bg:#f7f8f9;--surface:#fff;--surface-2:#edf0f3;--ink:#1a1c1f;--ink-soft:#414b56;--muted:#626d79;--rule:#d5dae0;--accent:#3a5f8a;--gold:#8a611c;--pos:#397052;--neg:#ad5140;--serif:Georgia,"Iowan Old Style",Charter,serif;--sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
 :root[data-theme=dark]{--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}}
@@ -38,22 +38,22 @@
 </style></head>
 <body id="top"><a class="skip" href="#article">Skip to content</a><button type="button" class="theme" aria-label="Toggle color theme">Theme</button><header class="paper-header"><div class="prose">
 <p class="series">Collective Intelligence · Part 9<br><a href="../">Part 1</a> · <a href="../part-2/">Part 2</a> · <a href="../part-3/">Part 3</a> · <a href="../part-4/">Part 4</a> · <a href="../part-5/">Part 5</a> · <a href="../part-6/">Part 6</a> · <a href="../part-7/">Part 7</a> · <a href="../part-8/">Part 8</a></p>
-<h1>What Did the Teacher Actually Transfer?</h1><p class="subtitle">On-policy distillation from Qwen Flash into a 9B coding model</p><p class="deck">I asked a larger teacher to score the 9B’s own reasoning and code on FrontierCS. Average score rose, while the share of tasks with any positive score stayed at half. The gains were concentrated where the student already worked with shorter reasoning, and many more attempts ran to the thinking cap. That split changed what I wanted the teacher to teach next.</p>
+<h1>What Did Distillation Buy?</h1><p class="subtitle">The training and inference budgets of a 9B FrontierCS student</p><p class="deck">Five on-policy distillation updates with Qwen Flash raised the 9B’s average score on FrontierCS, while best-of-five barely moved and more attempts exhausted the thinking budget. Calibrating the teacher’s temperature helped recover from an early score collapse. Counting from the base model, direct reinforcement learning scored higher at a nearby training token budget.</p>
 <p class="publication">Published <time datetime="2026-11-08">November 8, 2026</time> · Evidence through November 8, 2026</p>
-<nav class="contents" aria-label="Article sections"><a href="#result">The result</a><a href="#method">Teacher signal</a><a href="#recipes">What we tried</a><a href="#loops">Why loops matter</a><a href="#coverage">Where the gain came from</a><a href="#budget">Training budget</a><a href="#next">Next experiment</a></nav></div></header><main id="article"><section id="result">
-  <div class="prose"><h2>Five attempts tell three different stories</h2></div>
+<nav class="contents" aria-label="Article sections"><a href="#result">The result</a><a href="#method">Teacher signal</a><a href="#recipes">Why temperature 0.8</a><a href="#return">Discounted return</a><a href="#loops">Inference cost</a><a href="#coverage">Where the gain came from</a><a href="#budget">Training budget</a><a href="#next">Next comparison</a></nav></div></header><main id="article"><section id="result">
+  <div class="prose"><h2>Five updates improved the average attempt</h2>
+    <p>We already had a 9B coding model fine-tuned on Qwen Flash demonstrations. On-policy distillation, or OPD, let Flash score the 9B’s own reasoning and code. We wanted to know how much quality that extra teacher work could buy, and how the resulting model would spend its tokens at inference.</p>
+  </div>
   <div class="wide"><figure id="figure-1">
     <div class="fig-title">Figure 1 · The mean moved first</div>
     <div class="readout-labels"><div class="readout-values"><span>SFT start</span><span>After 5 OPD updates</span></div></div>
     <div class="readout-row"><strong>Avg@5</strong><div class="readout-values"><span>6.88</span><span>8.86</span></div><small>Paired gain +1.98 points, 95% interval +0.51 to +3.62.</small></div><div class="readout-row"><strong>Best@5</strong><div class="readout-values"><span>20.20</span><span>20.82</span></div><small>Paired gain +0.62 points. The interval includes zero.</small></div><div class="readout-row"><strong>Any positive score</strong><div class="readout-values"><span>50%</span><span>50%</span></div><small>86 of 172 tasks on each checkpoint.</small></div><div class="readout-row"><strong>Forced thinking close</strong><div class="readout-values"><span>23.6%</span><span>57.4%</span></div><small>Fraction of 860 samples reaching the thinking cap on each checkpoint.</small></div>
-    <figcaption>Paired FrontierCS evaluation, 172 tasks and five attempts per task at the same thinking cap. Score is on a 0–100 scale. Intervals resample tasks, keeping each task’s attempts together.</figcaption>
+    <figcaption>Paired FrontierCS evaluation on 172 tasks, five attempts per task, with the same 98,304-token thinking cap. Score is on a 0–100 scale. Intervals resample tasks, keeping each task’s attempts together.</figcaption>
   </figure></div>
   <div class="prose">
-    <p>In Part 7, we tried to teach a 9B coding model advanced search, including simulated annealing. The student could imitate a strong teacher’s long derivation and still produce a program that failed to compile. This time, I wanted the teacher to see the states the student would actually encounter. We let the 9B write its own reasoning, asked a larger Qwen Flash teacher to score it token by token, and updated the student with that signal.</p>
-    <p>The strongest measured OPD run improved the average of five attempts by 1.98 points over the Flash-SFT starting checkpoint. It also improved compilation by about six percentage points. The best attempt out of five moved only 0.62 points, with substantial uncertainty. Half the tasks earned some credit before training and half did afterward. These are three different questions about a model that will be sampled repeatedly.</p>
-    <p><strong>Avg@5</strong> tells me what a randomly selected attempt is worth on average. <strong>Best@5</strong> asks how much a scorer can recover if I have five attempts to choose from. <strong>Coverage</strong> counts tasks with at least one positive score. Here a positive score means some benchmark credit. A task can earn credit with a simple construction, and better optimization can raise the score without introducing a new algorithm.</p>
-    <p>The evaluation uses our frozen 172-task FrontierCS packet and one-shot code generation. Each checkpoint generates five programs per task with a 98,304-token thinking cap. One unavailable grade in the OPD packet was counted as zero. The benchmark provides executable scores for open-ended programs, which lets us track quality across attempts without treating every positive score as a full solution.</p>
-    <p>There are two baselines. The immediate starting policy is the third epoch of Flash SFT: 1,110 demonstrations from 268 tasks, with thinking and code given equal loss weight. A separate 9B policy trained with direct RL from the base reached 13.91 Avg@5 and 21.65 Best@5, with 60.5% coverage. I use the SFT baseline to ask what the teacher signal changed and the direct RL baseline to ask what another training path bought.</p>
+    <p>The strongest OPD run raised compilation by 6.3 percentage points. The average score rose, while the best of five stayed within sampling uncertainty and the fraction of tasks earning any credit stayed at half. Much more often, the evaluator had to end thinking at the cap to get a program. Five attempts at the same cap can therefore consume different amounts of inference work.</p>
+    <p><strong>Avg@5</strong> estimates the value of a random attempt. <strong>Best@5</strong> measures what a scorer can recover from five attempts. <strong>Coverage</strong> counts tasks with at least one positive score. We used a frozen one-shot evaluation, with one unavailable grade in the OPD packet counted as zero.</p>
+    <p>The immediate baseline was the third epoch of Flash SFT, trained on 1,110 demonstrations from 268 tasks with equal loss weight for thinking and code. A separate run trained the same 9B base with outcome RL. The SFT checkpoint tells us what we gained by adding OPD. The direct RL checkpoints give us a comparison when we count the cost of getting to that SFT checkpoint in the first place.</p>
     <p class="related"><a href="https://macoredroid.github.io/collective-intelligence/part-7/">Part 7 · The Distance to a Teacher</a> · <a href="https://github.com/FrontierCS/Frontier-CS">FrontierCS benchmark</a></p>
   </div>
 </section>
@@ -72,28 +72,280 @@
   </figure></div>
   <div class="prose">
     <p>For a sampled token, the local signal is <code>log p<sub>teacher</sub> − log p<sub>student</sub></code>. Averaged over the student’s token choices at a given prefix, this is the negative reverse KL at that prefix. In the experiment, we score both thinking and code, mask special tokens, and keep a small reference penalty to the starting student. The teacher signal is available throughout the rollout, including on attempts that would never earn useful benchmark reward.</p>
-    <p>The difficult part is deciding how much credit to assign to a choice when its consequences come thousands of tokens later. In the strongest arm we add a weighted, discounted return of subsequent teacher signals. Think of that as a way to give a choice some credit for what follows it. When subsequent tokens are mostly penalized, a long continuation can carry a cumulative cost even if each token by itself carries a small one.</p>
+    <p>Each update used eight student attempts per task to measure variation and collect the usual benchmark readouts. In the teacher-only arms, the eight attempts did not compete in the loss. The teacher scored each independently. We still ran the execution judge for monitoring, with zero outcome weight in the update.</p>
     <details><summary>Recipe and measurement details</summary>
-      <p>The starting policy was the third epoch of the earlier Flash SFT run. The larger teacher was Flash in FP8. We used a sampled-token reverse-KL signal with the teacher re-tempered to 0.8 using a top-logprob reconstruction with a tail estimate. The stronger-return arm used a coefficient of 0.01 and discount 0.9999 for the teacher return, learning rate 10<sup>−6</sup>, and a reference KL coefficient of 0.001. It used eight training tasks with eight student samples each per update and ran for five updates. Its objective did not include outcome reward.</p>
-      <p>A plain teacher-only arm at the same teacher temperature was near the SFT baseline on Avg@5 and fell 4.72 points on Best@5. The stronger-return arm improved the mean and recovered the best-of-five loss. Both arms encountered long rollouts. The run comparisons describe these specific recipes and checkpoints.</p>
+      <p>The teacher was Flash in FP8. The main arms used eight tasks per update, a learning rate of 10<sup>−6</sup>, and a reference KL coefficient of 0.001. The student sampled at temperature 1.0 across the full distribution. We adjusted the teacher’s scoring probabilities separately.</p>
     </details>
     <p class="related"><a href="https://thinkingmachines.ai/blog/on-policy-distillation/">Thinking Machines Lab · On-Policy Distillation</a></p>
   </div>
 </section>
 
 <section id="recipes">
-  <div class="prose"><h2>The first teacher signal made the student worse</h2>
-    <p>Our first try used the teacher’s original temperature. On the one-sample screen, mean score fell from 7.58 to 3.64. Compile rate fell from 73.8% to 55.8%, and median thinking grew from 57.5K to 94.3K tokens. Adding verifiable outcome reward brought the score back to 4.43, with even more attempts reaching the thinking cap. Both paired score intervals were below zero. Outcome feedback could still distinguish finished programs, but it did little to rescue this recipe’s ability to reach one.</p>
-    <p>We sharpened the teacher to temperature 0.8. Early in training, one batch had student entropy close to the starting policy and still thought about 23K tokens longer. A model can be just as decisive at each token and keep making decisions for much longer. On five samples, that arm came back to the SFT mean, but the best attempt fell by 4.72 points and roughly 72% of attempts hit the cap.</p>
+  <div class="prose"><h2>Why we set the teacher temperature to 0.8</h2>
+    <p>With Flash’s raw probabilities at temperature 1.0, the student’s one-sample score fell from 7.58 to 3.64. Compile rate fell from 73.8% to 55.8%, and median thinking grew from 57.5K to 94.3K tokens. Adding verifiable outcome reward raised the point estimate to 4.43, still below the starting policy on the paired comparison, and more attempts reached the cap.</p>
+    <p>We asked both models to score the <em>same prefixes</em> at the <em>same positions</em>. Entropy measures how spread out the next-token probabilities are. On the starting 9B’s own trajectories, raw Flash had about 0.11 nats more entropy per token. The gap was similar early in thinking, late in thinking, and in code. On Flash’s own text, Flash was slightly sharper than the 9B. The distribution we needed to calibrate was the one Flash produced on student text.</p>
+    <p>To check whether the spread itself mattered, we used the starting 9B as its own frozen teacher and deliberately flattened it at 1.15. The trained student’s entropy went from about 0.41 to 0.66 without a clear change in thinking length. That control gave us a reason to treat rising entropy and failure to stop as separate problems.</p>
   </div>
   <div class="wide"><figure id="figure-3">
-    <div class="fig-title">Figure 3 · A better first draw can coexist with a weaker best draw</div>
+    <div class="fig-title">Figure 3 · We calibrated on the student’s thinking prefixes</div>
+    <div class="article-plot"><svg role="img" aria-label="On the same student thinking prefixes, Flash entropy was 0.317 at 0.6, 0.377 at 0.7, 0.444 at 0.81, and 0.561 at 1.0. The starting student&#x27;s entropy was 0.429 nats per token." xmlns:xlink="http://www.w3.org/1999/xlink" width="368.964687pt" height="215.720938pt" viewBox="0 0 368.964687 215.720938" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-08T15:44:25.778773</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="temperature-figure_1">
+  <g id="temperature-patch_1">
+   <path d="M 0 215.720938
+L 368.964687 215.720938
+L 368.964687 0
+L 0 0
+L 0 215.720938
+z
+" style="fill: none"/>
+  </g>
+  <g id="temperature-axes_1">
+   <g id="temperature-patch_2">
+    <path d="M 49.284688 173.52
+L 361.764687 173.52
+L 361.764687 7.2
+L 49.284688 7.2
+L 49.284688 173.52
+z
+" style="fill: none"/>
+   </g>
+   <g id="temperature-matplotlib.axis_1">
+    <g id="temperature-xtick_1">
+     <g id="temperature-line2d_1">
+      <defs>
+       <path id="temperature-m6219816aa2" d="M 0 0
+L 0 3.5
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#temperature-m6219816aa2" x="80.532687" y="173.52" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="temperature-text_1">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="80.532687" y="189.637188" transform="rotate(-0 80.532687 189.637188)">0.6</text>
+     </g>
+    </g>
+    <g id="temperature-xtick_2">
+     <g id="temperature-line2d_2">
+      <g>
+       <use xlink:href="#temperature-m6219816aa2" x="143.028687" y="173.52" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="temperature-text_2">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="143.028687" y="189.637188" transform="rotate(-0 143.028687 189.637188)">0.7</text>
+     </g>
+    </g>
+    <g id="temperature-xtick_3">
+     <g id="temperature-line2d_3">
+      <g>
+       <use xlink:href="#temperature-m6219816aa2" x="211.774287" y="173.52" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="temperature-text_3">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="211.774287" y="189.637188" transform="rotate(-0 211.774287 189.637188)">0.81</text>
+     </g>
+    </g>
+    <g id="temperature-xtick_4">
+     <g id="temperature-line2d_4">
+      <g>
+       <use xlink:href="#temperature-m6219816aa2" x="330.516687" y="173.52" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="temperature-text_4">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="330.516687" y="189.637188" transform="rotate(-0 330.516687 189.637188)">1.0</text>
+     </g>
+    </g>
+    <g id="temperature-text_5">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="205.524687" y="205.638125" transform="rotate(-0 205.524687 205.638125)">Teacher scoring temperature</text>
+    </g>
+   </g>
+   <g id="temperature-matplotlib.axis_2">
+    <g id="temperature-ytick_1">
+     <g id="temperature-line2d_5">
+      <path d="M 49.284688 155.539459
+L 361.764687 155.539459
+" clip-path="url(#temperature-p61187496d1)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="temperature-line2d_6">
+      <defs>
+       <path id="temperature-m6a9c4623f9" d="M 0 0
+L -3.5 0
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#temperature-m6a9c4623f9" x="49.284688" y="155.539459" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="temperature-text_6">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.284688" y="160.098053" transform="rotate(-0 42.284688 160.098053)">0.3</text>
+     </g>
+    </g>
+    <g id="temperature-ytick_2">
+     <g id="temperature-line2d_7">
+      <path d="M 49.284688 110.588108
+L 361.764687 110.588108
+" clip-path="url(#temperature-p61187496d1)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="temperature-line2d_8">
+      <g>
+       <use xlink:href="#temperature-m6a9c4623f9" x="49.284688" y="110.588108" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="temperature-text_7">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.284688" y="115.146702" transform="rotate(-0 42.284688 115.146702)">0.4</text>
+     </g>
+    </g>
+    <g id="temperature-ytick_3">
+     <g id="temperature-line2d_9">
+      <path d="M 49.284688 65.636757
+L 361.764687 65.636757
+" clip-path="url(#temperature-p61187496d1)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="temperature-line2d_10">
+      <g>
+       <use xlink:href="#temperature-m6a9c4623f9" x="49.284688" y="65.636757" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="temperature-text_8">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.284688" y="70.195351" transform="rotate(-0 42.284688 70.195351)">0.5</text>
+     </g>
+    </g>
+    <g id="temperature-ytick_4">
+     <g id="temperature-line2d_11">
+      <path d="M 49.284688 20.685405
+L 361.764687 20.685405
+" clip-path="url(#temperature-p61187496d1)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="temperature-line2d_12">
+      <g>
+       <use xlink:href="#temperature-m6a9c4623f9" x="49.284688" y="20.685405" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="temperature-text_9">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.284688" y="25.243999" transform="rotate(-0 42.284688 25.243999)">0.6</text>
+     </g>
+    </g>
+    <g id="temperature-text_10">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="16.318125" y="90.36" transform="rotate(-90 16.318125 90.36)">Entropy (nats per token)</text>
+    </g>
+   </g>
+   <g id="temperature-line2d_13">
+    <path d="M 49.284688 97.552216
+L 361.764687 97.552216
+" clip-path="url(#temperature-p61187496d1)" style="fill: none; stroke-dasharray: 6.29,2.72; stroke-dashoffset: 0; stroke: var(--gold, #8a611c); stroke-width: 1.7"/>
+   </g>
+   <g id="temperature-patch_3">
+    <path d="M 49.284688 173.52
+L 49.284688 7.2
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="temperature-patch_4">
+    <path d="M 49.284688 173.52
+L 361.764687 173.52
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="temperature-PathCollection_1">
+    <defs>
+     <path id="temperature-ma46e62bf85" d="M 0 3.708099
+C 0.983399 3.708099 1.926654 3.317391 2.622022 2.622022
+C 3.317391 1.926654 3.708099 0.983399 3.708099 0
+C 3.708099 -0.983399 3.317391 -1.926654 2.622022 -2.622022
+C 1.926654 -3.317391 0.983399 -3.708099 0 -3.708099
+C -0.983399 -3.708099 -1.926654 -3.317391 -2.622022 -2.622022
+C -3.317391 -1.926654 -3.708099 -0.983399 -3.708099 0
+C -3.708099 0.983399 -3.317391 1.926654 -2.622022 2.622022
+C -1.926654 3.317391 -0.983399 3.708099 0 3.708099
+z
+" style="stroke: var(--accent, #3a5f8a)"/>
+    </defs>
+    <g clip-path="url(#temperature-p61187496d1)">
+     <use xlink:href="#temperature-ma46e62bf85" x="80.532687" y="147.89773" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#temperature-ma46e62bf85" x="143.028687" y="120.926919" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#temperature-ma46e62bf85" x="211.774287" y="90.809514" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#temperature-ma46e62bf85" x="330.516687" y="38.216432" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="temperature-text_11">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="80.532687" y="138.89773" transform="rotate(-0 80.532687 138.89773)">0.317</text>
+   </g>
+   <g id="temperature-text_12">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="143.028687" y="111.926919" transform="rotate(-0 143.028687 111.926919)">0.377</text>
+   </g>
+   <g id="temperature-text_13">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="211.774287" y="81.809514" transform="rotate(-0 211.774287 81.809514)">0.444</text>
+   </g>
+   <g id="temperature-text_14">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="330.516687" y="29.216432" transform="rotate(-0 330.516687 29.216432)">0.561</text>
+   </g>
+   <g id="temperature-legend_1">
+    <g id="temperature-line2d_14">
+     <path d="M 58.284688 20.298438
+L 68.284688 20.298438
+L 78.284688 20.298438
+" style="fill: none; stroke-dasharray: 6.29,2.72; stroke-dashoffset: 0; stroke: var(--gold, #8a611c); stroke-width: 1.7"/>
+    </g>
+    <g id="temperature-text_15">
+     <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="86.284688" y="23.798438" transform="rotate(-0 86.284688 23.798438)">Starting student · 0.429</text>
+    </g>
+    <g id="temperature-PathCollection_2">
+     <g>
+      <use xlink:href="#temperature-ma46e62bf85" x="68.284688" y="36.174219" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     </g>
+    </g>
+    <g id="temperature-text_16">
+     <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="86.284688" y="38.799219" transform="rotate(-0 86.284688 38.799219)">Flash on student text</text>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="temperature-p61187496d1">
+   <rect x="49.284688" y="7.2" width="312.48" height="166.32"/>
+  </clipPath>
+ </defs>
+</svg>
+</div>
+    <figcaption>Offline probability rescoring of the starting student’s thinking text. The dots are Flash’s measured entropy at four temperatures. The dashed line is the student’s own entropy. These are calibration measurements. Held-out training results appear below.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>The offline sweep put the match near 0.81 overall, with thinking positions near 0.80–0.83 and code near 0.71. At 0.6, Flash’s thinking-token distribution was already about 26% sharper by entropy than the student’s. We used one shared temperature of 0.8 in the main run. On its initial student rollouts the reweighted teacher measured 0.415 nats against the student’s 0.428. That was the selection criterion. The sweep measured entropy on fixed text, so it could locate a starting point without training and evaluating a checkpoint at every temperature.</p>
+    <details><summary>How we changed the teacher distribution</summary>
+      <p>Flash read the student’s rollout in a scoring pass. We took its raw log-probability of the sampled token and its top 50 log-probabilities. In the trainer we raised probabilities to the power <code>1/τ</code> and renormalized, accounting for the remaining vocabulary with a tail estimate. An exact-vocabulary check measured a mean log-normalizer error of about 0.00027 nats. The student kept sampling at 1.0. The separate inference sweep below changes the student sampler itself.</p>
+    </details>
+    <p>After the first updated batch at 0.8, student entropy was 0.385 against 0.431 at the starting checkpoint, while the raw-teacher arms had already climbed to around 0.69. Thinking still grew by about 23K tokens in the paired batch comparison. By update five the plain 0.8 policy’s training entropy was down near 0.11. On held-out tasks it roughly matched the starting mean, lost 4.72 Best@5 points, and hit the cap on about 72% of attempts. Matching the starting entropy addressed the initial drift. The rollouts the teacher scored changed as the student changed.</p>
+  </div>
+</section>
+
+<section id="return">
+  <div class="prose"><h2>What a longer credit window bought</h2>
+    <p>The next change kept the 0.8 teacher and added a discounted sum of later teacher scores to each token’s local signal. At a per-token discount of 0.9999, feedback 10,000 tokens later carries about 37% of its original weight. Since the future scores were often negative, adding that return could make the lead-in to an unproductive continuation more expensive.</p>
+    <p>With a return weight of 0.001, the second training batch still had a median thinking length of about 83K. At 0.01 it was about 48K, close to the starting student’s 48K and below the plain 0.8 arm’s 84K on the same task set. The stronger weight delayed the rise. By the fifth training batch its median was also at the cap. The weaker arm’s held-out one-sample score was 6.78 versus the baseline’s 7.58, with a paired interval that crossed zero.</p>
+  </div>
+  <div class="wide"><figure id="figure-4">
+    <div class="fig-title">Figure 4 · The return changed what we got from repeated sampling</div>
     <div class="article-plot"><svg role="img" aria-label="Expected best from one to five draws. SFT start: 6.88, 11.44, 14.93, 17.76, 20.20. Teacher at 0.8: 7.09, 10.59, 12.77, 14.28, 15.47. 0.8 with stronger return: 8.86, 13.63, 16.72, 18.97, 20.82." xmlns:xlink="http://www.w3.org/1999/xlink" width="376.310937pt" height="242.455531pt" viewBox="0 0 376.310937 242.455531" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-11-08T14:53:08.454001</dc:date>
+    <dc:date>2026-11-08T15:44:25.798733</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -130,12 +382,12 @@ z
     <g id="best-curve-xtick_1">
      <g id="best-curve-line2d_1">
       <defs>
-       <path id="best-curve-m5667c8750c" d="M 0 0
+       <path id="best-curve-m378949f822" d="M 0 0
 L 0 3.5
 " style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </defs>
       <g>
-       <use xlink:href="#best-curve-m5667c8750c" x="61.507154" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m378949f822" x="61.507154" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_1">
@@ -145,7 +397,7 @@ L 0 3.5
     <g id="best-curve-xtick_2">
      <g id="best-curve-line2d_2">
       <g>
-       <use xlink:href="#best-curve-m5667c8750c" x="134.399046" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m378949f822" x="134.399046" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_2">
@@ -155,7 +407,7 @@ L 0 3.5
     <g id="best-curve-xtick_3">
      <g id="best-curve-line2d_3">
       <g>
-       <use xlink:href="#best-curve-m5667c8750c" x="207.290938" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m378949f822" x="207.290938" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_3">
@@ -165,7 +417,7 @@ L 0 3.5
     <g id="best-curve-xtick_4">
      <g id="best-curve-line2d_4">
       <g>
-       <use xlink:href="#best-curve-m5667c8750c" x="280.182829" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m378949f822" x="280.182829" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_4">
@@ -175,7 +427,7 @@ L 0 3.5
     <g id="best-curve-xtick_5">
      <g id="best-curve-line2d_5">
       <g>
-       <use xlink:href="#best-curve-m5667c8750c" x="353.074721" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m378949f822" x="353.074721" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_5">
@@ -191,16 +443,16 @@ L 0 3.5
      <g id="best-curve-line2d_6">
       <path d="M 45.470938 200.254594
 L 369.110937 200.254594
-" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#best-curve-p9a09dc7b66)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="best-curve-line2d_7">
       <defs>
-       <path id="best-curve-m8a05b9efd7" d="M 0 0
+       <path id="best-curve-m534b88b2cd" d="M 0 0
 L -3.5 0
 " style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </defs>
       <g>
-       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m534b88b2cd" x="45.470938" y="200.254594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_7">
@@ -211,11 +463,11 @@ L -3.5 0
      <g id="best-curve-line2d_8">
       <path d="M 45.470938 168.838594
 L 369.110937 168.838594
-" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#best-curve-p9a09dc7b66)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="best-curve-line2d_9">
       <g>
-       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="168.838594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m534b88b2cd" x="45.470938" y="168.838594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_8">
@@ -226,11 +478,11 @@ L 369.110937 168.838594
      <g id="best-curve-line2d_10">
       <path d="M 45.470938 137.422594
 L 369.110937 137.422594
-" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#best-curve-p9a09dc7b66)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="best-curve-line2d_11">
       <g>
-       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="137.422594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m534b88b2cd" x="45.470938" y="137.422594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_9">
@@ -241,11 +493,11 @@ L 369.110937 137.422594
      <g id="best-curve-line2d_12">
       <path d="M 45.470938 106.006594
 L 369.110937 106.006594
-" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#best-curve-p9a09dc7b66)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="best-curve-line2d_13">
       <g>
-       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="106.006594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m534b88b2cd" x="45.470938" y="106.006594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_10">
@@ -256,11 +508,11 @@ L 369.110937 106.006594
      <g id="best-curve-line2d_14">
       <path d="M 45.470938 74.590594
 L 369.110937 74.590594
-" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#best-curve-p9a09dc7b66)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="best-curve-line2d_15">
       <g>
-       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="74.590594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m534b88b2cd" x="45.470938" y="74.590594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_11">
@@ -271,11 +523,11 @@ L 369.110937 74.590594
      <g id="best-curve-line2d_16">
       <path d="M 45.470938 43.174594
 L 369.110937 43.174594
-" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#best-curve-p9a09dc7b66)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="best-curve-line2d_17">
       <g>
-       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="43.174594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m534b88b2cd" x="45.470938" y="43.174594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_12">
@@ -286,11 +538,11 @@ L 369.110937 43.174594
      <g id="best-curve-line2d_18">
       <path d="M 45.470938 11.758594
 L 369.110937 11.758594
-" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#best-curve-p9a09dc7b66)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="best-curve-line2d_19">
       <g>
-       <use xlink:href="#best-curve-m8a05b9efd7" x="45.470938" y="11.758594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#best-curve-m534b88b2cd" x="45.470938" y="11.758594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="best-curve-text_13">
@@ -307,21 +559,21 @@ L 134.399046 110.404834
 L 207.290938 82.994374
 L 280.182829 60.767554
 L 353.074721 41.603794
-" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke-dasharray: 7.03,3.04; stroke-dashoffset: 0; stroke: var(--gold, #8a611c); stroke-width: 1.9"/>
+" clip-path="url(#best-curve-p9a09dc7b66)" style="fill: none; stroke-dasharray: 7.03,3.04; stroke-dashoffset: 0; stroke: var(--gold, #8a611c); stroke-width: 1.9"/>
     <defs>
-     <path id="best-curve-me2a22950ba" d="M -3 3
+     <path id="best-curve-m6fa09e12c0" d="M -3 3
 L 3 3
 L 3 -3
 L -3 -3
 z
 " style="stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
     </defs>
-    <g clip-path="url(#best-curve-pf99790f3b3)">
-     <use xlink:href="#best-curve-me2a22950ba" x="61.507154" y="146.219074" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
-     <use xlink:href="#best-curve-me2a22950ba" x="134.399046" y="110.404834" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
-     <use xlink:href="#best-curve-me2a22950ba" x="207.290938" y="82.994374" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
-     <use xlink:href="#best-curve-me2a22950ba" x="280.182829" y="60.767554" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
-     <use xlink:href="#best-curve-me2a22950ba" x="353.074721" y="41.603794" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+    <g clip-path="url(#best-curve-p9a09dc7b66)">
+     <use xlink:href="#best-curve-m6fa09e12c0" x="61.507154" y="146.219074" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-m6fa09e12c0" x="134.399046" y="110.404834" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-m6fa09e12c0" x="207.290938" y="82.994374" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-m6fa09e12c0" x="280.182829" y="60.767554" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-m6fa09e12c0" x="353.074721" y="41.603794" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
     </g>
    </g>
    <g id="best-curve-line2d_21">
@@ -330,20 +582,20 @@ L 134.399046 117.080734
 L 207.290938 99.959014
 L 280.182829 88.099474
 L 353.074721 78.753214
-" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke-dasharray: 1.9,3.135; stroke-dashoffset: 0; stroke: var(--neg, #ad5140); stroke-width: 1.9"/>
+" clip-path="url(#best-curve-p9a09dc7b66)" style="fill: none; stroke-dasharray: 1.9,3.135; stroke-dashoffset: 0; stroke: var(--neg, #ad5140); stroke-width: 1.9"/>
     <defs>
-     <path id="best-curve-m1d4a6a9403" d="M 0 -3
+     <path id="best-curve-mec24e0beea" d="M 0 -3
 L -3 3
 L 3 3
 z
 " style="stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
     </defs>
-    <g clip-path="url(#best-curve-pf99790f3b3)">
-     <use xlink:href="#best-curve-m1d4a6a9403" x="61.507154" y="144.569734" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
-     <use xlink:href="#best-curve-m1d4a6a9403" x="134.399046" y="117.080734" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
-     <use xlink:href="#best-curve-m1d4a6a9403" x="207.290938" y="99.959014" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
-     <use xlink:href="#best-curve-m1d4a6a9403" x="280.182829" y="88.099474" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
-     <use xlink:href="#best-curve-m1d4a6a9403" x="353.074721" y="78.753214" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+    <g clip-path="url(#best-curve-p9a09dc7b66)">
+     <use xlink:href="#best-curve-mec24e0beea" x="61.507154" y="144.569734" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-mec24e0beea" x="134.399046" y="117.080734" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-mec24e0beea" x="207.290938" y="99.959014" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-mec24e0beea" x="280.182829" y="88.099474" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+     <use xlink:href="#best-curve-mec24e0beea" x="353.074721" y="78.753214" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
     </g>
    </g>
    <g id="best-curve-line2d_22">
@@ -352,9 +604,9 @@ L 134.399046 93.204574
 L 207.290938 68.935714
 L 280.182829 51.264214
 L 353.074721 36.734314
-" clip-path="url(#best-curve-pf99790f3b3)" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 1.9; stroke-linecap: square"/>
+" clip-path="url(#best-curve-p9a09dc7b66)" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 1.9; stroke-linecap: square"/>
     <defs>
-     <path id="best-curve-m2ec2ef7d4b" d="M 0 3
+     <path id="best-curve-m0f5e264636" d="M 0 3
 C 0.795609 3 1.55874 2.683901 2.12132 2.12132
 C 2.683901 1.55874 3 0.795609 3 0
 C 3 -0.795609 2.683901 -1.55874 2.12132 -2.12132
@@ -366,12 +618,12 @@ C -1.55874 2.683901 -0.795609 3 0 3
 z
 " style="stroke: var(--accent, #3a5f8a)"/>
     </defs>
-    <g clip-path="url(#best-curve-pf99790f3b3)">
-     <use xlink:href="#best-curve-m2ec2ef7d4b" x="61.507154" y="130.668154" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
-     <use xlink:href="#best-curve-m2ec2ef7d4b" x="134.399046" y="93.204574" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
-     <use xlink:href="#best-curve-m2ec2ef7d4b" x="207.290938" y="68.935714" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
-     <use xlink:href="#best-curve-m2ec2ef7d4b" x="280.182829" y="51.264214" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
-     <use xlink:href="#best-curve-m2ec2ef7d4b" x="353.074721" y="36.734314" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    <g clip-path="url(#best-curve-p9a09dc7b66)">
+     <use xlink:href="#best-curve-m0f5e264636" x="61.507154" y="130.668154" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#best-curve-m0f5e264636" x="134.399046" y="93.204574" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#best-curve-m0f5e264636" x="207.290938" y="68.935714" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#best-curve-m0f5e264636" x="280.182829" y="51.264214" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#best-curve-m0f5e264636" x="353.074721" y="36.734314" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
     </g>
    </g>
    <g id="best-curve-patch_3">
@@ -391,7 +643,7 @@ L 66.370937 26.166875
 L 77.370937 26.166875
 " style="fill: none; stroke-dasharray: 7.03,3.04; stroke-dashoffset: 0; stroke: var(--gold, #8a611c); stroke-width: 1.9"/>
      <g>
-      <use xlink:href="#best-curve-me2a22950ba" x="66.370937" y="26.166875" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
+      <use xlink:href="#best-curve-m6fa09e12c0" x="66.370937" y="26.166875" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c); stroke-linejoin: miter"/>
      </g>
     </g>
     <g id="best-curve-text_15">
@@ -403,7 +655,7 @@ L 66.370937 42.667734
 L 77.370937 42.667734
 " style="fill: none; stroke-dasharray: 1.9,3.135; stroke-dashoffset: 0; stroke: var(--neg, #ad5140); stroke-width: 1.9"/>
      <g>
-      <use xlink:href="#best-curve-m1d4a6a9403" x="66.370937" y="42.667734" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
+      <use xlink:href="#best-curve-mec24e0beea" x="66.370937" y="42.667734" style="fill: var(--neg, #ad5140); stroke: var(--neg, #ad5140); stroke-linejoin: miter"/>
      </g>
     </g>
     <g id="best-curve-text_16">
@@ -415,7 +667,7 @@ L 66.370937 59.168594
 L 77.370937 59.168594
 " style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 1.9; stroke-linecap: square"/>
      <g>
-      <use xlink:href="#best-curve-m2ec2ef7d4b" x="66.370937" y="59.168594" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+      <use xlink:href="#best-curve-m0f5e264636" x="66.370937" y="59.168594" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
      </g>
     </g>
     <g id="best-curve-text_17">
@@ -425,16 +677,16 @@ L 77.370937 59.168594
   </g>
  </g>
  <defs>
-  <clipPath id="best-curve-pf99790f3b3">
+  <clipPath id="best-curve-p9a09dc7b66">
    <rect x="45.470938" y="11.758594" width="323.64" height="188.496"/>
   </clipPath>
  </defs>
 </svg>
 </div>
-    <figcaption>Expected best score from a subset of <em>k</em> of the five evaluated attempts, averaged over tasks. At <em>k</em> = 1 this is Avg@5; it is separate from the independent one-sample screens. All three curves use the same 172 tasks.</figcaption>
+    <figcaption>Expected best score from a subset of <em>k</em> of five attempts, averaged over the same 172 tasks. At <em>k</em> = 1 the curve gives Avg@5. The independent one-sample screens use separately generated attempts.</figcaption>
   </figure></div>
   <div class="prose">
-    <p>Adding the stronger discounted return changed the curve. Compared with SFT, it improved the expected first draw by 1.98 points, then gave up most of that margin as more samples were available. Compared with plain 0.8 OPD, it recovered much of the upper tail. This was the recipe we kept. It was also a reason to look inside the rollout: we had a teacher signal that improved answers on average while sending many more attempts to the cap.</p>
+    <p>The stronger return improved the expected first draw by 1.98 points over SFT and recovered the best-of-five loss seen with plain 0.8 OPD. The margin over SFT shrank as more samples were available. This five-update recipe had the clearest held-out mean gain among the temperature and return variants.</p>
     <details><summary>Recipe comparisons and evaluation scope</summary>
       <div class="table-scroll" tabindex="0" role="region" aria-label="OPD recipe comparisons"><table>
       <thead><tr><th scope="col">Recipe</th><th scope="col">Attempts per task</th><th scope="col">Mean</th><th scope="col">Best of five</th><th scope="col">Forced close</th></tr></thead>
@@ -442,11 +694,13 @@ L 77.370937 59.168594
       <tr><th scope="row">SFT start</th><td>1</td><td>7.58</td><td>—</td><td>26.7%</td></tr>
       <tr><th scope="row">Raw teacher</th><td>1</td><td>3.64</td><td>—</td><td>45.9%</td></tr>
       <tr><th scope="row">Raw teacher + outcome</th><td>1</td><td>4.43</td><td>—</td><td>58.7%</td></tr>
+      <tr><th scope="row">Teacher at 0.8</th><td>1</td><td>7.31</td><td>—</td><td>73.8%</td></tr>
+      <tr><th scope="row">Teacher at 0.8 + weaker return</th><td>1</td><td>6.78</td><td>—</td><td>65.7%</td></tr>
       <tr><th scope="row">SFT start</th><td>5</td><td>6.88</td><td>20.20</td><td>23.6%</td></tr>
       <tr><th scope="row">Teacher at 0.8</th><td>5</td><td>7.09</td><td>15.47</td><td>~72%</td></tr>
       <tr><th scope="row">Teacher at 0.8 + stronger return</th><td>5</td><td>8.86</td><td>20.82</td><td>57.4%</td></tr>
       </tbody></table></div>
-      <p>The paired Best@5 difference for plain 0.8 OPD was −4.72 points, with a 95% interval of −8.54 to −1.06. Its Avg@5 difference was +0.21, with an interval of −1.53 to +2.09. Teacher temperature changes the training target. Student decoding settings, discussed below, change which tokens the student actually samples.</p>
+      <p>The paired Best@5 difference for plain 0.8 OPD was −4.72 points, with a 95% interval of −8.54 to −1.06. Its Avg@5 difference was +0.21, with an interval of −1.53 to +2.09.</p>
     </details>
   </div>
 </section>
@@ -456,19 +710,19 @@ L 77.370937 59.168594
     <p>Imagine a student that has settled on a candidate solution. It repeats its complexity analysis, then repeats the same plan in slightly different words. The teacher is now judging a familiar continuation to a repetitive prefix. It can assign high probability to another repeat even if its own independent solution would have moved on.</p>
     <p>We saw this in the rollout audit. Repeat lines often carried a much smaller teacher–student log-probability gap than first-occurrence reasoning. In the audited batches, retaining repeated lines reduced the mean per-token penalty relative to computing the mean without those lines. The effect is a property of the tokens and the reduction rule. It does not identify why any particular sample entered a loop.</p>
   </div>
-  <div class="wide"><figure id="figure-4">
-    <div class="fig-title">Figure 4 · Answers are stronger when thinking closes naturally</div>
+  <div class="wide"><figure id="figure-5">
+    <div class="fig-title">Figure 5 · Answers are stronger when thinking closes naturally</div>
     <div class="readout-labels"><div class="readout-values"><span>SFT start</span><span>After 5 OPD updates</span></div></div>
     <div class="readout-row"><strong>Natural close</strong><div class="readout-values"><span>8.25</span><span>15.96</span></div><small>Mean program score among samples that closed thinking on their own.</small></div>
     <div class="readout-row"><strong>Forced close</strong><div class="readout-values"><span>2.44</span><span>3.60</span></div><small>Mean score among samples pushed to the answer phase at the thinking cap.</small></div>
     <figcaption>Conditional means on the same evaluation packet. Each checkpoint induces its own split between natural and forced endings. The groups contain different samples and the comparison is descriptive.</figcaption>
   </figure></div>
   <div class="prose">
-    <p>That split helps explain why the improvement was hard to use. When the distilled model closed its reasoning on its own, its programs scored nearly twice as well on average as the starting student’s naturally closed programs. At the same time, forced closes rose from about 24% to 57% of attempts. In a group of five we went from about 3.8 natural closes to 2.1. Some forced answers still scored, but we had fewer of the kind that tended to score well.</p>
-    <p>We also looked for the point where more thinking stopped helping. In 16 selected traces, we used the final answer to find an earlier code block already close to the emitted program. On review, 15 looked ready to finish and 14 spent further tokens without a useful change. The median extra reasoning was about 15K tokens. At those points the teacher gave the closing token a median probability near one in a million. The first code block was usually much less like the final program, so closing at the first sight of code would be a bad rule. This audit uses hindsight to find a decision point; it gives us a test case, not a detector we can use at inference.</p>
+    <p>On the five-attempt packet, median thinking grew from about 53K tokens to the 98K cap. The expected number of natural closes in five attempts fell from 3.8 to 2.1. The natural closes scored much better after OPD, but the evaluation spent more tokens reaching the answer phase. An inference budget measured in generated tokens could buy a different number of attempts from each checkpoint.</p>
+    <p>We also looked for the point where more thinking stopped helping. In 16 selected traces, we used the final answer to find an earlier code block already close to the emitted program. On review, 15 looked ready to finish and 14 spent further tokens without a useful change. The median extra reasoning was about 15K tokens. At those points the teacher gave the closing token a median probability near one in a million. The first code block was usually much less like the final program. We located the later decision point retrospectively, using the final answer as a reference.</p>
     <p>We tried cutting the loop in two places. Cutting its tail out of the training return also removed negative return that had reached the decisions just before loop onset. On one audited batch the pre-loop return moved from −7.94 to −0.37 under the cut. That made the lead-in cheaper under this objective, and the training variant continued to loop. The result is specific to how we formed and masked the return.</p>
     <p>We also changed decoding on the same checkpoint. Tightening the sampling distribution to the teacher’s card settings increased repetition and forced closes in a one-sample sweep. Cutting repetition at inference cut thinking length, but the run still scored about seven points on average against 10.33 with the original sampler. Ending a loop early saved tokens without restoring the original score in this screen.</p>
-    <p>Perhaps the policy simply needed to train under the sampler it would use at test time. We continued for three updates using the coding sampler with a thinking-only presence penalty, then evaluated both checkpoints with that sampler. The score moved from 7.33 to 6.27 and forced closes from 65.1% to 79.1%. The score interval still crossed zero. The original sampler also gave a lower point estimate after retraining. Matching train and test sampling was a reasonable fix to try; it did not produce a recovery here.</p>
+    <p>We continued for three updates using the coding sampler with a thinking-only presence penalty, then evaluated both checkpoints with that sampler. The score moved from 7.33 to 6.27 and forced closes from 65.1% to 79.1%. The score interval crossed zero. The original sampler also gave a lower point estimate after retraining.</p>
     <p>Two more changes separated exposure from skill. Continuing with a 64K <em>training</em> cap gave a 5.48 one-sample score under the usual 98K evaluation cap, versus 10.33 before that continuation. The cap controlled what the policy saw during training. It did not provide a label for when to finish. A windowed experiment generated rollouts but stopped before a completed update, so it has no held-out result.</p>
     <details><summary>One-sample decoding sweep</summary>
       <div class="table-scroll" tabindex="0" role="region" aria-label="Decoding sweep table"><table>
@@ -487,14 +741,14 @@ L 77.370937 59.168594
   <div class="prose"><h2>The gain came mostly from tasks the student already handled quickly</h2>
     <p>I grouped tasks by how long the starting 9B thought, using the median of its five attempts. This fixes the grouping before looking at the distilled model’s score. The largest improvement came from tasks where the starting student took fewer than 16,000 thinking tokens.</p>
   </div>
-  <div class="wide"><figure id="figure-5">
-    <div class="fig-title">Figure 5 · Gains by starting-student thinking length</div>
+  <div class="wide"><figure id="figure-6">
+    <div class="fig-title">Figure 6 · Gains by starting-student thinking length</div>
     <div class="article-plot"><svg role="img" aria-label="Gain by starting student median thinking length. Under 16K plus 7.0, 16–32K plus 2.5, 32–64K plus 2.1, 64K to cap minus 0.1, at cap minus 1.0 points." xmlns:xlink="http://www.w3.org/1999/xlink" width="375.23375pt" height="201.132937pt" viewBox="0 0 375.23375 201.132937" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-11-08T14:53:08.481871</dc:date>
+    <dc:date>2026-11-08T15:44:25.823241</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -532,7 +786,7 @@ z
      <g id="buckets-line2d_1">
       <path d="M 84.5775 162.432
 L 84.5775 7.2
-" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="buckets-line2d_2"/>
      <g id="buckets-text_1">
@@ -543,7 +797,7 @@ L 84.5775 7.2
      <g id="buckets-line2d_3">
       <path d="M 138.8275 162.432
 L 138.8275 7.2
-" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="buckets-line2d_4"/>
      <g id="buckets-text_2">
@@ -554,7 +808,7 @@ L 138.8275 7.2
      <g id="buckets-line2d_5">
       <path d="M 193.0775 162.432
 L 193.0775 7.2
-" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="buckets-line2d_6"/>
      <g id="buckets-text_3">
@@ -565,7 +819,7 @@ L 193.0775 7.2
      <g id="buckets-line2d_7">
       <path d="M 247.3275 162.432
 L 247.3275 7.2
-" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="buckets-line2d_8"/>
      <g id="buckets-text_4">
@@ -576,7 +830,7 @@ L 247.3275 7.2
      <g id="buckets-line2d_9">
       <path d="M 301.5775 162.432
 L 301.5775 7.2
-" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="buckets-line2d_10"/>
      <g id="buckets-text_5">
@@ -587,7 +841,7 @@ L 301.5775 7.2
      <g id="buckets-line2d_11">
       <path d="M 355.8275 162.432
 L 355.8275 7.2
-" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.15; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="buckets-line2d_12"/>
      <g id="buckets-text_6">
@@ -636,7 +890,7 @@ L 328.7025 14.256
 L 328.7025 28.240865
 L 138.8275 28.240865
 z
-" clip-path="url(#buckets-pd678b29bae)" style="fill: var(--accent, #3a5f8a)"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: var(--accent, #3a5f8a)"/>
    </g>
    <g id="buckets-patch_4">
     <path d="M 138.8275 46.039784
@@ -644,7 +898,7 @@ L 206.64 46.039784
 L 206.64 60.024649
 L 138.8275 60.024649
 z
-" clip-path="url(#buckets-pd678b29bae)" style="fill: var(--accent, #3a5f8a)"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: var(--accent, #3a5f8a)"/>
    </g>
    <g id="buckets-patch_5">
     <path d="M 138.8275 77.823568
@@ -652,7 +906,7 @@ L 195.79 77.823568
 L 195.79 91.808432
 L 138.8275 91.808432
 z
-" clip-path="url(#buckets-pd678b29bae)" style="fill: var(--accent, #3a5f8a)"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: var(--accent, #3a5f8a)"/>
    </g>
    <g id="buckets-patch_6">
     <path d="M 138.8275 109.607351
@@ -660,7 +914,7 @@ L 136.115 109.607351
 L 136.115 123.592216
 L 138.8275 123.592216
 z
-" clip-path="url(#buckets-pd678b29bae)" style="fill: var(--gold, #8a611c)"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: var(--gold, #8a611c)"/>
    </g>
    <g id="buckets-patch_7">
     <path d="M 138.8275 141.391135
@@ -668,12 +922,12 @@ L 111.7025 141.391135
 L 111.7025 155.376
 L 138.8275 155.376
 z
-" clip-path="url(#buckets-pd678b29bae)" style="fill: var(--gold, #8a611c)"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: var(--gold, #8a611c)"/>
    </g>
    <g id="buckets-line2d_18">
     <path d="M 138.8275 162.432
 L 138.8275 7.2
-" clip-path="url(#buckets-pd678b29bae)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 1.2; stroke-linecap: square"/>
+" clip-path="url(#buckets-pf6600d8c77)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 1.2; stroke-linecap: square"/>
    </g>
    <g id="buckets-text_13">
     <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="332.5" y="24.36562" transform="rotate(-0 332.5 24.36562)">+7.0</text>
@@ -693,7 +947,7 @@ L 138.8275 7.2
   </g>
  </g>
  <defs>
-  <clipPath id="buckets-pd678b29bae">
+  <clipPath id="buckets-pf6600d8c77">
    <rect x="75.08375" y="7.2" width="292.95" height="155.232"/>
   </clipPath>
  </defs>
@@ -702,25 +956,26 @@ L 138.8275 7.2
     <figcaption>Task-paired differences in Avg@5, bucketed by the SFT starting checkpoint’s median thinking length on each task. The under-16K bucket accounts for about 62% of the overall gain. Thinking length here is a descriptive grouping, and the buckets contain different tasks.</figcaption>
   </figure></div>
   <div class="prose">
-    <p>The teacher can improve decisions within a path the student already visits. On tasks where the student often fills its reasoning window, the local signal can see many tokens inside a failing path. A useful correction might live at an early choice of algorithm, far away from the point where the judge reports a zero. The score-by-length plot is consistent with this explanation. A paired program audit would be needed to identify which algorithm families actually changed.</p>
+    <p>On tasks where the student already thought for fewer than 16K tokens, OPD added about seven score points on average. Where the starting median was at the cap, the point estimate fell by one. Task difficulty and the student’s starting competence vary across these groups. The split shows where we saw a return on teacher feedback and where long, heavily scored trajectories yielded little held-out improvement.</p>
     <p>There is another clue in the audit. Within a group of attempts on the same task, the teacher’s answer-token signal correlated modestly with the judge score, around +0.20 in the stronger-return arm. The aggregate thinking-token signal was about +0.07, with uncertainty including zero. That average can wash out an important early token or reflect how long the model stays in a familiar loop. I would use the answer-side signal as a diagnostic and inspect decision points directly before treating either aggregate as a process score.</p>
   </div>
 </section>
 
 <section id="budget">
   <div class="prose"><h2>What did the extra training buy?</h2>
+    <p>The five-update OPD leg processed about 20 million trainer tokens after SFT. Its paired gain of 1.98 points measures the marginal return from that checkpoint. The first outcome-RL block and the second OPD block processed another 133 million trainer tokens combined and ended at 8.69 Avg@5, close to the original 8.86. Those trainer counts describe the individual legs. The cumulative ledger below also counts teacher scoring passes.</p>
     <p>We carried the improved checkpoint into longer experiments. The <strong>hybrid</strong> kept teacher feedback and added verifiable outcomes. It reached 9.21 Avg@5 and later fell to 8.83. The gain at the earlier checkpoint was small relative to the uncertainty. It looked more encouraging on selected training tasks than on the held-out packet.</p>
     <p>The <strong>alternating</strong> run separated the signals into blocks. After 20 outcome-RL updates, it scored 8.34 Avg@5 and brought forced closes down to 32.3%. Five more OPD updates moved the score to 8.69, with longer thinking and more forced closes again. The paired change was +0.35 with a 95% interval of −0.78 to +1.51. A later RL leg reached 9.18. Alternating let us see the stopping behavior move as we changed objectives, but the best mean remained close to the original five-update checkpoint.</p>
     <p>A separate <strong>supervised anchor</strong> added likelihood training on teacher answers. Early rollouts stopped more often, which was the immediate goal. On held-out one-sample screens, mean score fell from 8.16 at the first readout to 5.78 and 5.24 at later ones. These are separate from the five-sample hybrid results. Teaching from a good answer made some trajectories easier to close; we still needed the policy’s own continuation to produce a good program.</p>
   </div>
-  <div class="wide"><figure id="figure-6">
-    <div class="fig-title">Figure 6 · Selected checkpoints and cumulative training tokens</div>
-    <div class="article-plot"><svg role="img" aria-label="Selected checkpoints. SFT 103.5 million tokens and 6.88, hybrid 280 million and 9.21, alternating RL and OPD 436 million and 9.18, RL from base about 747 million and 13.91." xmlns:xlink="http://www.w3.org/1999/xlink" width="363.570947pt" height="232.352937pt" viewBox="0 0 363.570947 232.352937" xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <div class="wide"><figure id="figure-7">
+    <div class="fig-title">Figure 7 · Direct RL led at nearby token budgets</div>
+    <div class="article-plot"><svg role="img" aria-label="Selected checkpoints. SFT 103.5 million tokens and 6.88, hybrid 280 million and 9.21, alternating RL and OPD 436 million and 9.18, direct RL about 480 million and 13.49, later direct RL about 747 million and 13.91." xmlns:xlink="http://www.w3.org/1999/xlink" width="363.570947pt" height="232.352937pt" viewBox="0 0 363.570947 232.352937" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-11-08T14:53:08.503046</dc:date>
+    <dc:date>2026-11-08T15:44:25.845637</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -758,16 +1013,16 @@ z
      <g id="ledger-line2d_1">
       <path d="M 45.47 190.152
 L 45.47 7.2
-" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#ledger-p384bb10cd0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="ledger-line2d_2">
       <defs>
-       <path id="ledger-me5eae3b2e2" d="M 0 0
+       <path id="ledger-mb1f3a2ea66" d="M 0 0
 L 0 3.5
 " style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </defs>
       <g>
-       <use xlink:href="#ledger-me5eae3b2e2" x="45.47" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#ledger-mb1f3a2ea66" x="45.47" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="ledger-text_1">
@@ -778,11 +1033,11 @@ L 0 3.5
      <g id="ledger-line2d_3">
       <path d="M 120.332112 190.152
 L 120.332112 7.2
-" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#ledger-p384bb10cd0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="ledger-line2d_4">
       <g>
-       <use xlink:href="#ledger-me5eae3b2e2" x="120.332112" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#ledger-mb1f3a2ea66" x="120.332112" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="ledger-text_2">
@@ -793,11 +1048,11 @@ L 120.332112 7.2
      <g id="ledger-line2d_5">
       <path d="M 195.194224 190.152
 L 195.194224 7.2
-" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#ledger-p384bb10cd0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="ledger-line2d_6">
       <g>
-       <use xlink:href="#ledger-me5eae3b2e2" x="195.194224" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#ledger-mb1f3a2ea66" x="195.194224" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="ledger-text_3">
@@ -808,11 +1063,11 @@ L 195.194224 7.2
      <g id="ledger-line2d_7">
       <path d="M 270.056335 190.152
 L 270.056335 7.2
-" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#ledger-p384bb10cd0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="ledger-line2d_8">
       <g>
-       <use xlink:href="#ledger-me5eae3b2e2" x="270.056335" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#ledger-mb1f3a2ea66" x="270.056335" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="ledger-text_4">
@@ -823,11 +1078,11 @@ L 270.056335 7.2
      <g id="ledger-line2d_9">
       <path d="M 344.918447 190.152
 L 344.918447 7.2
-" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#ledger-p384bb10cd0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="ledger-line2d_10">
       <g>
-       <use xlink:href="#ledger-me5eae3b2e2" x="344.918447" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#ledger-mb1f3a2ea66" x="344.918447" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="ledger-text_5">
@@ -835,7 +1090,7 @@ L 344.918447 7.2
      </g>
     </g>
     <g id="ledger-text_6">
-     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="196.13" y="222.270125" transform="rotate(-0 196.13 222.270125)">Training tokens (millions)</text>
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="196.13" y="222.270125" transform="rotate(-0 196.13 222.270125)">Tokens in training ledger (millions)</text>
     </g>
    </g>
    <g id="ledger-matplotlib.axis_2">
@@ -843,16 +1098,16 @@ L 344.918447 7.2
      <g id="ledger-line2d_11">
       <path d="M 45.47 190.152
 L 346.79 190.152
-" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#ledger-p384bb10cd0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="ledger-line2d_12">
       <defs>
-       <path id="ledger-m5435e3c542" d="M 0 0
+       <path id="ledger-m5a31d058dc" d="M 0 0
 L -3.5 0
 " style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </defs>
       <g>
-       <use xlink:href="#ledger-m5435e3c542" x="45.47" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#ledger-m5a31d058dc" x="45.47" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="ledger-text_7">
@@ -863,11 +1118,11 @@ L -3.5 0
      <g id="ledger-line2d_13">
       <path d="M 45.47 147.104471
 L 346.79 147.104471
-" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#ledger-p384bb10cd0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="ledger-line2d_14">
       <g>
-       <use xlink:href="#ledger-m5435e3c542" x="45.47" y="147.104471" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#ledger-m5a31d058dc" x="45.47" y="147.104471" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="ledger-text_8">
@@ -878,11 +1133,11 @@ L 346.79 147.104471
      <g id="ledger-line2d_15">
       <path d="M 45.47 104.056941
 L 346.79 104.056941
-" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#ledger-p384bb10cd0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="ledger-line2d_16">
       <g>
-       <use xlink:href="#ledger-m5435e3c542" x="45.47" y="104.056941" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#ledger-m5a31d058dc" x="45.47" y="104.056941" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="ledger-text_9">
@@ -893,11 +1148,11 @@ L 346.79 104.056941
      <g id="ledger-line2d_17">
       <path d="M 45.47 61.009412
 L 346.79 61.009412
-" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#ledger-p384bb10cd0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="ledger-line2d_18">
       <g>
-       <use xlink:href="#ledger-m5435e3c542" x="45.47" y="61.009412" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#ledger-m5a31d058dc" x="45.47" y="61.009412" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="ledger-text_10">
@@ -908,11 +1163,11 @@ L 346.79 61.009412
      <g id="ledger-line2d_19">
       <path d="M 45.47 17.961882
 L 346.79 17.961882
-" clip-path="url(#ledger-pfb7873d393)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#ledger-p384bb10cd0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="ledger-line2d_20">
       <g>
-       <use xlink:href="#ledger-m5435e3c542" x="45.47" y="17.961882" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+       <use xlink:href="#ledger-m5a31d058dc" x="45.47" y="17.961882" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
       </g>
      </g>
      <g id="ledger-text_11">
@@ -935,7 +1190,7 @@ L 346.79 190.152
    </g>
    <g id="ledger-PathCollection_1">
     <defs>
-     <path id="ledger-ma7f17c9b95" d="M 0 3.872983
+     <path id="ledger-m84746d8a25" d="M 0 3.872983
 C 1.027127 3.872983 2.012324 3.464901 2.738613 2.738613
 C 3.464901 2.012324 3.872983 1.027127 3.872983 0
 C 3.872983 -1.027127 3.464901 -2.012324 2.738613 -2.738613
@@ -947,24 +1202,24 @@ C -2.012324 3.464901 -1.027127 3.872983 0 3.872983
 z
 " style="stroke: var(--gold, #8a611c)"/>
     </defs>
-    <g clip-path="url(#ledger-pfb7873d393)">
-     <use xlink:href="#ledger-ma7f17c9b95" x="84.211143" y="116.110249" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c)"/>
+    <g clip-path="url(#ledger-p384bb10cd0)">
+     <use xlink:href="#ledger-m84746d8a25" x="84.211143" y="116.110249" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c)"/>
     </g>
    </g>
    <g id="ledger-text_13">
     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="92.211143" y="118.110249" transform="rotate(-0 92.211143 118.110249)">SFT start · 6.88</text>
    </g>
    <g id="ledger-PathCollection_2">
-    <g clip-path="url(#ledger-pfb7873d393)">
-     <use xlink:href="#ledger-ma7f17c9b95" x="150.276957" y="91.035064" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c)"/>
+    <g clip-path="url(#ledger-p384bb10cd0)">
+     <use xlink:href="#ledger-m84746d8a25" x="150.276957" y="91.035064" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c)"/>
     </g>
    </g>
    <g id="ledger-text_14">
     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="150.276957" y="78.035064" transform="rotate(-0 150.276957 78.035064)">Hybrid · 9.21</text>
    </g>
    <g id="ledger-PathCollection_3">
-    <g clip-path="url(#ledger-pfb7873d393)">
-     <use xlink:href="#ledger-ma7f17c9b95" x="208.669404" y="91.35792" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c)"/>
+    <g clip-path="url(#ledger-p384bb10cd0)">
+     <use xlink:href="#ledger-m84746d8a25" x="208.669404" y="91.35792" style="fill: var(--gold, #8a611c); stroke: var(--gold, #8a611c)"/>
     </g>
    </g>
    <g id="ledger-text_15">
@@ -972,43 +1227,49 @@ z
    </g>
    <g id="ledger-PathCollection_4">
     <defs>
-     <path id="ledger-m70d15e5726" d="M -0 5.477226
+     <path id="ledger-m86499fc89b" d="M -0 5.477226
 L 5.477226 0
 L 0 -5.477226
 L -5.477226 -0
 z
 " style="stroke: var(--accent, #3a5f8a)"/>
     </defs>
-    <g clip-path="url(#ledger-pfb7873d393)">
-     <use xlink:href="#ledger-m70d15e5726" x="325.079988" y="40.454216" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    <g clip-path="url(#ledger-p384bb10cd0)">
+     <use xlink:href="#ledger-m86499fc89b" x="225.139068" y="44.974207" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
     </g>
    </g>
    <g id="ledger-text_16">
-    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="318.079988" y="27.454216" transform="rotate(-0 318.079988 27.454216)">Direct RL · 13.91</text>
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="225.139068" y="32.974207" transform="rotate(-0 225.139068 32.974207)">Direct RL · 13.49</text>
+   </g>
+   <g id="ledger-PathCollection_5">
+    <g clip-path="url(#ledger-p384bb10cd0)">
+     <use xlink:href="#ledger-m86499fc89b" x="325.079988" y="40.454216" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="ledger-text_17">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="318.079988" y="28.454216" transform="rotate(-0 318.079988 28.454216)">Later direct RL · 13.91</text>
    </g>
   </g>
  </g>
  <defs>
-  <clipPath id="ledger-pfb7873d393">
+  <clipPath id="ledger-p384bb10cd0">
    <rect x="45.47" y="7.2" width="301.32" height="182.952"/>
   </clipPath>
  </defs>
 </svg>
 </div>
-    <figcaption>Selected points from the experiment ledger. The distillation totals include teacher prefill as counted in that ledger. Some earlier RL token totals are estimates. These are separate runs with different training histories, so the plot does not connect them into a common learning curve.</figcaption>
+    <figcaption>Selected checkpoints counted from the base model. The distillation totals include the SFT stage and teacher prefill during OPD. The first RL stage contributes estimated tokens. Each point belongs to its own training path.</figcaption>
   </figure></div>
   <div class="prose">
-    <p>The direct-RL line starts from the same 9B base family and uses a different training path. At a nearby point in the ledger, the alternating run’s 436 million tokens were compared with a direct-RL checkpoint at about 480 million. The alternating run was 4.31 Avg@5 points lower, with a task-paired 95% interval from −6.54 to −2.29. The later direct-RL checkpoint scored 13.91. These totals are useful for deciding what to try next. Different rollout lengths, model serving costs and data curricula make them an imperfect comparison of wall time or accelerator cost.</p>
-    <p>I would separate the comparison with the immediate starting checkpoint from the comparison with an alternative use of the budget. The first tells us that the teacher signal improved this student’s average sample. The second asks whether this path was the best way to spend the training effort from the base. In these runs, direct RL was ahead on the latter comparison. We started setting up two follow-ups: skip SFT and distill from a stronger RL checkpoint into the base 9B before outcome RL, and use Flash feedback on a student already strengthened by RL. The first was still at a short mechanics check; neither had an efficacy result in this snapshot.</p>
+    <p>At the closest pair in the ledger, the alternating run had used 436 million tokens and the direct RL checkpoint about 480 million. The alternating run scored 4.31 Avg@5 points lower, with a task-paired 95% interval from −6.54 to −2.29. The direct RL run later reached 13.91 Avg@5 and 21.65 Best@5. The two routes used different training data and starting checkpoints for their later stages. Tokens put them on a common accounting axis, but a Flash prefill, a 9B decode, and a 9B training pass carry different costs.</p>
+    <p>The choice of baseline depends on where we can start. If the SFT checkpoint is already available, five OPD updates bought a measurable increase in the value of a single draw. If we start at the base, SFT consumes 103.5 million trainer tokens before OPD begins, and direct RL reached a higher score at the nearby budget we measured. The small gain from adding the teacher to an existing policy and the return on the full training route answer different questions.</p>
   </div>
 </section>
 
 <section id="next">
-  <div class="prose"><h2>Measure the algorithm before measuring the climb</h2>
-    <p>The capability I wanted was more specific than a higher score. Can the 9B write a correct implementation of simulated annealing or another advanced search procedure on a task where the starting policy seldom does? And once it has a working implementation, can it use feedback to improve the objective while preserving correctness?</p>
-    <p>I would split the next curriculum into those two skills. First ask for a single correct program, and inspect the actual search loop, objective delta and acceptance rule. Count correct implementations across several samples per held-out task and record which approaches the starting model already produces. Then give both policies the same verified starting program, submission feedback and search budget. Measure the score improvement and correctness of each accepted edit.</p>
-    <p>Our earlier one-shot audit shows why those checks need to be explicit. A clock read that looked like time-budgeted search was being used to seed the random number generator. There was real fixed-iteration local search elsewhere. A useful audit distinguishes fixed iterations, a clock that actually controls search, and a working annealing schedule that sometimes accepts a worse move. They are different capabilities and can earn similar program scores on a single input.</p>
-    <p>That design makes success visible at the point where it matters. Better one-shot construction would show up in the programs themselves. Better hill climbing would show up in a sequence of valid, measured improvements from the same starting point. The November 8 snapshot contains a stronger average OPD sample and a persistent stopping problem. The algorithm-level read is the next test.</p>
+  <div class="prose"><h2>Match the starting policy and both budgets</h2>
+    <p>We began setting up two follow-ups. One distills from an RL-trained 9B teacher into the base student before outcome RL, removing the SFT stage from that route. The other adds Flash feedback to a student already trained with outcome RL. The first was still at a short mechanics check, and both efficacy comparisons were pending at the November 8 cutoff.</p>
+    <p>For the second comparison, both arms can start from the same RL checkpoint. One continues with outcome RL and the other spends part of its budget on teacher scoring. At evaluation, each gets the same total generated-token allowance per task, including unfinished attempts. Plotting the best executable score as that allowance is spent would show whether the higher average sample pays for the longer rollouts.</p>
   </div>
 </section>
 </main><footer><div class="prose"><nav class="contents" aria-label="Series navigation"><a href="../">Part 1 · The Harness Is Part of the Model</a><a href="../part-2/">Part 2 · The Wall, the Compile Tax, and the Oracle</a><a href="../part-3/">Part 3 · Climbing From Zero Without a Teacher</a><a href="../part-4/">Part 4 · Borrowing a Foothold</a><a href="../part-5/">Part 5 · When the Reward Misses the Algorithm</a><a href="../part-6/">Part 6 · Fork, Talk, Submit</a><a href="../part-7/">Part 7 · The Distance to a Teacher</a><a href="../part-8/">Part 8 · One Harness, Six Ways to Work</a><a href="https://github.com/MaCoredroid/collective-intelligence">Repository</a><a href="#top">Back to top ↑</a></nav></div></footer><script>
