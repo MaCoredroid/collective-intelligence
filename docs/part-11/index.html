@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="On FrontierCS, on-policy distillation brought a 9B coding model into its RL-trained teacher’s score range. The next experiment begins with the pretrained base."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-11/"><meta property="og:type" content="article"><meta property="og:site_name" content="Collective Intelligence"><meta property="og:title" content="Can a 9B Model Teach Its Earlier Self?"><meta property="og:description" content="On FrontierCS, on-policy distillation brought a 9B coding model into its RL-trained teacher’s score range. The next experiment begins with the pretrained base."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-11/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Can a 9B Model Teach Its Earlier Self?"><meta name="twitter:description" content="On FrontierCS, on-policy distillation brought a 9B coding model into its RL-trained teacher’s score range. The next experiment begins with the pretrained base."><title>Can a 9B Model Teach Its Earlier Self?</title><style>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="On FrontierCS, ten on-policy distillation updates brought a 9B into its RL-trained teacher’s score range. We compare guided RL and supervised tuning from base."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-11/"><meta property="og:type" content="article"><meta property="og:site_name" content="Collective Intelligence"><meta property="og:title" content="Can a 9B Model Teach Its Earlier Self?"><meta property="og:description" content="On FrontierCS, ten on-policy distillation updates brought a 9B into its RL-trained teacher’s score range. We compare guided RL and supervised tuning from base."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-11/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Can a 9B Model Teach Its Earlier Self?"><meta name="twitter:description" content="On FrontierCS, ten on-policy distillation updates brought a 9B into its RL-trained teacher’s score range. We compare guided RL and supervised tuning from base."><title>Can a 9B Model Teach Its Earlier Self?</title><style>
 :root{--bg:#f7f8f9;--surface:#fff;--surface-2:#edf0f3;--ink:#1a1c1f;--ink-soft:#414b56;--muted:#626d79;--rule:#d5dae0;--accent:#3a5f8a;--gold:#8a611c;--pos:#397052;--neg:#ad5140;--serif:Georgia,"Iowan Old Style",Charter,serif;--sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
 :root[data-theme=dark]{--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}}
@@ -38,50 +38,50 @@
 </style></head>
 <body id="top"><a class="skip" href="#article">Skip to content</a><button type="button" class="theme" aria-label="Toggle color theme">Theme</button><header class="paper-header"><div class="prose">
 <p class="series">Collective Intelligence · Part 11<br><a href="../">Part 1</a> · <a href="../part-2/">Part 2</a> · <a href="../part-3/">Part 3</a> · <a href="../part-4/">Part 4</a> · <a href="../part-5/">Part 5</a> · <a href="../part-6/">Part 6</a> · <a href="../part-7/">Part 7</a> · <a href="../part-8/">Part 8</a> · <a href="../part-9/">Part 9</a> · <a href="../part-10/">Part 10</a></p>
-<h1>Can a 9B Model Teach Its Earlier Self?</h1><p class="subtitle">On-policy distillation on FrontierCS and a new starting point for reinforcement learning</p><p class="deck">After ten on-policy distillation updates, a 9B coding model reached the score range of its teacher, a later checkpoint of the same model trained with reinforcement learning. It also outscored our earlier Flash-distilled student. The teacher, starting checkpoint, and training recipe all changed, including a fix that brought the trainer and rollout server into closer agreement. In a separate experiment, supervised fine-tuning from the pretrained base earned credit on more tasks, while its average score remained below the base model’s point estimate.</p>
+<h1>Can a 9B Model Teach Its Earlier Self?</h1><p class="subtitle">On-policy distillation, teacher-guided RL, and supervised fine-tuning on FrontierCS</p><p class="deck">A 9B coding model reached its RL-trained teacher’s score range on FrontierCS after ten on-policy distillation updates. It also outscored our earlier Flash-distilled student, though the teacher, starting weights, and training recipe all changed. A separate run with 27B hints showed no clear gain once the hints were removed. Supervised fine-tuning from the pretrained 9B widened task coverage after eight epochs, and its average score stayed below the base model’s point estimate.</p>
 <p class="publication">Published <time datetime="2026-11-14">November 14, 2026</time> · Evidence through November 14, 2026</p>
-<nav class="contents" aria-label="Article sections"><a href="#result">The result</a><a href="#setup">Earlier OPD</a><a href="#sync">Trainer and serving sync</a><a href="#where">Where the gain came from</a><a href="#base">SFT from base</a><a href="#next">Next comparison</a></nav></div></header><main id="article"><section id="result">
+<nav class="contents" aria-label="Article sections"><a href="#models">Models used</a><a href="#training">Training overview</a><a href="#setup">Earlier Flash OPD</a><a href="#self-opd">9B-to-9B OPD</a><a href="#guided-rl">Teacher-guided RL</a><a href="#base">SFT from base</a><a href="#conclusion">What we learned</a></nav></div></header><main id="article"><section id="models">
   <div class="prose">
-    <h2>Ten updates brought the student into the teacher’s score range</h2>
-    <p>In Part 9, Qwen Flash improved the average attempt of a 9B coding model after supervised fine-tuning. The gain was modest, and the student hit its thinking cap more often. This time we went back to the released 9B checkpoint, skipped our supervised stage, and used a later version of that same 9B as the teacher. The teacher had already been trained with reinforcement learning on verified program outcomes.</p>
+    <h2>Models used</h2>
+    <ul>
+      <li><strong>Qwen3.5-9B-Base.</strong> Qwen’s dense, 9-billion-parameter model before instruction and chat post-training. The full supervised fine-tuning runs used these weights with the released post-trained model’s tokenizer and chat template. <a href="https://huggingface.co/Qwen/Qwen3.5-9B-Base">Base model card</a></li>
+      <li><strong>Qwen3.5-9B.</strong> Qwen’s post-trained release of the same 9B architecture. It supplied the starting weights for the on-policy distillation student and for the reinforcement learning run that produced its 9B teacher. <a href="https://huggingface.co/Qwen/Qwen3.5-9B">Post-trained model card</a></li>
+      <li><strong>Flash · Qwen3.8-Flash-Next-FP8.</strong> The larger teacher used in the earlier distillation experiments and for supervised demonstrations. Qwen reports 125B parameters in its mixture-of-experts language model, about 6B active per token, plus 51B n-gram embedding and 4B multi-token prediction parameters. <a href="https://huggingface.co/Qwen/Qwen3.8-Flash-Next-FP8#model-overview">Flash model card</a></li>
+      <li><strong>Qwen3.8-27B.</strong> A dense 27-billion-parameter model. It supplied demonstrations for supervised training and programs for the guided RL pilot. The pilot used the FP8 version. <a href="https://huggingface.co/Qwen/Qwen3.8-27B-FP8#model-overview">27B model card</a></li>
+    </ul>
   </div>
-  <div class="wide"><figure id="figure-1">
-    <div class="fig-title">FrontierCS scores after changing the distillation route</div>
-    <div class="table-scroll" tabindex="0" role="region" aria-label="FrontierCS scores from five attempts per task"><table>
-      <thead><tr><th scope="col">Policy</th><th scope="col">Avg@5</th><th scope="col">Best@5</th><th scope="col">Tasks with credit</th></tr></thead>
-      <tbody>
-        <tr><th scope="row">Earlier Flash SFT start</th><td>6.88</td><td>20.20</td><td>86 / 172</td></tr>
-        <tr><th scope="row">Earlier Flash OPD after SFT</th><td>8.86</td><td>20.82</td><td>86 / 172</td></tr>
-        <tr><th scope="row">RL-trained 9B teacher</th><td>13.91</td><td>21.65</td><td>104 / 172</td></tr>
-        <tr><th scope="row">Released 9B → OPD with the RL-trained 9B</th><td><strong>14.03</strong></td><td><strong>22.71</strong></td><td>105 / 172</td></tr>
-      </tbody>
-    </table></div>
-    <figcaption>Five attempts on each of 172 tasks. Avg@5 averages the scores of all attempts per task. Best@5 averages the highest score per task. Coverage means positive benchmark credit on at least one attempt. Each score is on a 0–100 scale.</figcaption>
-  </figure></div>
+</section>
+
+<section id="training">
   <div class="prose">
-    <p>The new student was 0.12 Avg@5 points ahead of its teacher, with a task-paired 95% interval of −1.72 to +2.00. Its first attempt alone had scored 15.39. The four added attempts averaged 13.69, bringing the result back toward the teacher’s score. Best@5 was 1.06 points higher and coverage differed by one task. I read this as reaching the teacher’s range on this benchmark.</p>
-    <p>For scale, the released 9B had scored 6.26 Avg@5 in an earlier evaluation on the same tasks. The launcher, deadline and judging route differed, so that figure gives historical context for the starting policy. The teacher comparison uses the matched evaluation path.</p>
-    <p>Against the earlier Flash-distilled model, the new student gained 5.17 Avg@5 points, with a paired interval of +2.91 to +7.69. That compares two complete training routes. The teacher, student initialization, parameter updates and number of training steps all changed.</p>
-    <p class="related"><a href="https://macoredroid.github.io/collective-intelligence/part-9/">Part 9 · What Did Distillation Buy?</a></p>
+    <h2>What we trained</h2>
+    <p>We wanted to know what each source of teacher feedback could actually buy on FrontierCS. An execution judge graded the programs. The training recipes differed in when the teacher contributed and what the 9B learned from.</p>
+    <ol>
+      <li><a href="#setup">Flash SFT → Flash OPD</a> trained on fixed teacher demonstrations, then used Flash to score the student’s own attempts. Average score improved after OPD, and best-of-five barely moved.</li>
+      <li><a href="#self-opd">OPD from the released 9B with an RL-trained 9B teacher</a> used the student’s own attempts from the start. After ten updates, the student scored in its teacher’s range.</li>
+      <li><a href="#guided-rl">Teacher-guided RL</a> trained the RL 9B on hard problems with hints drawn from 27B solutions. The pilot showed no clear gain when tested without hints.</li>
+      <li><a href="#base">Full SFT from the pretrained 9B</a> used graded teacher demonstrations. More epochs recovered score and widened coverage. We then tried a refreshed demonstration mix.</li>
+    </ol>
   </div>
 </section>
 
 <section id="setup">
   <div class="prose">
-    <h2>What changed from the Flash runs</h2>
-    <p>The distinction between two Qwen checkpoints matters here. The OPD student started from <strong>Qwen3.5-9B</strong>, the vendor’s post-trained release. The frozen teacher was that release after our outcome-based RL. Later, for supervised fine-tuning, we started from <strong>Qwen3.5-9B-Base</strong>, the pretrained weights before the vendor’s post-training.</p>
-    <p>During OPD the student generated its own reasoning and programs. The frozen teacher scored the student’s sampled tokens in context. This time the teacher and student shared a checkpoint lineage. The teacher also had experience with the same kind of executable feedback we used to measure the student. We wanted to see what the student could recover from that teacher’s feedback on its own rollouts.</p>
-    <p>In the earlier Flash runs, matching the teacher’s temperature to the SFT student’s entropy recovered much of an early score collapse. The stronger discounted return lifted Avg@5 from 6.88 to 8.86, while coverage stayed at 86 tasks and forced closes rose from 24% to 57%. Alternating outcome RL and OPD moved the stopping rate back and forth, with little additional score gain.</p>
-    <p>The new run retained a teacher scoring temperature of 0.8. The earlier Flash run updated the full model for five steps at a learning rate of 10<sup>−6</sup>. The new run updated rank-64 adapters for ten steps at 4 × 10<sup>−5</sup> and got credit on 105 tasks. These differences matter when interpreting the 5.17-point gain.</p>
-    <p>We prepared a Flash control from the same released student with the same adapter recipe and task draws, and paused it before training. Running it would help isolate the effect of the teacher. To compare their cost, we would also count the teacher’s prior training separately from the cost of scoring student rollouts.</p>
+    <h2>Flash distillation after supervised fine-tuning</h2>
+    <p>We started from Qwen’s released, post-trained 9B and ran 207 SFT updates over three epochs on 1,110 Flash demonstrations from 268 tasks. We filtered incomplete answer code and used the student’s starting loss to screen out some hard-to-imitate answers. We then ran five full-weight on-policy distillation (OPD) updates at a learning rate of 10<sup>−6</sup>. The 9B generated its own reasoning and programs, and Flash scored the sampled tokens in context.</p>
+    <p>We set Flash’s scoring temperature to 0.8 after measuring the starting student’s entropy. That recovered much of the early score collapse. Giving later teacher scores more weight in earlier token updates raised Avg@5 from 6.88 to 8.86. Best@5 moved from 20.20 to 20.82, coverage stayed at 86 of 172 tasks, and forced thinking closes rose from 24% to 57%. Alternating outcome RL and OPD moved the stopping rate back and forth with little additional score gain.</p>
+    <p class="related"><a href="https://macoredroid.github.io/collective-intelligence/part-9/">Part 9 · What Did Distillation Buy?</a></p>
   </div>
 </section>
 
-<section id="sync">
+<section id="self-opd">
   <div class="prose">
-    <h2>Training and serving had to score the same policy</h2>
-    <p>The new run used rank-64 LoRA. The rollout server generated with the adapter merged into the base weights and rounded to BF16. The trainer added the adapter contribution in higher precision during the forward pass. Loading the same adapter checkpoint could therefore give different next-token probabilities on the same prefix. That discrepancy matters for on-policy training because the update uses probabilities for the tokens the deployed student just sampled.</p>
-    <p>We made the trainer’s forward pass use the rounded, merged weights that serving used, while retaining gradients for the adapter. We kept the pristine starting weights for the reference KL. To verify a reload, we scored the same sampled tokens right before and after the server loaded the new student and checked both against the trainer.</p>
+    <h2>On-policy distillation from a later 9B checkpoint</h2>
+    <p>The student started from Qwen’s released, post-trained Qwen3.5-9B. The teacher started from the same release and had completed 124 outcome-based RL updates on judged coding attempts across its training runs. We froze that teacher and skipped the supervised stage for the student.</p>
+    <p>We sampled fresh one-shot coding attempts from the student and used the teacher to score the sampled reasoning and code tokens. Each update targeted 64 student rollouts. The run kept the teacher scoring temperature at 0.8 and used rank-64 LoRA adapters. The final recipe used ten updates at 4 × 10<sup>−5</sup>. The execution judge graded the final programs.</p>
+    <h3 id="sync">What changed between the first and final LoRA runs</h3>
+    <p>The rollout server generated with the adapter merged into the model weights and rounded to BF16. The trainer added the adapter contribution in higher precision during its forward pass. The trainer and server could therefore assign different probabilities to the same token, even with the same adapter loaded. Those probabilities matter because the update uses tokens generated by the deployed student.</p>
+    <p>We changed the trainer’s forward pass to use the rounded, merged weights while retaining gradients for the adapter. We kept the original starting weights for the reference KL. To check a reload, we scored the same sampled tokens immediately before and after the rollout server loaded the new weights and compared both against the trainer.</p>
   </div>
   <div class="wide"><figure id="figure-sync">
     <div class="fig-title">Reloading reduced the discrepancy after the forward-pass fix</div>
@@ -96,15 +96,28 @@
     <figcaption>Smaller log-probability gaps mean closer agreement between trainer and server on the sampled tokens. The full fine-tune column gives the scale of the residual discrepancy in the previous setup.</figcaption>
   </figure></div>
   <div class="prose">
-    <p>The first LoRA run had also barely moved from its starting policy at a learning rate of 10<sup>−5</sup>. We increased it to 4 × 10<sup>−5</sup> and let the rerun train past the earlier stopping point. The KL to the starting policy at the second batch rose from 8.4 × 10<sup>−5</sup> to 2.8 × 10<sup>−3</sup>. The probability check shows that the sync fix addressed the serving mismatch. The final score reflects the combined recipe changes.</p>
-    <p>We scored the saved checkpoint on all 172 tasks before drawing conclusions. A follow-up RL leg completed two updates and was stopped before evaluation. The 14.03 result comes from the checkpoint exported immediately after OPD.</p>
+    <p>The first LoRA run also barely moved from its starting policy at a learning rate of 10<sup>−5</sup>. We increased it to 4 × 10<sup>−5</sup> and ran past the earlier stopping point. The KL from the starting policy at the second batch rose from 8.4 × 10<sup>−5</sup> to 2.8 × 10<sup>−3</sup>. The probability probe verified closer agreement after the sync fix. The benchmark result reflects the revised recipe as a whole.</p>
+    <h3 id="result">Evaluation after ten OPD updates</h3>
+    <p>We evaluated the step-10 OPD checkpoint on 172 FrontierCS tasks, with five attempts per task. The result comes from the checkpoint exported immediately after OPD, before the two subsequent outcome-RL updates.</p>
   </div>
-</section>
-
-<section id="where">
+  <div class="wide"><figure id="figure-1">
+    <div class="fig-title">FrontierCS scores after changing the distillation route</div>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="FrontierCS scores from five attempts per task"><table>
+      <thead><tr><th scope="col">Policy</th><th scope="col">Avg@5</th><th scope="col">Best@5</th><th scope="col">Tasks with credit</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Flash SFT, epoch 3</th><td>6.88</td><td>20.20</td><td>86 / 172</td></tr>
+        <tr><th scope="row">Flash OPD from Flash SFT, step 5</th><td>8.86</td><td>20.82</td><td>86 / 172</td></tr>
+        <tr><th scope="row">RL-trained 9B teacher</th><td>13.91</td><td>21.65</td><td>104 / 172</td></tr>
+        <tr><th scope="row">9B-to-9B OPD, step 10</th><td><strong>14.03</strong></td><td><strong>22.71</strong></td><td>105 / 172</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Five attempts on each of 172 tasks. Avg@5 averages the scores of all attempts per task. Best@5 averages the highest score per task. Coverage means positive benchmark credit on at least one attempt. Each score is on a 0–100 scale.</figcaption>
+  </figure></div>
   <div class="prose">
-    <h2>Where the score gain came from</h2>
-    <p>We used the first two attempts from the released 9B to group tasks by how much credit it earned. We then used its other three attempts to estimate the baseline within each group. Holding back those attempts matters. Even with no training, a model will sometimes score on its third attempt after missing twice.</p>
+    <p>The student scored 14.03 Avg@5 and its teacher 13.91. The task-paired difference was +0.12 points, with a 95% interval of −1.72 to +2.00. The first attempt alone scored 15.39, and the other four averaged 13.69. Best@5 was 1.06 points higher and coverage differed by one task. The five-attempt evaluation puts the student in the teacher’s score range.</p>
+    <p>The new student scored 5.17 Avg@5 points above the earlier Flash-distilled student, with a paired interval of +2.91 to +7.69. The teacher, student initialization, trainable parameters, learning rate, and number of updates all changed. We prepared a comparison using Flash with the same released student, adapter recipe, and task draws. That comparison was still pending at the November 14 evidence cutoff. A full training-cost comparison would also count the RL used to produce the 9B teacher.</p>
+    <h3 id="where">Where the score gain came from</h3>
+    <p>Qwen’s released 9B scored 6.26 Avg@5 in an earlier evaluation on the same tasks with a different launcher, deadline, and judging route. We used its first two attempts to group tasks by score and reserved its other three attempts to estimate the baseline within each group. Even a model that missed both grouping attempts can score on its next try.</p>
   </div>
   <div class="wide"><figure id="figure-2">
     <div class="fig-title">The largest gains came from tasks where the released 9B already scored</div>
@@ -417,17 +430,28 @@ z
     <figcaption>Task-paired mean score changes relative to the released 9B’s three reserved attempts. The first two attempts assign groups. Positive-score tasks split at their median score of 10.21. The released 9B was evaluated with an older launcher and judging route, so the deltas can include a protocol offset.</figcaption>
   </figure></div>
   <div class="prose">
-    <p>The largest gains came from 27 tasks, about one sixth of the packet. They contributed just over half the measured improvement. The 117 tasks that scored zero on the first two attempts also improved. The student scored at least once on 52 of them and the teacher on 54. The released 9B itself scored on 23 of them in its remaining three tries. Those counts describe a low-scoring group and how often each policy found a scoring program.</p>
-    <p>We inspected the best programs from 14 deliberately selected tasks. Several gains over the earlier Flash run came from producing code that compiled or ran within the time limit. Against the RL teacher the differences went both ways. On one task the student’s alternative graph construction scored higher. On another an unbounded query strategy failed an adversarial test that the teacher’s bounded version handled. This small audit shows what a changed score can represent.</p>
+    <p>The 27 tasks where the released 9B scored highest in its first two attempts supplied just over half the measured gain. On the 117 tasks that scored zero on both grouping attempts, the distilled student earned credit on 52, the teacher on 54, and the released 9B on 23 in its three reserved attempts. These counts describe performance on a low-scoring group with different numbers of attempts for the compared policies.</p>
+    <p>We inspected the best programs on 14 deliberately selected tasks. Several gains over the earlier Flash run came from compiling or staying within the time limit. Against the RL teacher, the cases went both ways. The student’s alternative graph construction scored higher on one task. On another, its unbounded query strategy failed an adversarial test that the teacher’s bounded version handled.</p>
+  </div>
+</section>
+
+<section id="guided-rl">
+  <div class="prose">
+    <h2>Teacher-guided RL with 27B hints</h2>
+    <p>We ran a separate 20-update pilot from the same outcome-trained 9B that served as the OPD teacher. Inspired by the Monotone Frontier Curriculum, we used graded Qwen3.8-27B solutions to supply a sketch, partial code, or a full program on hard training problems. The 9B generated its own answer and received the execution score. The curriculum included attempts without a hint and reduced the amount of help when enough attempts succeeded. <a href="https://arxiv.org/abs/2609.13997">Monotone Frontier Curriculum paper</a></p>
+    <p>At step 20, with hints removed, the 9B scored 13.02 on a one-attempt FrontierCS evaluation versus 14.39 for its starting checkpoint. The paired difference was −1.37 points with a 95% interval of −3.99 to +1.30. A trace audit found no use of the 27B’s core idea in 720 unhinted training attempts. Most hinted wins depended on access to the full program, which the student often copied. We stopped the pilot after 20 updates. A matched plain-RL control was left unrun.</p>
+    <p class="related"><a href="https://macoredroid.github.io/collective-intelligence/part-10/#handoff">Part 10 · Flash-to-9B handoffs with a frozen policy</a></p>
   </div>
 </section>
 
 <section id="base">
   <div class="prose">
-    <h2>The base model had a higher floor than we expected</h2>
-    <p>OPD showed that we could recover an existing 9B teacher’s performance. For the next training route we wanted to know whether demonstrations from stronger models could give outcome RL a better policy to start from. Earlier offline SFT on the released, post-trained weights had sometimes regressed. Moving the same kind of supervision before post-training gave us a way to test a different initialization. We first measured the pretrained model on its own, then measured what SFT added.</p>
-    <p>We expected the raw base to struggle in the harness. With the post-trained tokenizer and the same evaluation path used for the SFT checkpoints, the base weights already averaged 7.99 across five attempts per task and closed thinking naturally on about 89% of attempts. That measured floor changed the test. SFT had to improve a functioning coding policy.</p>
-    <p>The first dataset contained 1,905 graded teacher traces and about 105 million retained tokens before repetition. The mix included 27B, Flash and GLM demonstrations. We fine-tuned the full 9B model and gave thinking and answer tokens equal loss weight. After three passes the average score was down 2.62 points versus base, with a paired interval of −4.88 to −0.56.</p>
+    <h2>Full supervised fine-tuning from the pretrained base</h2>
+    <p>We wanted to know whether demonstrations from stronger models could give outcome RL a better starting policy. Earlier offline SFT on the released, post-trained weights had sometimes regressed. This run put the demonstrations at the start of our post-training pipeline, using Qwen3.5-9B-Base weights with the released post-trained tokenizer and chat template.</p>
+    <h3>Data and training</h3>
+    <p>We assembled 1,905 graded one-shot demonstrations on 274 training problems, with about 105 million retained assistant tokens per pass. The mix included 690 Qwen3.8-27B traces, 1,119 Flash traces, and 96 archived GLM traces. We kept FrontierCS evaluation tasks out of the training mix. We updated all model weights and applied equal loss weight to reasoning and answer tokens. The main evaluation used the epoch-three checkpoint after 357 updates and a continuation on the same data through epoch eight.</p>
+    <h3>Evaluation against the raw base</h3>
+    <p>We evaluated the raw base weights with the same tokenizer, template, and evaluation path. The base averaged 7.99 and closed thinking naturally on about 89% of attempts. After three passes over the demonstrations, Avg@5 was 2.62 points lower, with a task-paired 95% interval of −4.88 to −0.56.</p>
   </div>
   <div class="wide"><figure id="figure-3">
     <div class="fig-title">Repeating the original SFT mix recovered score and widened coverage</div>
@@ -442,17 +466,20 @@ z
     <figcaption>Same 172-task, five-attempt evaluation. Fixed-denominator scores include one unavailable attempt at zero for base and epoch 3 and two for epoch 8. Omitting unavailable grades puts epoch 8 at 6.71.</figcaption>
   </figure></div>
   <div class="prose">
-    <p>After eight passes the model earned credit on 15 more tasks than base and had fewer compile errors, about 24% versus 37%. Its average score remained 1.30 points below base, with a 95% interval of −3.45 to +0.71. More tasks had at least one scoring answer, while the expected score from one draw had yet to improve. This is the same distinction that made the best-of-five readout necessary for OPD.</p>
-    <p>At epoch three, a separate one-attempt audit found that compilation failures on tasks the base answered successfully accounted for much of the score loss. The SFT policy also ended reasoning naturally less often, and even the subset that ended naturally scored lower. The one-attempt screens rose from 0.72 at epoch one to 5.05 at epoch three, dipped to 3.44 at epoch five, and reached 7.04 at epoch eight. Natural termination rose substantially across the early epochs. We treated undertraining as a working explanation for that recovery and kept measuring compilation separately from stopping.</p>
+    <p>After eight passes, SFT earned credit on 15 more tasks than the base and reduced compile errors from about 37% to 24%. Its average score remained 1.30 points below base, with a 95% interval of −3.45 to +0.71. The model produced a scoring answer on more tasks across five tries. The expected score of a single attempt had yet to improve over the base.</p>
+    <p>A separate one-attempt audit found that compilation failures on tasks the base answered successfully accounted for much of the epoch-three score loss. The SFT policy also ended reasoning naturally less often. The one-attempt screens moved from 0.72 at epoch one to 5.05 at epoch three, dipped to 3.44 at epoch five, and reached 7.04 at epoch eight. We treated undertraining as a working explanation for the recovery and tracked compilation separately from stopping.</p>
+    <h3 id="next">What changed in the next SFT round</h3>
+    <p>We chose Flash for the new batch after it scored higher on 132 shared FrontierSmith problems and yielded about 1.6 times as many retained tokens per GPU-hour under the settings we tested. We added 1,577 new Flash traces after screening for incomplete code and dropped 82 older 27B traces whose reasoning had been forcibly closed. The refreshed mix contained 3,400 traces and about 147.5 million retained tokens per pass.</p>
+    <p>We resumed from epoch seven of the original mix and ran 426 updates over two passes. The one-attempt score fell to 2.54 after the first pass and recovered to 7.27 after the second, close to 7.04 after epoch eight of the original mix. The paired interval for that final difference was −3.05 to +3.48.</p>
+    <p>The data and learning-rate schedule changed together, so the first-pass dip had more than one possible cause. A third round started from the refreshed mix’s second-pass checkpoint and trained for four epochs on the 1,577 new Flash traces alone. The refreshed mix’s five-attempt results and the third round’s evaluation were still pending at the November 14 evidence cutoff.</p>
   </div>
 </section>
 
-<section id="next">
+<section id="conclusion">
   <div class="prose">
-    <h2>Can SFT give RL a better starting point?</h2>
-    <p>In the next round, we resumed from epoch seven and trained on a refreshed mix with 3,400 traces and about 147.5 million retained tokens. The one-attempt score fell to 2.54 after the first pass and recovered to 7.27 at the end of the second. That was close to 7.04 for epoch eight of the original mix, with a paired interval of −3.05 to +3.48 for the difference.</p>
-    <p>The dip came halfway through a restarted learning-rate schedule and after the first pass over new demonstrations. Either could matter. This round changed the data and the schedule together. The next round continues from the second-pass checkpoint and repeats just the 1,577 new Flash traces for four epochs. We’ll record the intermediate scores and judge the recipe at the end of the schedule, with five attempts per task for a checkpoint that passes its screen. The refreshed mix’s five-attempt results and the new-only round were still pending at the November 14 evidence cutoff.</p>
-    <p>The practical test comes after SFT. Start two outcome-RL runs from the pretrained 9B and the selected SFT checkpoint, give them the same tasks and RL budget, and compare how quickly and how far each improves. Count teacher generation and SFT in the full training budget. Compare held-out score, coverage, compilation and natural termination at each checkpoint. The experiment will show whether the additional coverage after supervised training gives RL more places to start improving, and whether those gains repay the cost of collecting and training on the traces.</p>
+    <h2>What we learned</h2>
+    <p>Ten OPD updates recovered the score range of the RL-trained 9B. An otherwise matched Flash run would test how much of the result came from using that teacher. The guided RL pilot showed that the 9B could use hints during training, with no clear gain when it had to solve the task on its own.</p>
+    <p>Full SFT from the pretrained base widened coverage by epoch eight, and its average score remained below the base point estimate. The next test is to run outcome RL from the raw base and from a selected SFT checkpoint with the same tasks and RL budget. We can then compare held-out score, coverage, compilation, and stopping, and count teacher generation and SFT in the total training cost.</p>
   </div>
 </section>
 </main><footer><div class="prose"><nav class="contents" aria-label="Series navigation"><a href="../">Part 1 · The Harness Is Part of the Model</a><a href="../part-2/">Part 2 · The Wall, the Compile Tax, and the Oracle</a><a href="../part-3/">Part 3 · Climbing From Zero Without a Teacher</a><a href="../part-4/">Part 4 · Borrowing a Foothold</a><a href="../part-5/">Part 5 · When the Reward Misses the Algorithm</a><a href="../part-6/">Part 6 · Fork, Talk, Submit</a><a href="../part-7/">Part 7 · The Distance to a Teacher</a><a href="../part-8/">Part 8 · One Harness, Six Ways to Work</a><a href="../part-9/">Part 9 · What Did Distillation Buy?</a><a href="../part-10/">Part 10 · Where a 9B Agent Swarm Gets Stuck</a><a href="https://github.com/MaCoredroid/collective-intelligence">Repository</a><a href="#top">Back to top ↑</a></nav></div></footer><script>
