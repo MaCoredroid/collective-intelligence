@@ -47,6 +47,7 @@
       <li><strong>Pretrained 9B base · Qwen3.5-9B-Base.</strong> Qwen’s dense, 9-billion-parameter language model before instruction and chat post-training. We used these weights, with the post-trained release’s tokenizer files, for our full supervised fine-tuning (SFT) run. <a href="https://huggingface.co/Qwen/Qwen3.5-9B-Base">Base model card</a></li>
       <li><strong>Qwen’s post-trained 9B · Qwen3.5-9B.</strong> The released chat and tool-use version of the same 9B architecture. It was the starting point for our direct reinforcement learning (RL) and for the initial and targeted SFT runs. <a href="https://huggingface.co/Qwen/Qwen3.5-9B">Post-trained model card</a></li>
       <li><strong>Flash · Qwen3.8-Flash-Next-FP8.</strong> The teacher that generated the demonstrations. Qwen reports 125B parameters in the mixture-of-experts language model, about 6B active per token, plus a 51B n-gram embedding table and a 4B multi-token prediction module. FP8 refers to the weight format. <a href="https://huggingface.co/Qwen/Qwen3.8-Flash-Next-FP8#model-overview">Flash model card</a></li>
+      <li><strong>27B critic · Qwen3.8-27B-FP8.</strong> Qwen’s dense, 27-billion-parameter model in FP8. It gave text feedback on the 9B’s candidate programs in the critique experiment. <a href="https://huggingface.co/Qwen/Qwen3.8-27B-FP8#model-overview">27B model card</a></li>
     </ul>
   </div>
 </section>
@@ -760,7 +761,7 @@ L 417.56375 190.152
     </details>
     <h3 id="feedback">Could teacher feedback close the gap?</h3>
     <p>We gave the frozen step-66 team RL checkpoint Flash’s progress as extra context and asked whether its token scores could identify promising parts of its own build traces. The best of six ranking checks gave an AUC of 0.573. The top-ranked spans pointed toward Flash’s approach about as often as randomly selected spans in a blind read. We held the training pilot.</p>
-    <p>On 24 tasks, we used Qwen3.8-27B FP8 to critique a candidate from the same step-66 checkpoint, with no code in the critique. The checkpoint then revised its candidate. Critique prompted more changes of approach but showed no clear score advantage over a generic request to improve or a sham critique. All three arms scored below their starting candidates on average. Rewrites were especially prone to losing score.</p>
+    <p>On 24 tasks, we used Qwen3.8-27B-FP8 to critique a candidate from the same step-66 checkpoint, with no code in the critique. The checkpoint then revised its candidate. Critique prompted more changes of approach but showed no clear score advantage over a generic request to improve or a sham critique. All three arms scored below their starting candidates on average. Rewrites were especially prone to losing score.</p>
   </div>
 </section>
 
