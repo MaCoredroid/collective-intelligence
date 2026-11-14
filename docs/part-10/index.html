@@ -40,7 +40,25 @@
 <p class="series">Collective Intelligence · Part 10<br><a href="../">Part 1</a> · <a href="../part-2/">Part 2</a> · <a href="../part-3/">Part 3</a> · <a href="../part-4/">Part 4</a> · <a href="../part-5/">Part 5</a> · <a href="../part-6/">Part 6</a> · <a href="../part-7/">Part 7</a> · <a href="../part-8/">Part 8</a> · <a href="../part-9/">Part 9</a> · <a href="../part-11/">Part 11</a></p>
 <h1>Where a 9B Agent Swarm Gets Stuck</h1><p class="subtitle">Teaching coding agents to build, test, and choose a solution</p><p class="deck">We tested four ways to train a 9B agent swarm on FrontierCS. The first supervised checkpoint faced different rules at evaluation and submitted nothing in 197 rollouts. The direct reinforcement learning checkpoint submitted reliably and gave us a reference. After regenerating Flash demonstrations in the 9B harness, we recovered most submissions in a small test by training on tools and messages. Full fine-tuning from the pretrained base improved across checkpoints and still trailed the swarm trained with reinforcement learning. Handoff experiments located the largest score gap around building and measuring competing programs.</p>
 <p class="publication">Published <time datetime="2026-11-14">November 14, 2026</time> · Evidence through November 14, 2026</p>
-<nav class="contents" aria-label="Article sections"><a href="#training">Training overview</a><a href="#failure">Initial SFT, then RL</a><a href="#rl">Direct team RL</a><a href="#next">SFT on regenerated traces</a><a href="#base-sft">SFT from base</a><a href="#handoff">Handoff experiments</a><a href="#conclusion">What we learned</a></nav></div></header><main id="article"><section id="training">
+<nav class="contents" aria-label="Article sections"><a href="#models">Models and checkpoints</a><a href="#training">Training overview</a><a href="#failure">Initial SFT, then RL</a><a href="#rl">Direct team RL</a><a href="#next">SFT on regenerated traces</a><a href="#base-sft">SFT from base</a><a href="#handoff">Handoff experiments</a><a href="#conclusion">What we learned</a></nav></div></header><main id="article"><section id="models">
+  <div class="prose">
+    <h2>Models and checkpoints</h2>
+    <h3>Qwen releases</h3>
+    <ul>
+      <li><strong>Pretrained 9B base · Qwen3.5-9B-Base.</strong> Qwen’s dense, 9-billion-parameter language model before instruction and chat post-training. We used these weights, with the post-trained release’s tokenizer files, for our full supervised fine-tuning (SFT) run. <a href="https://huggingface.co/Qwen/Qwen3.5-9B-Base">Base model card</a></li>
+      <li><strong>Qwen’s post-trained 9B · Qwen3.5-9B.</strong> The released chat and tool-use version of the same 9B architecture. It was the starting point for our direct reinforcement learning (RL) and for the initial and targeted SFT runs. <a href="https://huggingface.co/Qwen/Qwen3.5-9B">Post-trained model card</a></li>
+      <li><strong>Flash · Qwen3.8-Flash-Next-FP8.</strong> The teacher that generated the demonstrations. Qwen reports 125B parameters in the mixture-of-experts language model, about 6B active per token, plus a 51B n-gram embedding table and a 4B multi-token prediction module. FP8 refers to the weight format. <a href="https://huggingface.co/Qwen/Qwen3.8-Flash-Next-FP8#model-overview">Flash model card</a></li>
+    </ul>
+    <h3>Checkpoints from our runs</h3>
+    <ul>
+      <li><strong>Early RL reference.</strong> Qwen’s post-trained 9B after five updates in our team-RL pilot. We used it to start the continuation run and as the reference on the small SFT comparison panel.</li>
+      <li><strong>Outcome-trained 9B.</strong> Our later team-RL checkpoint, saved at step 66 of the continuation run. It is the 9B reference in the larger evaluations and the model that takes over in the Flash handoffs.</li>
+      <li><strong>SFT checkpoints.</strong> The initial Flash SFT checkpoint and the two 40-update checkpoints on regenerated traces started from Qwen’s post-trained 9B. The epoch-three and epoch-eight checkpoints came from the separate full fine-tune of the pretrained base.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="training">
   <div class="prose">
     <h2>What we trained</h2>
     <p>Can an agent swarm learn to work together on FrontierCS? Here, every agent in the swarm runs the same 9B coding model. Each agent can <strong>fork</strong> a teammate into its own workspace, <strong>message</strong> peers with scores and commit references, and <strong>submit</strong> one Git commit for the whole team. The shared goal is to build working candidates, compare them on shared inputs, and choose one for grading.</p>
@@ -57,7 +75,7 @@
 <section id="failure">
   <div class="prose">
     <h2>Initial training with SFT, then RL</h2>
-    <p>We planned to start with supervised fine-tuning (SFT) on complete Flash team demonstrations, then use reinforcement learning (RL) to improve outcomes. The training set contained 631 episodes, split into 2,322 agent histories with 158 million assistant tokens and 245 million tokens including context. We held out the probe panel and the FrontierCS evaluation set.</p>
+    <p>We started with supervised fine-tuning on complete Flash team demonstrations, then used reinforcement learning to improve outcomes. The training set contained 631 episodes, including traces from our Flash RL run, split into 2,322 agent histories with 158 million assistant tokens and 245 million tokens including context. We held out the probe panel and the FrontierCS evaluation set.</p>
     <h3 id="harness">The training and evaluation harnesses differed</h3>
     <p>The original Flash traces used an older harness. Agents worked against a wall clock and followed a different submission routine. The 9B evaluation gave each agent a budget of 100,000 generated tokens, sent merge notices, and used a two-step submission. The first <code>submit_final</code> call shows the team’s state. The second selects the commit and ends the episode when called with <code>confirm: true</code>.</p>
   </div>
@@ -86,7 +104,7 @@
 <section id="rl">
   <div class="prose">
     <h2>Direct reinforcement learning on team outcomes</h2>
-    <p>This experiment began before the first SFT run. The 9B started directly in the team harness, where we could grade the submitted program for correctness and objective value. The first pilot used the verified team outcome and a term for which candidate the team selected. We also scored other eligible commits to see whether the team had found a better option.</p>
+    <p>This experiment began before the first SFT run. We started from Qwen’s post-trained 9B in the team harness, where we could grade the submitted program for correctness and objective value. The first pilot used the verified team outcome and a term for which candidate the team selected. We also scored other eligible commits to see whether the team had found a better option.</p>
     <h3>Early checkpoint evaluation</h3>
     <p>The pilot drew eight team episodes per training task. After five updates, a blind review of 24 matched training pairs found more distinct approaches in 14, less distinct approaches in three, and seven ties. We saw no clear difference on the fixed probe. The later teams sent more messages and spent more tokens in a matched training slice. Its reward change was +0.016, with an interval from −0.07 to +0.10.</p>
   </div>
@@ -388,7 +406,7 @@ L 345.024688 161.446594
       <p>Ten submitted programs scored zero. Nine submitters knew about the better commit and only one episode showed explicit agreement. Checks on the supplied examples sometimes gave the same result for candidates whose hidden scores were quite different. We used language-model readers to annotate decisions such as same-input testing and use of peer evidence, then checked their annotations against tool records. The execution judge supplied the scores.</p>
     </details>
     <h3>Outcome-only checkpoint</h3>
-    <p>We continued training with outcome reward alone and kept the extra signals as diagnostics. At the checkpoint used in the later comparisons, 56% of episodes ran or compared a peer’s commit, 47% compared programs on the same inputs, and 18% used their own tests in a comparison. Use of those tests was already declining before the reward change.</p>
+    <p>We continued training with outcome reward alone and kept the extra signals as diagnostics. At the step-66 checkpoint used in the later comparisons, 56% of episodes ran or compared a peer’s commit, 47% compared programs on the same inputs, and 18% used their own tests in a comparison. Use of those tests was already declining before the reward change.</p>
     <p>On a separate panel of 40 FrontierCS tasks with five attempts per task, the trained 9B submitted in all 200 episodes. Flash submitted in 94%. The 9B averaged 11.52 across attempts and 17.41 across the best of five. Flash reached 56.17 and 71.96 on the same 0–100 scale. This checkpoint gave us a reference for further training. Submission was already reliable, and program quality was the larger gap to Flash.</p>
   </div>
 </section>
@@ -437,18 +455,18 @@ L 345.024688 161.446594
   <div class="wide"><figure id="figure-7">
     <div class="fig-title">Figure 7 · Limiting the loss to actions recovered most submissions</div>
     <div class="table-scroll" tabindex="0" role="region" aria-label="Regenerated-trace SFT checkpoint comparison"><table>
-      <thead><tr><th scope="col">Metric</th><th scope="col">RL run’s starting checkpoint</th><th scope="col">SFT with reasoning</th><th scope="col">SFT on tools and messages</th></tr></thead>
+      <thead><tr><th scope="col">Metric</th><th scope="col">Early RL reference</th><th scope="col">SFT with reasoning</th><th scope="col">SFT on tools and messages</th></tr></thead>
       <tbody>
         <tr><th scope="row">Explicit submissions</th><td>8 / 8</td><td>4 / 8</td><td>7 / 8</td></tr>
         <tr><th scope="row">Mean score</th><td>0.461</td><td>0.000</td><td>0.188</td></tr>
         <tr><th scope="row">Thinking tokens per call, 90th percentile</th><td>301</td><td>8,675</td><td>62</td></tr>
       </tbody>
     </table></div>
-    <figcaption>Four tasks, two episodes per task, with scores on the native 0–1 scale. The reference is the direct RL run’s starting checkpoint. The SFT checkpoints used the same demonstrations, learning rate, and number of updates.</figcaption>
+    <figcaption>Four tasks, two episodes per task, with scores on the native 0–1 scale. The early reference had five pilot RL updates. Both SFT checkpoints started from Qwen’s post-trained 9B and used the same demonstrations, learning rate, and number of updates.</figcaption>
   </figure></div>
   <div class="prose">
     <p>All four submissions from the first checkpoint failed to compile. The second checkpoint produced valid calls and restored most submissions. Teams still submitted early, around 37% of the way through their token budget, with the merge cue scheduled at 80%. One trace posted an agreement with a placeholder for the commit. Another asked for a peer rerun and proceeded without the result. We also found that the harness could grade a fallback worktree without an explicit submit call, so we counted the calls separately from the grades.</p>
-    <p><strong>Decision.</strong> We held the planned RL follow-up. The tool-and-message checkpoint scored below the starting reference, and the panel was small with a residual trainer–serving discrepancy. Recovering the call itself gave us a clearer target for the next run. The team still needed to produce and choose stronger programs.</p>
+    <p><strong>Decision.</strong> We held the planned RL follow-up. The tool-and-message checkpoint scored below the early RL reference, and the panel was small with a residual trainer–serving discrepancy. Recovering the call itself gave us a clearer target for the next run. The team still needed to produce and choose stronger programs.</p>
   </div>
 </section>
 
