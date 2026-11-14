@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="On FrontierCS, on-policy distillation brought a 9B coding model into its RL-trained teacher’s score range. The next experiment begins with the pretrained base."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-11/"><meta property="og:type" content="article"><meta property="og:site_name" content="Collective Intelligence"><meta property="og:title" content="Can a 9B Model Teach Its Earlier Self?"><meta property="og:description" content="On FrontierCS, on-policy distillation brought a 9B coding model into its RL-trained teacher’s score range. The next experiment begins with the pretrained base."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-11/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Can a 9B Model Teach Its Earlier Self?"><meta name="twitter:description" content="On FrontierCS, on-policy distillation brought a 9B coding model into its RL-trained teacher’s score range. The next experiment begins with the pretrained base."><title>Can a 9B Model Teach Its Earlier Self?</title><style>
+:root{--bg:#f7f8f9;--surface:#fff;--surface-2:#edf0f3;--ink:#1a1c1f;--ink-soft:#414b56;--muted:#626d79;--rule:#d5dae0;--accent:#3a5f8a;--gold:#8a611c;--pos:#397052;--neg:#ad5140;--serif:Georgia,"Iowan Old Style",Charter,serif;--sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
+:root[data-theme=dark]{--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}}
+*{box-sizing:border-box}html{scroll-behavior:auto;scroll-padding-top:2rem}body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.65 var(--serif);-webkit-font-smoothing:antialiased}p{color:var(--ink-soft);margin:1.05em 0;text-wrap:pretty}h1,h2,h3{text-wrap:balance;line-height:1.15}h1{font-size:clamp(2.3rem,5.4vw,3.65rem);letter-spacing:-.025em;font-weight:600;margin:.8rem 0 1.2rem}h2{font-size:clamp(1.65rem,3.5vw,2.3rem);font-weight:600;letter-spacing:-.015em;margin:0 0 1.4rem}h3{font-size:1.14rem;margin:0 0 .6rem}a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:4px}a:hover{text-decoration-style:dotted}.prose{max-width:45rem;margin:auto;padding:0 1.5rem}.wide{max-width:68rem;margin:auto;padding:0 1.5rem}header{padding:4.6rem 0 1rem}.series{font:12px/1.7 var(--mono);color:var(--muted);letter-spacing:.07em}.subtitle{font-size:1.2rem;color:var(--accent);margin:0 0 1.8rem}.deck{font-size:1.22rem;line-height:1.55}.publication{font:13px/1.65 var(--sans);color:var(--muted);padding:.8rem 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:1.8rem 0}.contents{display:flex;gap:.45rem 1rem;flex-wrap:wrap;font:13px/1.7 var(--sans);margin:1.6rem 0 0}.theme{position:fixed;right:1rem;top:1rem;z-index:10;background:var(--surface);border:1px solid var(--rule);color:var(--ink-soft);border-radius:20px;padding:.4rem .8rem;font:12px var(--mono);cursor:pointer}.skip{position:fixed;left:1rem;top:-5rem;z-index:20;background:var(--surface);padding:.7rem}.skip:focus{top:1rem}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}section{padding-top:4rem;margin-top:2.7rem;border-top:1px solid var(--rule)}section:first-of-type{margin-top:1.7rem}.takeaway{font-size:1.13rem;color:var(--ink);margin:1.6rem 0;font-style:italic}figure{margin:2rem 0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.5rem;min-width:0}.fig-title{font:600 15px/1.5 var(--sans);margin:0 0 1.1rem}.kind{font:11px var(--mono);color:var(--muted);display:block;margin-bottom:.35rem;letter-spacing:.03em}.plot{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}.plot svg{display:block;width:100%;height:auto;min-width:650px}figcaption{font:13px/1.65 var(--sans);color:var(--muted);border-top:1px solid var(--rule);padding-top:1rem;margin-top:1.2rem}figcaption strong{color:var(--ink-soft)}.controls{display:flex;flex-wrap:wrap;gap:.5rem 1rem;margin:1rem 0 1.3rem}button{font-family:var(--sans)}.controls button{font:13px/1.5 var(--sans);color:var(--ink-soft);border:1px solid var(--rule);background:var(--surface);padding:.55rem .8rem;border-radius:4px;cursor:pointer}.controls button[aria-pressed=true]{color:var(--accent);border-color:var(--accent);background:var(--surface-2)}.controls button:hover{border-color:var(--accent)}.controls .play{margin-left:auto}.stage{padding:1.1rem 0 .2rem;min-height:8rem}.stage p{font-size:1.03rem;margin:.5rem 0}.stage-title{font:600 16px var(--sans);color:var(--accent)}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:1.2rem 0}.flow span{font:14px/1.6 var(--sans);padding:.6rem .8rem;background:var(--surface-2);border:1px solid var(--rule);border-radius:4px}.flow i{font-style:normal;color:var(--accent)}.flow .faded{opacity:.45}.flow .active{border-color:var(--accent);color:var(--accent)}.changed{animation:enter .26s ease-out}@keyframes enter{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}.small{font:13px/1.7 var(--sans);color:var(--muted)}.measure{font:600 18px/1.6 var(--mono);margin:.7rem 0;color:var(--ink)}.bar{display:block;position:relative;min-height:2.4rem;border-radius:4px;overflow:hidden;margin:1rem 0;background:var(--gold)}.bar span{background:var(--accent);display:block;position:absolute;inset:0;transform-origin:left;transition:transform .5s cubic-bezier(.16,1,.3,1)}.bar span:last-child{display:none}.legend{display:flex;gap:1rem;flex-wrap:wrap;font:13px var(--sans);color:var(--ink-soft)}.legend span::before{content:'';display:inline-block;width:.65rem;height:.65rem;background:var(--accent);margin-right:.4rem}.legend span:last-child::before{background:var(--gold)}.formula{font:16px/1.8 var(--mono);padding:1rem 0;color:var(--ink);overflow-wrap:anywhere}.prompt-source{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.85 var(--mono);background:var(--surface-2);padding:1.25rem;border-radius:4px;color:var(--ink-soft)}.scroll table{min-width:740px}.scroll:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.practice{padding:1.1rem 0;border-top:1px solid var(--rule)}.practice strong{display:block;font:600 16px var(--sans);margin-bottom:.5rem}.practice p{font-size:1rem;margin:.3rem 0}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font:14px/1.6 var(--sans)}th,td{padding:.7rem .8rem;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}th{color:var(--ink);font-weight:600}td{color:var(--ink-soft)}.mono{font-family:var(--mono)}details{border-top:1px solid var(--rule);padding:1rem 0;margin-top:1.4rem;font-size:.95rem}summary{cursor:pointer;color:var(--accent);font:14px/1.5 var(--sans)}details p{font-size:.95rem}.waffle{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;margin:1rem 0;max-width:38rem}.waffle span{aspect-ratio:1;background:var(--rule);border-radius:2px;transition:background-color .2s}.waffle .solo{background:var(--gold)}.waffle .middle{background:var(--accent)}.waffle .four{background:var(--pos)}.model-info{display:flex;flex-wrap:wrap;gap:.5rem 2rem;font:14px/1.7 var(--sans);color:var(--ink-soft);padding:.9rem 0;border-bottom:1px solid var(--rule)}.model-story{font-size:1.02rem;max-width:48rem}.legend span.solo::before{background:var(--gold)}.legend span.middle::before{background:var(--accent)}.legend span.four::before{background:var(--pos)}.token-grid{display:grid;grid-template-columns:minmax(9rem,1.2fr) 1fr 1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);font:13px/1.6 var(--mono)}.token-grid>span{background:var(--surface);padding:.7rem}.token-grid .on{color:var(--pos)}.token-grid .off{color:var(--muted)}.lane{display:flex;align-items:center;gap:.7rem;font:13px var(--sans);margin:.7rem 0}.lane>span{min-width:6rem}.track{height:18px;background:var(--surface-2);flex:1;position:relative;border:1px solid var(--rule)}.track b{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(.428571);transition:transform .5s cubic-bezier(.16,1,.3,1)}.track::after{content:"";position:absolute;left:71.4286%;top:-4px;bottom:-4px;border-left:1px dashed var(--ink-soft)}.lane.total .track b{background:var(--accent)}.lane.total .track{overflow:visible}.deadline{font:14px/1.65 var(--sans);padding:.7rem 0}.step-list{display:flex;flex-wrap:wrap;gap:.6rem;list-style:none;margin:1rem 0;padding:0}.step-list li{font:13px var(--sans);color:var(--muted);border-bottom:2px solid var(--rule);padding:.4rem 0;flex:1 1 8rem}.step-list li.current{color:var(--accent);border-color:var(--accent)}footer{margin:4rem auto 0;padding:2.2rem 0 3rem;border-top:1px solid var(--rule)}footer p{font-size:.92rem}.foot-links{display:flex;gap:.8rem 1.6rem;flex-wrap:wrap;font:13px var(--sans)}.index-list{list-style:none;padding:0}.index-list li{padding:1.5rem 0;border-top:1px solid var(--rule)}.index-list h2{margin:.3rem 0 .7rem}.index-list p{margin:.4rem 0}
+@media(max-width:640px){body{font-size:18px}.prose,.wide{padding-left:1.15rem;padding-right:1.15rem}header{padding-top:4rem}.deck{font-size:1.1rem}.subtitle{font-size:1.03rem}figure{padding:1.1rem .85rem;margin:1.5rem 0}.controls{gap:.45rem}.controls button{padding:.5rem .6rem;font-size:12px}.controls .play{margin-left:0}.stage{min-height:10.5rem}.token-grid{grid-template-columns:minmax(5rem,1.1fr) 1fr 1fr;font-size:11px}.token-grid>span{padding:.6rem .4rem}.model-info{gap:.3rem 1rem}.waffle{gap:4px}.flow span{padding:.5rem .6rem;font-size:13px}section{padding-top:2.8rem;margin-top:2rem}.fig-title{font-size:14px}.plot svg{min-width:630px}.practice p{font-size:1rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+@media print{.theme,.controls,.contents,.skip{display:none}body{background:#fff;color:#111}figure{break-inside:avoid}.plot{overflow:visible}.plot svg{min-width:0}details{display:block}}
+
+::selection{background:var(--accent);color:var(--surface)}
+.paper-header .series{margin:0 0 .7rem}.paper-header .publication{margin-top:1.5rem}
+.readout-values{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;text-align:right;font-variant-numeric:tabular-nums}
+.readout-labels,.readout-row{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:.2rem .85rem}
+.readout-labels{font:600 .8rem/1.4 var(--sans);color:var(--muted);padding:.45rem 0 .6rem}
+.readout-labels .readout-values{grid-column:2}.readout-labels .readout-values span{white-space:normal;color:inherit}
+.readout-row{align-items:center;border-top:1px solid var(--rule);padding:.68rem 0;font:1rem/1.35 var(--sans)}
+.readout-row small{grid-column:1/-1;color:var(--muted);font-size:.78rem}.readout-values span:last-child{font-weight:700;color:var(--accent)}
+.readout-values span{white-space:nowrap}
+.walk-content{border-top:1px solid var(--rule);padding-top:.9rem}.walk-stage{min-height:10.4rem}
+.walk-stage h3{margin:.25rem 0 .7rem}.walk-stage p{margin:.6rem 0}
+.formula{padding:.75rem .9rem;background:var(--surface-2);border-radius:.5rem;font:.86rem/1.5 var(--mono);overflow-wrap:anywhere}
+.article-plot svg{display:block;width:100%;height:auto;max-width:710px;margin:0 auto;overflow:visible}
+.episode-grid{display:grid;grid-template-columns:repeat(29,minmax(0,1fr));gap:4px;max-width:680px;margin:1rem auto}
+.episode-grid span{aspect-ratio:1;border-radius:2px}.episode-grid .budget,.legend .budget{background:var(--accent)}
+.episode-grid .idle,.legend .idle{border:1.5px solid var(--gold);background:var(--surface)}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem 1.3rem;list-style:none;padding:0;font: .86rem/1.45 var(--sans)}
+.legend b{display:inline-block;width:.7rem;height:.7rem;margin-right:.45rem;border-radius:2px}
+.marker-row{padding:.55rem 0 .7rem;border-top:1px solid var(--rule);font:.9rem/1.4 var(--sans)}
+.marker-line{display:grid;grid-template-columns:2.75rem minmax(0,1fr) 3.1rem;gap:.5rem;align-items:center;margin-top:.26rem;font-variant-numeric:tabular-nums}
+.marker-track{height:8px;background:var(--surface-2);border-radius:2px}.marker-track b{display:block;height:100%;background:var(--accent);border-radius:2px}.marker-track.teacher b{background:var(--gold)}
+.path-row{display:grid;grid-template-columns:9.3rem minmax(0,1fr);gap:.45rem 1rem;padding:.8rem 0;border-top:1px solid var(--rule);font:.93rem/1.5 var(--sans)}
+.path-row p{margin:0}.table-scroll{overflow-x:auto}.table-scroll table{min-width:34rem}
+.theme{z-index:5}.room-list{list-style:none;padding:0}.room-list li{padding:1.25rem 0;border-top:1px solid var(--rule)}.room-list h2{margin:.1rem 0;font-size:1.65rem}
+@media(max-width:640px){.theme{position:absolute}.episode-grid{grid-template-columns:repeat(23,minmax(0,1fr));gap:3px}.path-row{grid-template-columns:1fr}.readout-row{font-size:.9rem}.readout-labels{font-size:.73rem}.walk-stage{min-height:12rem}}
+@media(prefers-reduced-motion:reduce){[data-play]{display:none}}
+@media print{.walk-stage[hidden]{display:block!important}.walk-stage{min-height:0}.walk-content{border-top:0}}
+</style></head>
+<body id="top"><a class="skip" href="#article">Skip to content</a><button type="button" class="theme" aria-label="Toggle color theme">Theme</button><header class="paper-header"><div class="prose">
+<p class="series">Collective Intelligence · Part 11<br><a href="../">Part 1</a> · <a href="../part-2/">Part 2</a> · <a href="../part-3/">Part 3</a> · <a href="../part-4/">Part 4</a> · <a href="../part-5/">Part 5</a> · <a href="../part-6/">Part 6</a> · <a href="../part-7/">Part 7</a> · <a href="../part-8/">Part 8</a> · <a href="../part-9/">Part 9</a> · <a href="../part-10/">Part 10</a></p>
+<h1>Can a 9B Model Teach Its Earlier Self?</h1><p class="subtitle">On-policy distillation on FrontierCS and a new starting point for reinforcement learning</p><p class="deck">After ten on-policy distillation updates, a 9B coding model reached the score range of its teacher, a later checkpoint of the same model trained with reinforcement learning. It also outscored our earlier Flash-distilled student. The teacher, starting checkpoint, and training recipe all changed, including a fix that brought the trainer and rollout server into closer agreement. In a separate experiment, supervised fine-tuning from the pretrained base earned credit on more tasks, while its average score remained below the base model’s point estimate.</p>
+<p class="publication">Published <time datetime="2026-11-14">November 14, 2026</time> · Evidence through November 14, 2026</p>
+<nav class="contents" aria-label="Article sections"><a href="#result">The result</a><a href="#setup">Earlier OPD</a><a href="#sync">Trainer and serving sync</a><a href="#where">Where the gain came from</a><a href="#base">SFT from base</a><a href="#next">Next comparison</a></nav></div></header><main id="article"><section id="result">
+  <div class="prose">
+    <h2>Ten updates brought the student into the teacher’s score range</h2>
+    <p>In Part 9, Qwen Flash improved the average attempt of a 9B coding model after supervised fine-tuning. The gain was modest, and the student hit its thinking cap more often. This time we went back to the released 9B checkpoint, skipped our supervised stage, and used a later version of that same 9B as the teacher. The teacher had already been trained with reinforcement learning on verified program outcomes.</p>
+  </div>
+  <div class="wide"><figure id="figure-1">
+    <div class="fig-title">FrontierCS scores after changing the distillation route</div>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="FrontierCS scores from five attempts per task"><table>
+      <thead><tr><th scope="col">Policy</th><th scope="col">Avg@5</th><th scope="col">Best@5</th><th scope="col">Tasks with credit</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Earlier Flash SFT start</th><td>6.88</td><td>20.20</td><td>86 / 172</td></tr>
+        <tr><th scope="row">Earlier Flash OPD after SFT</th><td>8.86</td><td>20.82</td><td>86 / 172</td></tr>
+        <tr><th scope="row">RL-trained 9B teacher</th><td>13.91</td><td>21.65</td><td>104 / 172</td></tr>
+        <tr><th scope="row">Released 9B → OPD with the RL-trained 9B</th><td><strong>14.03</strong></td><td><strong>22.71</strong></td><td>105 / 172</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Five attempts on each of 172 tasks. Avg@5 averages the scores of all attempts per task. Best@5 averages the highest score per task. Coverage means positive benchmark credit on at least one attempt. Each score is on a 0–100 scale.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>The new student was 0.12 Avg@5 points ahead of its teacher, with a task-paired 95% interval of −1.72 to +2.00. Its first attempt alone had scored 15.39. The four added attempts averaged 13.69, bringing the result back toward the teacher’s score. Best@5 was 1.06 points higher and coverage differed by one task. I read this as reaching the teacher’s range on this benchmark.</p>
+    <p>For scale, the released 9B had scored 6.26 Avg@5 in an earlier evaluation on the same tasks. The launcher, deadline and judging route differed, so that figure gives historical context for the starting policy. The teacher comparison uses the matched evaluation path.</p>
+    <p>Against the earlier Flash-distilled model, the new student gained 5.17 Avg@5 points, with a paired interval of +2.91 to +7.69. That compares two complete training routes. The teacher, student initialization, parameter updates and number of training steps all changed.</p>
+    <p class="related"><a href="https://macoredroid.github.io/collective-intelligence/part-9/">Part 9 · What Did Distillation Buy?</a></p>
+  </div>
+</section>
+
+<section id="setup">
+  <div class="prose">
+    <h2>What changed from the Flash runs</h2>
+    <p>The distinction between two Qwen checkpoints matters here. The OPD student started from <strong>Qwen3.5-9B</strong>, the vendor’s post-trained release. The frozen teacher was that release after our outcome-based RL. Later, for supervised fine-tuning, we started from <strong>Qwen3.5-9B-Base</strong>, the pretrained weights before the vendor’s post-training.</p>
+    <p>During OPD the student generated its own reasoning and programs. The frozen teacher scored the student’s sampled tokens in context. This time the teacher and student shared a checkpoint lineage. The teacher also had experience with the same kind of executable feedback we used to measure the student. We wanted to see what the student could recover from that teacher’s feedback on its own rollouts.</p>
+    <p>In the earlier Flash runs, matching the teacher’s temperature to the SFT student’s entropy recovered much of an early score collapse. The stronger discounted return lifted Avg@5 from 6.88 to 8.86, while coverage stayed at 86 tasks and forced closes rose from 24% to 57%. Alternating outcome RL and OPD moved the stopping rate back and forth, with little additional score gain.</p>
+    <p>The new run retained a teacher scoring temperature of 0.8. The earlier Flash run updated the full model for five steps at a learning rate of 10<sup>−6</sup>. The new run updated rank-64 adapters for ten steps at 4 × 10<sup>−5</sup> and got credit on 105 tasks. These differences matter when interpreting the 5.17-point gain.</p>
+    <p>We prepared a Flash control from the same released student with the same adapter recipe and task draws, and paused it before training. Running it would help isolate the effect of the teacher. To compare their cost, we would also count the teacher’s prior training separately from the cost of scoring student rollouts.</p>
+  </div>
+</section>
+
+<section id="sync">
+  <div class="prose">
+    <h2>Training and serving had to score the same policy</h2>
+    <p>The new run used rank-64 LoRA. The rollout server generated with the adapter merged into the base weights and rounded to BF16. The trainer added the adapter contribution in higher precision during the forward pass. Loading the same adapter checkpoint could therefore give different next-token probabilities on the same prefix. That discrepancy matters for on-policy training because the update uses probabilities for the tokens the deployed student just sampled.</p>
+    <p>We made the trainer’s forward pass use the rounded, merged weights that serving used, while retaining gradients for the adapter. We kept the pristine starting weights for the reference KL. To verify a reload, we scored the same sampled tokens right before and after the server loaded the new student and checked both against the trainer.</p>
+  </div>
+  <div class="wide"><figure id="figure-sync">
+    <div class="fig-title">Reloading reduced the discrepancy after the forward-pass fix</div>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Student trainer and rollout server log probability discrepancies"><table>
+      <thead><tr><th scope="col">Second rollout batch</th><th scope="col">Earlier LoRA</th><th scope="col">Revised LoRA</th><th scope="col">Earlier full fine-tune</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Trainer–server gap on rollout tokens</th><td>0.0096</td><td>0.0065</td><td>0.0059</td></tr>
+        <tr><th scope="row">Probe gap before reload</th><td>0.0087</td><td>0.0136</td><td>0.0147</td></tr>
+        <tr><th scope="row">Probe gap after reload</th><td>0.0125</td><td>0.0048</td><td>0.0070</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Smaller log-probability gaps mean closer agreement between trainer and server on the sampled tokens. The full fine-tune column gives the scale of the residual discrepancy in the previous setup.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>The first LoRA run had also barely moved from its starting policy at a learning rate of 10<sup>−5</sup>. We increased it to 4 × 10<sup>−5</sup> and let the rerun train past the earlier stopping point. The KL to the starting policy at the second batch rose from 8.4 × 10<sup>−5</sup> to 2.8 × 10<sup>−3</sup>. The probability check shows that the sync fix addressed the serving mismatch. The final score reflects the combined recipe changes.</p>
+    <p>We scored the saved checkpoint on all 172 tasks before drawing conclusions. A follow-up RL leg completed two updates and was stopped before evaluation. The 14.03 result comes from the checkpoint exported immediately after OPD.</p>
+  </div>
+</section>
+
+<section id="where">
+  <div class="prose">
+    <h2>Where the score gain came from</h2>
+    <p>We used the first two attempts from the released 9B to group tasks by how much credit it earned. We then used its other three attempts to estimate the baseline within each group. Holding back those attempts matters. Even with no training, a model will sometimes score on its third attempt after missing twice.</p>
+  </div>
+  <div class="wide"><figure id="figure-2">
+    <div class="fig-title">The largest gains came from tasks where the released 9B already scored</div>
+    <div class="article-plot"><svg role="img" aria-label="Mean score change in zero, lower and higher credit groups. 9B OPD student: plus 4.24, plus 4.63 and plus 25.64. RL-trained 9B teacher: plus 5.32, plus 6.04 and plus 18.76. Earlier Flash OPD: plus 1.89, minus 1.29 and plus 9.00 points." xmlns:xlink="http://www.w3.org/1999/xlink" width="527.655644pt" height="266.272857pt" viewBox="0 0 527.655644 266.272857" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-14T11:46:27.901674</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="teacher-buckets-figure_1">
+  <g id="teacher-buckets-patch_1">
+   <path d="M 0 266.272857
+L 527.655644 266.272857
+L 527.655644 0
+L 0 0
+L 0 266.272857
+z
+" style="fill: none"/>
+  </g>
+  <g id="teacher-buckets-axes_1">
+   <g id="teacher-buckets-patch_2">
+    <path d="M 154.253125 224.07192
+L 505.793125 224.07192
+L 505.793125 41.11992
+L 154.253125 41.11992
+L 154.253125 224.07192
+z
+" style="fill: none"/>
+   </g>
+   <g id="teacher-buckets-matplotlib.axis_1">
+    <g id="teacher-buckets-xtick_1">
+     <g id="teacher-buckets-line2d_1">
+      <path d="M 193.313125 224.07192
+L 193.313125 41.11992
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="teacher-buckets-line2d_2">
+      <defs>
+       <path id="teacher-buckets-mff3c3214e8" d="M 0 0
+L 0 3.5
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#teacher-buckets-mff3c3214e8" x="193.313125" y="224.07192" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="teacher-buckets-text_1">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="193.313125" y="240.189107" transform="rotate(-0 193.313125 240.189107)">0</text>
+     </g>
+    </g>
+    <g id="teacher-buckets-xtick_2">
+     <g id="teacher-buckets-line2d_3">
+      <path d="M 249.113125 224.07192
+L 249.113125 41.11992
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="teacher-buckets-line2d_4">
+      <g>
+       <use xlink:href="#teacher-buckets-mff3c3214e8" x="249.113125" y="224.07192" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="teacher-buckets-text_2">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="249.113125" y="240.189107" transform="rotate(-0 249.113125 240.189107)">5</text>
+     </g>
+    </g>
+    <g id="teacher-buckets-xtick_3">
+     <g id="teacher-buckets-line2d_5">
+      <path d="M 304.913125 224.07192
+L 304.913125 41.11992
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="teacher-buckets-line2d_6">
+      <g>
+       <use xlink:href="#teacher-buckets-mff3c3214e8" x="304.913125" y="224.07192" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="teacher-buckets-text_3">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="304.913125" y="240.189107" transform="rotate(-0 304.913125 240.189107)">10</text>
+     </g>
+    </g>
+    <g id="teacher-buckets-xtick_4">
+     <g id="teacher-buckets-line2d_7">
+      <path d="M 360.713125 224.07192
+L 360.713125 41.11992
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="teacher-buckets-line2d_8">
+      <g>
+       <use xlink:href="#teacher-buckets-mff3c3214e8" x="360.713125" y="224.07192" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="teacher-buckets-text_4">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="360.713125" y="240.189107" transform="rotate(-0 360.713125 240.189107)">15</text>
+     </g>
+    </g>
+    <g id="teacher-buckets-xtick_5">
+     <g id="teacher-buckets-line2d_9">
+      <path d="M 416.513125 224.07192
+L 416.513125 41.11992
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="teacher-buckets-line2d_10">
+      <g>
+       <use xlink:href="#teacher-buckets-mff3c3214e8" x="416.513125" y="224.07192" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="teacher-buckets-text_5">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="416.513125" y="240.189107" transform="rotate(-0 416.513125 240.189107)">20</text>
+     </g>
+    </g>
+    <g id="teacher-buckets-xtick_6">
+     <g id="teacher-buckets-line2d_11">
+      <path d="M 472.313125 224.07192
+L 472.313125 41.11992
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="teacher-buckets-line2d_12">
+      <g>
+       <use xlink:href="#teacher-buckets-mff3c3214e8" x="472.313125" y="224.07192" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="teacher-buckets-text_6">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="472.313125" y="240.189107" transform="rotate(-0 472.313125 240.189107)">25</text>
+     </g>
+    </g>
+    <g id="teacher-buckets-text_7">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="330.023125" y="256.190045" transform="rotate(-0 330.023125 256.190045)">Mean score change (points)</text>
+    </g>
+   </g>
+   <g id="teacher-buckets-matplotlib.axis_2">
+    <g id="teacher-buckets-ytick_1">
+     <g id="teacher-buckets-line2d_13">
+      <defs>
+       <path id="teacher-buckets-m67a52eda62" d="M 0 0
+L -3.5 0
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#teacher-buckets-m67a52eda62" x="154.253125" y="70.536219" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="teacher-buckets-text_8">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="147.253125" y="75.095281" transform="rotate(-0 147.253125 75.095281)">Zero credit · 117 tasks</text>
+     </g>
+    </g>
+    <g id="teacher-buckets-ytick_2">
+     <g id="teacher-buckets-line2d_14">
+      <g>
+       <use xlink:href="#teacher-buckets-m67a52eda62" x="154.253125" y="132.59592" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="teacher-buckets-text_9">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="147.253125" y="137.154982" transform="rotate(-0 147.253125 137.154982)">Lower credit · 28 tasks</text>
+     </g>
+    </g>
+    <g id="teacher-buckets-ytick_3">
+     <g id="teacher-buckets-line2d_15">
+      <g>
+       <use xlink:href="#teacher-buckets-m67a52eda62" x="154.253125" y="194.655621" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="teacher-buckets-text_10">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="147.253125" y="199.214684" transform="rotate(-0 147.253125 199.214684)">Higher credit · 27 tasks</text>
+     </g>
+    </g>
+   </g>
+   <g id="teacher-buckets-patch_3">
+    <path d="M 193.313125 49.43592
+L 240.631525 49.43592
+L 240.631525 61.84786
+L 193.313125 61.84786
+z
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="teacher-buckets-patch_4">
+    <path d="M 193.313125 111.495621
+L 244.983925 111.495621
+L 244.983925 123.907562
+L 193.313125 123.907562
+z
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="teacher-buckets-patch_5">
+    <path d="M 193.313125 173.555323
+L 479.455525 173.555323
+L 479.455525 185.967263
+L 193.313125 185.967263
+z
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="teacher-buckets-patch_6">
+    <path d="M 193.313125 64.330248
+L 252.684325 64.330248
+L 252.684325 76.742189
+L 193.313125 76.742189
+z
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: var(--gold, #8a611c)"/>
+   </g>
+   <g id="teacher-buckets-patch_7">
+    <path d="M 193.313125 126.38995
+L 260.719525 126.38995
+L 260.719525 138.80189
+L 193.313125 138.80189
+z
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: var(--gold, #8a611c)"/>
+   </g>
+   <g id="teacher-buckets-patch_8">
+    <path d="M 193.313125 188.449651
+L 402.674725 188.449651
+L 402.674725 200.861592
+L 193.313125 200.861592
+z
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: var(--gold, #8a611c)"/>
+   </g>
+   <g id="teacher-buckets-patch_9">
+    <path d="M 193.313125 79.224577
+L 214.405525 79.224577
+L 214.405525 91.636517
+L 193.313125 91.636517
+z
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: var(--neg, #ad5140)"/>
+   </g>
+   <g id="teacher-buckets-patch_10">
+    <path d="M 193.313125 141.284278
+L 178.916725 141.284278
+L 178.916725 153.696219
+L 193.313125 153.696219
+z
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: var(--neg, #ad5140)"/>
+   </g>
+   <g id="teacher-buckets-patch_11">
+    <path d="M 193.313125 203.34398
+L 293.753125 203.34398
+L 293.753125 215.75592
+L 193.313125 215.75592
+z
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: var(--neg, #ad5140)"/>
+   </g>
+   <g id="teacher-buckets-line2d_16">
+    <path d="M 193.313125 224.07192
+L 193.313125 41.11992
+" clip-path="url(#teacher-buckets-p3ac3356ee3)" style="fill: none; stroke: var(--rule, #d5dae0); stroke-linecap: square"/>
+   </g>
+   <g id="teacher-buckets-patch_12">
+    <path d="M 154.253125 224.07192
+L 154.253125 41.11992
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="teacher-buckets-patch_13">
+    <path d="M 154.253125 224.07192
+L 505.793125 224.07192
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="teacher-buckets-legend_1">
+    <g id="teacher-buckets-patch_14">
+     <path d="M 157.252206 17.638594
+L 175.252206 17.638594
+L 175.252206 11.338594
+L 157.252206 11.338594
+z
+" style="fill: var(--accent, #3a5f8a)"/>
+    </g>
+    <g id="teacher-buckets-text_11">
+     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="182.452206" y="17.638594" transform="rotate(-0 182.452206 17.638594)">9B OPD student</text>
+    </g>
+    <g id="teacher-buckets-patch_15">
+     <path d="M 271.919237 17.638594
+L 289.919237 17.638594
+L 289.919237 11.338594
+L 271.919237 11.338594
+z
+" style="fill: var(--gold, #8a611c)"/>
+    </g>
+    <g id="teacher-buckets-text_12">
+     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="297.119237" y="17.638594" transform="rotate(-0 297.119237 17.638594)">RL-trained 9B teacher</text>
+    </g>
+    <g id="teacher-buckets-patch_16">
+     <path d="M 413.769081 17.638594
+L 431.769081 17.638594
+L 431.769081 11.338594
+L 413.769081 11.338594
+z
+" style="fill: var(--neg, #ad5140)"/>
+    </g>
+    <g id="teacher-buckets-text_13">
+     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: var(--ink-soft, #27313d)" x="438.969081" y="17.638594" transform="rotate(-0 438.969081 17.638594)">Earlier Flash OPD</text>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="teacher-buckets-p3ac3356ee3">
+   <rect x="154.253125" y="41.11992" width="351.54" height="182.952"/>
+  </clipPath>
+ </defs>
+</svg>
+</div>
+    <figcaption>Task-paired mean score changes relative to the released 9B’s three reserved attempts. The first two attempts assign groups. Positive-score tasks split at their median score of 10.21. The released 9B was evaluated with an older launcher and judging route, so the deltas can include a protocol offset.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>The largest gains came from 27 tasks, about one sixth of the packet. They contributed just over half the measured improvement. The 117 tasks that scored zero on the first two attempts also improved. The student scored at least once on 52 of them and the teacher on 54. The released 9B itself scored on 23 of them in its remaining three tries. Those counts describe a low-scoring group and how often each policy found a scoring program.</p>
+    <p>We inspected the best programs from 14 deliberately selected tasks. Several gains over the earlier Flash run came from producing code that compiled or ran within the time limit. Against the RL teacher the differences went both ways. On one task the student’s alternative graph construction scored higher. On another an unbounded query strategy failed an adversarial test that the teacher’s bounded version handled. This small audit shows what a changed score can represent.</p>
+  </div>
+</section>
+
+<section id="base">
+  <div class="prose">
+    <h2>The base model had a higher floor than we expected</h2>
+    <p>OPD showed that we could recover an existing 9B teacher’s performance. For the next training route we wanted to know whether demonstrations from stronger models could give outcome RL a better policy to start from. Earlier offline SFT on the released, post-trained weights had sometimes regressed. Moving the same kind of supervision before post-training gave us a way to test a different initialization. We first measured the pretrained model on its own, then measured what SFT added.</p>
+    <p>We expected the raw base to struggle in the harness. With the post-trained tokenizer and the same evaluation path used for the SFT checkpoints, the base weights already averaged 7.99 across five attempts per task and closed thinking naturally on about 89% of attempts. That measured floor changed the test. SFT had to improve a functioning coding policy.</p>
+    <p>The first dataset contained 1,905 graded teacher traces and about 105 million retained tokens before repetition. The mix included 27B, Flash and GLM demonstrations. We fine-tuned the full 9B model and gave thinking and answer tokens equal loss weight. After three passes the average score was down 2.62 points versus base, with a paired interval of −4.88 to −0.56.</p>
+  </div>
+  <div class="wide"><figure id="figure-3">
+    <div class="fig-title">Repeating the original SFT mix recovered score and widened coverage</div>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Base and SFT evaluation"><table>
+      <thead><tr><th scope="col">Policy</th><th scope="col">Avg@5</th><th scope="col">Best@5</th><th scope="col">Tasks with credit</th><th scope="col">Natural close</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Pretrained 9B base</th><td>7.99</td><td>17.57</td><td>77 / 172</td><td>89%</td></tr>
+        <tr><th scope="row">Base + SFT, epoch 3</th><td>5.37</td><td>15.50</td><td>79 / 172</td><td>73%</td></tr>
+        <tr><th scope="row">Base + SFT, epoch 8</th><td>6.69</td><td>17.04</td><td>92 / 172</td><td>82%</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Same 172-task, five-attempt evaluation. Fixed-denominator scores include one unavailable attempt at zero for base and epoch 3 and two for epoch 8. Omitting unavailable grades puts epoch 8 at 6.71.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>After eight passes the model earned credit on 15 more tasks than base and had fewer compile errors, about 24% versus 37%. Its average score remained 1.30 points below base, with a 95% interval of −3.45 to +0.71. More tasks had at least one scoring answer, while the expected score from one draw had yet to improve. This is the same distinction that made the best-of-five readout necessary for OPD.</p>
+    <p>At epoch three, a separate one-attempt audit found that compilation failures on tasks the base answered successfully accounted for much of the score loss. The SFT policy also ended reasoning naturally less often, and even the subset that ended naturally scored lower. The one-attempt screens rose from 0.72 at epoch one to 5.05 at epoch three, dipped to 3.44 at epoch five, and reached 7.04 at epoch eight. Natural termination rose substantially across the early epochs. We treated undertraining as a working explanation for that recovery and kept measuring compilation separately from stopping.</p>
+  </div>
+</section>
+
+<section id="next">
+  <div class="prose">
+    <h2>Can SFT give RL a better starting point?</h2>
+    <p>In the next round, we resumed from epoch seven and trained on a refreshed mix with 3,400 traces and about 147.5 million retained tokens. The one-attempt score fell to 2.54 after the first pass and recovered to 7.27 at the end of the second. That was close to 7.04 for epoch eight of the original mix, with a paired interval of −3.05 to +3.48 for the difference.</p>
+    <p>The dip came halfway through a restarted learning-rate schedule and after the first pass over new demonstrations. Either could matter. This round changed the data and the schedule together. The next round continues from the second-pass checkpoint and repeats just the 1,577 new Flash traces for four epochs. We’ll record the intermediate scores and judge the recipe at the end of the schedule, with five attempts per task for a checkpoint that passes its screen. The refreshed mix’s five-attempt results and the new-only round were still pending at the November 14 evidence cutoff.</p>
+    <p>The practical test comes after SFT. Start two outcome-RL runs from the pretrained 9B and the selected SFT checkpoint, give them the same tasks and RL budget, and compare how quickly and how far each improves. Count teacher generation and SFT in the full training budget. Compare held-out score, coverage, compilation and natural termination at each checkpoint. The experiment will show whether the additional coverage after supervised training gives RL more places to start improving, and whether those gains repay the cost of collecting and training on the traces.</p>
+  </div>
+</section>
+</main><footer><div class="prose"><nav class="contents" aria-label="Series navigation"><a href="../">Part 1 · The Harness Is Part of the Model</a><a href="../part-2/">Part 2 · The Wall, the Compile Tax, and the Oracle</a><a href="../part-3/">Part 3 · Climbing From Zero Without a Teacher</a><a href="../part-4/">Part 4 · Borrowing a Foothold</a><a href="../part-5/">Part 5 · When the Reward Misses the Algorithm</a><a href="../part-6/">Part 6 · Fork, Talk, Submit</a><a href="../part-7/">Part 7 · The Distance to a Teacher</a><a href="../part-8/">Part 8 · One Harness, Six Ways to Work</a><a href="../part-9/">Part 9 · What Did Distillation Buy?</a><a href="../part-10/">Part 10 · Where Agent Teams Get Stuck</a><a href="https://github.com/MaCoredroid/collective-intelligence">Repository</a><a href="#top">Back to top ↑</a></nav></div></footer><script>
+const root = document.documentElement;
+const theme = document.querySelector('.theme');
+const dark = matchMedia('(prefers-color-scheme: dark)');
+let savedTheme;
+try { savedTheme = localStorage.getItem('ci-draft-theme'); } catch {}
+if (savedTheme === 'light' || savedTheme === 'dark') root.dataset.theme = savedTheme;
+theme.addEventListener('click', () => {
+  const current = root.dataset.theme || (dark.matches ? 'dark' : 'light');
+  const next = current === 'dark' ? 'light' : 'dark';
+  root.dataset.theme = next;
+  try { localStorage.setItem('ci-draft-theme', next); } catch {}
+});
+const motion = matchMedia('(prefers-reduced-motion: reduce)');
+document.querySelectorAll('[data-walk]').forEach(walk => {
+  const buttons = [...walk.querySelectorAll('[data-step]')];
+  const stages = [...walk.querySelectorAll('[data-stage]')];
+  const play = walk.querySelector('[data-play]');
+  let selected = 0;
+  let timer;
+  function select(index) {
+    selected = index;
+    buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
+    stages.forEach((stage, i) => { stage.hidden = i !== index; });
+  }
+  function stop() {
+    clearInterval(timer);
+    timer = undefined;
+    play.textContent = 'Play steps';
+    play.setAttribute('aria-pressed', 'false');
+  }
+  buttons.forEach((button, i) => button.addEventListener('click', () => { stop(); select(i); }));
+  play.addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (motion.matches) return;
+    select(0);
+    play.textContent = 'Pause steps';
+    play.setAttribute('aria-pressed', 'true');
+    timer = setInterval(() => {
+      if (selected + 1 === stages.length) { stop(); return; }
+      select(selected + 1);
+    }, 5200);
+  });
+  motion.addEventListener('change', stop);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+  window.addEventListener('pagehide', stop);
+});
+</script></body></html>

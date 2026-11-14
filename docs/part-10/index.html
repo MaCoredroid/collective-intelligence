@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="A FrontierCS study of what a 9B coding team learned from supervised traces, reinforcement learning, and handoffs from a stronger team."><link rel="canonical" href="https://macoredroid.github.io/collective-intelligence/part-10/"><meta property="og:type" content="article"><meta property="og:site_name" content="Collective Intelligence"><meta property="og:title" content="Where Agent Teams Get Stuck"><meta property="og:description" content="A FrontierCS study of what a 9B coding team learned from supervised traces, reinforcement learning, and handoffs from a stronger team."><meta property="og:url" content="https://macoredroid.github.io/collective-intelligence/part-10/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Where Agent Teams Get Stuck"><meta name="twitter:description" content="A FrontierCS study of what a 9B coding team learned from supervised traces, reinforcement learning, and handoffs from a stronger team."><title>Where Agent Teams Get Stuck</title><style>
+:root{--bg:#f7f8f9;--surface:#fff;--surface-2:#edf0f3;--ink:#1a1c1f;--ink-soft:#414b56;--muted:#626d79;--rule:#d5dae0;--accent:#3a5f8a;--gold:#8a611c;--pos:#397052;--neg:#ad5140;--serif:Georgia,"Iowan Old Style",Charter,serif;--sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
+:root[data-theme=dark]{--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#131518;--surface:#1b1e22;--surface-2:#242a31;--ink:#e7e9ec;--ink-soft:#c0c7d0;--muted:#a0aab5;--rule:#424c58;--accent:#9abbeb;--gold:#dfb867;--pos:#8bd2a8;--neg:#eea18c}}
+*{box-sizing:border-box}html{scroll-behavior:auto;scroll-padding-top:2rem}body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.65 var(--serif);-webkit-font-smoothing:antialiased}p{color:var(--ink-soft);margin:1.05em 0;text-wrap:pretty}h1,h2,h3{text-wrap:balance;line-height:1.15}h1{font-size:clamp(2.3rem,5.4vw,3.65rem);letter-spacing:-.025em;font-weight:600;margin:.8rem 0 1.2rem}h2{font-size:clamp(1.65rem,3.5vw,2.3rem);font-weight:600;letter-spacing:-.015em;margin:0 0 1.4rem}h3{font-size:1.14rem;margin:0 0 .6rem}a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:4px}a:hover{text-decoration-style:dotted}.prose{max-width:45rem;margin:auto;padding:0 1.5rem}.wide{max-width:68rem;margin:auto;padding:0 1.5rem}header{padding:4.6rem 0 1rem}.series{font:12px/1.7 var(--mono);color:var(--muted);letter-spacing:.07em}.subtitle{font-size:1.2rem;color:var(--accent);margin:0 0 1.8rem}.deck{font-size:1.22rem;line-height:1.55}.publication{font:13px/1.65 var(--sans);color:var(--muted);padding:.8rem 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:1.8rem 0}.contents{display:flex;gap:.45rem 1rem;flex-wrap:wrap;font:13px/1.7 var(--sans);margin:1.6rem 0 0}.theme{position:fixed;right:1rem;top:1rem;z-index:10;background:var(--surface);border:1px solid var(--rule);color:var(--ink-soft);border-radius:20px;padding:.4rem .8rem;font:12px var(--mono);cursor:pointer}.skip{position:fixed;left:1rem;top:-5rem;z-index:20;background:var(--surface);padding:.7rem}.skip:focus{top:1rem}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}section{padding-top:4rem;margin-top:2.7rem;border-top:1px solid var(--rule)}section:first-of-type{margin-top:1.7rem}.takeaway{font-size:1.13rem;color:var(--ink);margin:1.6rem 0;font-style:italic}figure{margin:2rem 0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.5rem;min-width:0}.fig-title{font:600 15px/1.5 var(--sans);margin:0 0 1.1rem}.kind{font:11px var(--mono);color:var(--muted);display:block;margin-bottom:.35rem;letter-spacing:.03em}.plot{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}.plot svg{display:block;width:100%;height:auto;min-width:650px}figcaption{font:13px/1.65 var(--sans);color:var(--muted);border-top:1px solid var(--rule);padding-top:1rem;margin-top:1.2rem}figcaption strong{color:var(--ink-soft)}.controls{display:flex;flex-wrap:wrap;gap:.5rem 1rem;margin:1rem 0 1.3rem}button{font-family:var(--sans)}.controls button{font:13px/1.5 var(--sans);color:var(--ink-soft);border:1px solid var(--rule);background:var(--surface);padding:.55rem .8rem;border-radius:4px;cursor:pointer}.controls button[aria-pressed=true]{color:var(--accent);border-color:var(--accent);background:var(--surface-2)}.controls button:hover{border-color:var(--accent)}.controls .play{margin-left:auto}.stage{padding:1.1rem 0 .2rem;min-height:8rem}.stage p{font-size:1.03rem;margin:.5rem 0}.stage-title{font:600 16px var(--sans);color:var(--accent)}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:1.2rem 0}.flow span{font:14px/1.6 var(--sans);padding:.6rem .8rem;background:var(--surface-2);border:1px solid var(--rule);border-radius:4px}.flow i{font-style:normal;color:var(--accent)}.flow .faded{opacity:.45}.flow .active{border-color:var(--accent);color:var(--accent)}.changed{animation:enter .26s ease-out}@keyframes enter{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}.small{font:13px/1.7 var(--sans);color:var(--muted)}.measure{font:600 18px/1.6 var(--mono);margin:.7rem 0;color:var(--ink)}.bar{display:block;position:relative;min-height:2.4rem;border-radius:4px;overflow:hidden;margin:1rem 0;background:var(--gold)}.bar span{background:var(--accent);display:block;position:absolute;inset:0;transform-origin:left;transition:transform .5s cubic-bezier(.16,1,.3,1)}.bar span:last-child{display:none}.legend{display:flex;gap:1rem;flex-wrap:wrap;font:13px var(--sans);color:var(--ink-soft)}.legend span::before{content:'';display:inline-block;width:.65rem;height:.65rem;background:var(--accent);margin-right:.4rem}.legend span:last-child::before{background:var(--gold)}.formula{font:16px/1.8 var(--mono);padding:1rem 0;color:var(--ink);overflow-wrap:anywhere}.prompt-source{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.85 var(--mono);background:var(--surface-2);padding:1.25rem;border-radius:4px;color:var(--ink-soft)}.scroll table{min-width:740px}.scroll:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.practice{padding:1.1rem 0;border-top:1px solid var(--rule)}.practice strong{display:block;font:600 16px var(--sans);margin-bottom:.5rem}.practice p{font-size:1rem;margin:.3rem 0}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font:14px/1.6 var(--sans)}th,td{padding:.7rem .8rem;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}th{color:var(--ink);font-weight:600}td{color:var(--ink-soft)}.mono{font-family:var(--mono)}details{border-top:1px solid var(--rule);padding:1rem 0;margin-top:1.4rem;font-size:.95rem}summary{cursor:pointer;color:var(--accent);font:14px/1.5 var(--sans)}details p{font-size:.95rem}.waffle{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;margin:1rem 0;max-width:38rem}.waffle span{aspect-ratio:1;background:var(--rule);border-radius:2px;transition:background-color .2s}.waffle .solo{background:var(--gold)}.waffle .middle{background:var(--accent)}.waffle .four{background:var(--pos)}.model-info{display:flex;flex-wrap:wrap;gap:.5rem 2rem;font:14px/1.7 var(--sans);color:var(--ink-soft);padding:.9rem 0;border-bottom:1px solid var(--rule)}.model-story{font-size:1.02rem;max-width:48rem}.legend span.solo::before{background:var(--gold)}.legend span.middle::before{background:var(--accent)}.legend span.four::before{background:var(--pos)}.token-grid{display:grid;grid-template-columns:minmax(9rem,1.2fr) 1fr 1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);font:13px/1.6 var(--mono)}.token-grid>span{background:var(--surface);padding:.7rem}.token-grid .on{color:var(--pos)}.token-grid .off{color:var(--muted)}.lane{display:flex;align-items:center;gap:.7rem;font:13px var(--sans);margin:.7rem 0}.lane>span{min-width:6rem}.track{height:18px;background:var(--surface-2);flex:1;position:relative;border:1px solid var(--rule)}.track b{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(.428571);transition:transform .5s cubic-bezier(.16,1,.3,1)}.track::after{content:"";position:absolute;left:71.4286%;top:-4px;bottom:-4px;border-left:1px dashed var(--ink-soft)}.lane.total .track b{background:var(--accent)}.lane.total .track{overflow:visible}.deadline{font:14px/1.65 var(--sans);padding:.7rem 0}.step-list{display:flex;flex-wrap:wrap;gap:.6rem;list-style:none;margin:1rem 0;padding:0}.step-list li{font:13px var(--sans);color:var(--muted);border-bottom:2px solid var(--rule);padding:.4rem 0;flex:1 1 8rem}.step-list li.current{color:var(--accent);border-color:var(--accent)}footer{margin:4rem auto 0;padding:2.2rem 0 3rem;border-top:1px solid var(--rule)}footer p{font-size:.92rem}.foot-links{display:flex;gap:.8rem 1.6rem;flex-wrap:wrap;font:13px var(--sans)}.index-list{list-style:none;padding:0}.index-list li{padding:1.5rem 0;border-top:1px solid var(--rule)}.index-list h2{margin:.3rem 0 .7rem}.index-list p{margin:.4rem 0}
+@media(max-width:640px){body{font-size:18px}.prose,.wide{padding-left:1.15rem;padding-right:1.15rem}header{padding-top:4rem}.deck{font-size:1.1rem}.subtitle{font-size:1.03rem}figure{padding:1.1rem .85rem;margin:1.5rem 0}.controls{gap:.45rem}.controls button{padding:.5rem .6rem;font-size:12px}.controls .play{margin-left:0}.stage{min-height:10.5rem}.token-grid{grid-template-columns:minmax(5rem,1.1fr) 1fr 1fr;font-size:11px}.token-grid>span{padding:.6rem .4rem}.model-info{gap:.3rem 1rem}.waffle{gap:4px}.flow span{padding:.5rem .6rem;font-size:13px}section{padding-top:2.8rem;margin-top:2rem}.fig-title{font-size:14px}.plot svg{min-width:630px}.practice p{font-size:1rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+@media print{.theme,.controls,.contents,.skip{display:none}body{background:#fff;color:#111}figure{break-inside:avoid}.plot{overflow:visible}.plot svg{min-width:0}details{display:block}}
+
+::selection{background:var(--accent);color:var(--surface)}
+.paper-header .series{margin:0 0 .7rem}.paper-header .publication{margin-top:1.5rem}
+.readout-values{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;text-align:right;font-variant-numeric:tabular-nums}
+.readout-labels,.readout-row{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:.2rem .85rem}
+.readout-labels{font:600 .8rem/1.4 var(--sans);color:var(--muted);padding:.45rem 0 .6rem}
+.readout-labels .readout-values{grid-column:2}.readout-labels .readout-values span{white-space:normal;color:inherit}
+.readout-row{align-items:center;border-top:1px solid var(--rule);padding:.68rem 0;font:1rem/1.35 var(--sans)}
+.readout-row small{grid-column:1/-1;color:var(--muted);font-size:.78rem}.readout-values span:last-child{font-weight:700;color:var(--accent)}
+.readout-values span{white-space:nowrap}
+.walk-content{border-top:1px solid var(--rule);padding-top:.9rem}.walk-stage{min-height:10.4rem}
+.walk-stage h3{margin:.25rem 0 .7rem}.walk-stage p{margin:.6rem 0}
+.formula{padding:.75rem .9rem;background:var(--surface-2);border-radius:.5rem;font:.86rem/1.5 var(--mono);overflow-wrap:anywhere}
+.article-plot svg{display:block;width:100%;height:auto;max-width:710px;margin:0 auto;overflow:visible}
+.episode-grid{display:grid;grid-template-columns:repeat(29,minmax(0,1fr));gap:4px;max-width:680px;margin:1rem auto}
+.episode-grid span{aspect-ratio:1;border-radius:2px}.episode-grid .budget,.legend .budget{background:var(--accent)}
+.episode-grid .idle,.legend .idle{border:1.5px solid var(--gold);background:var(--surface)}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem 1.3rem;list-style:none;padding:0;font: .86rem/1.45 var(--sans)}
+.legend b{display:inline-block;width:.7rem;height:.7rem;margin-right:.45rem;border-radius:2px}
+.marker-row{padding:.55rem 0 .7rem;border-top:1px solid var(--rule);font:.9rem/1.4 var(--sans)}
+.marker-line{display:grid;grid-template-columns:2.75rem minmax(0,1fr) 3.1rem;gap:.5rem;align-items:center;margin-top:.26rem;font-variant-numeric:tabular-nums}
+.marker-track{height:8px;background:var(--surface-2);border-radius:2px}.marker-track b{display:block;height:100%;background:var(--accent);border-radius:2px}.marker-track.teacher b{background:var(--gold)}
+.path-row{display:grid;grid-template-columns:9.3rem minmax(0,1fr);gap:.45rem 1rem;padding:.8rem 0;border-top:1px solid var(--rule);font:.93rem/1.5 var(--sans)}
+.path-row p{margin:0}.table-scroll{overflow-x:auto}.table-scroll table{min-width:34rem}
+.theme{z-index:5}.room-list{list-style:none;padding:0}.room-list li{padding:1.25rem 0;border-top:1px solid var(--rule)}.room-list h2{margin:.1rem 0;font-size:1.65rem}
+@media(max-width:640px){.theme{position:absolute}.episode-grid{grid-template-columns:repeat(23,minmax(0,1fr));gap:3px}.path-row{grid-template-columns:1fr}.readout-row{font-size:.9rem}.readout-labels{font-size:.73rem}.walk-stage{min-height:12rem}}
+@media(prefers-reduced-motion:reduce){[data-play]{display:none}}
+@media print{.walk-stage[hidden]{display:block!important}.walk-stage{min-height:0}.walk-content{border-top:0}}
+</style></head>
+<body id="top"><a class="skip" href="#article">Skip to content</a><button type="button" class="theme" aria-label="Toggle color theme">Theme</button><header class="paper-header"><div class="prose">
+<p class="series">Collective Intelligence · Part 10<br><a href="../">Part 1</a> · <a href="../part-2/">Part 2</a> · <a href="../part-3/">Part 3</a> · <a href="../part-4/">Part 4</a> · <a href="../part-5/">Part 5</a> · <a href="../part-6/">Part 6</a> · <a href="../part-7/">Part 7</a> · <a href="../part-8/">Part 8</a> · <a href="../part-9/">Part 9</a> · <a href="../part-11/">Part 11</a></p>
+<h1>Where Agent Teams Get Stuck</h1><p class="subtitle">Training a 9B coding team to build, test, and choose a solution</p><p class="deck">A 9B coding team trained on Flash demonstrations submitted zero solutions in 197 FrontierCS rollouts. Training on tool calls and messages brought back submissions in a small follow-up. In handoff experiments, the 9B gained little from inheriting a plan or a first build. Scores rose most when Flash left behind competing programs with measured results. Teacher critiques prompted more changes of approach, with no clear score advantage over the controls.</p>
+<p class="publication">Published <time datetime="2026-11-14">November 14, 2026</time> · Evidence through November 14, 2026</p>
+<nav class="contents" aria-label="Article sections"><a href="#failure">The failure</a><a href="#harness">Two clocks</a><a href="#rl">Team RL</a><a href="#protocol">Protocol audit</a><a href="#traces">Two traces</a><a href="#next">Targeted SFT</a><a href="#handoff">Flash handoffs</a><a href="#feedback">Teacher feedback</a><a href="#base-sft">SFT from base</a></nav></div></header><main id="article"><section id="failure">
+  <div class="prose"><h2>197 attempts ended before the team submitted</h2></div>
+  <div class="wide"><figure id="figure-1">
+    <div class="fig-title">Figure 1 · What happened after supervised training</div>
+    <div class="episode-grid" role="img" aria-label="197 rollout episodes. Zero submissions. 154 exhausted the token budget and 43 went idle."><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="budget"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span><span class="idle"></span></div>
+    <ul class="legend"><li><b class="budget" aria-hidden="true"></b>154 exhausted the budget</li><li><b class="idle" aria-hidden="true"></b>43 went idle</li><li><strong>0 submitted</strong></li></ul>
+    <figcaption>Each square is one observed rollout episode from the SFT-initialized run. The colors group ending types. The layout does not encode time or task order.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>Part 8 described a team harness that gives models the same basic tools. An agent can fork a teammate, exchange measurements, and submit one committed program for the team. The obvious next question was whether a smaller model could learn to use those tools well enough to combine what its teammates found.</p>
+    <p>We trained a 9B on 631 valid Flash team episodes. These provided 2,322 per-agent trajectories, about 158 million assistant tokens, and about 245 million sequence tokens once the surrounding context was included. We kept the small probe panel and our FrontierCS evaluation set out of SFT. The idea was to give the student practice following a full team episode before asking reinforcement learning to refine its choices.</p>
+    <p>The first rollouts from that checkpoint surprised us. None of 197 episodes submitted a solution. In the sampled run, 27% of turns lacked a tool call and the model produced about nine malformed calls per episode. The first RL update recorded zero loss and zero gradient. All the observed rewards were zero, which gave the group-relative outcome term no preference among the sampled attempts.</p>
+    <p>The output failures mattered in their own right. Much of the missing tool use came from turns that never closed their thinking block. A team that has found promising code can still end with no submitted solution if it cannot emit the final tool call. Our direct-RL team had used the interface successfully. That narrowed the question to what changed with the demonstrations and the checkpoint, while leaving several possible causes on the table.</p>
+    <p class="related"><a href="https://macoredroid.github.io/collective-intelligence/part-8/">Part 8 · One Harness, Six Ways to Work</a></p>
+  </div>
+</section>
+
+<section id="harness">
+  <div class="prose"><h2>Change the clock and the right moment to submit changes</h2>
+    <p>The core interface has three moves. <strong>Fork</strong> starts a peer from the parent’s conversation and workspace snapshot, with its own seat identity and branch. <strong>Message</strong> passes an idea, test result or commit reference to a peer. <strong>Submit</strong> selects one committed program for the whole team. A peer can win the team’s submission without ever invoking the submit tool itself.</p>
+    <p>The original Flash traces paced work against elapsed time. Later we gave each 9B agent 100K generated tokens. A wall clock measures how much time a team occupies. A token clock controls the amount each agent can write, even when the models run at different speeds. More agents can still spend more tokens in aggregate, so comparing teams also calls for a total-work measure.</p>
+  </div>
+  <div class="wide"><figure id="figure-2">
+    <div class="fig-title">Figure 2 · The teacher and student saw different cues</div>
+    <div class="path-row"><strong>Older Flash traces</strong><p>Minutes remaining → time-based merge routine → submit the selected commit.</p></div>
+    <div class="path-row"><strong>9B evaluation</strong><p>Tokens remaining → merge-point notices → inspect current team state and confirm the submission.</p></div>
+    <div class="path-row"><strong>Demonstration audit</strong><p>139 of 631 teacher episodes contained an agent beyond 100,000 tokens. The old episodes did not use the two-step confirmation.</p></div>
+    <figcaption>The timing cues and termination contract changed together. The audit identifies exposure differences. It does not separate them from output formatting, reasoning length, or the change of model.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>On the newer interface, the first <code>submit_final</code> call shows the live team state without submitting. A second call with <code>confirm: true</code> can select the exact commit and end the episode. The prompt asks agents to report measured results near the merge point and agree to a commit explicitly. Confirmation gives the submitter a chance to reconsider, but the tool does not require unanimous consent. That distinction later mattered: the 9B could satisfy the tool contract while skipping the comparison the prompt intended.</p>
+    <p>The old demonstrations contained successful endings under a different routine. In the initial audit, nearly half of turns mentioned time and about 9% were flagged for wall-clock behavior. Those flags are broad and can overlap. Replacing “two minutes remaining” with “tokens remaining” would leave intact the decisions that came before and after it. We chose to rerun Flash so the demonstrations could contain the choices it actually made after seeing the student’s budget and confirmation state.</p>
+  </div>
+</section>
+
+<section id="rl">
+  <div class="prose"><h2>Reinforcement learning changed how teams searched</h2>
+    <p>Before the SFT run, we trained the 9B directly in the team harness. The first pilot assigned credit primarily from the verified team outcome, with a selection term on episodes where the graded candidates differed. We could grade a submitted program on correctness and objective value, and look back at other eligible commits to estimate how much score the selection left on the table.</p>
+    <p>The five-update pilot drew eight team episodes per training task. We kept a small fixed probe of four tasks, two episodes each. In a blind review of 24 training pairs, the later teams explored better-separated directions in 14, worse-separated directions in three, with seven ties. The direction result did not carry over to the sampled probe pairs. In another matched training slice, the later teams sent more messages and spent more tokens. The task-matched training reward change was +0.016 with an interval from −0.07 to +0.10. More visible teamwork gave us behavior to inspect; it was weak evidence for better outcomes.</p>
+  </div>
+  <div class="wide"><figure id="figure-3">
+    <div class="fig-title">Figure 3 · The fixed pilot probe varied across checkpoints</div>
+    <div class="article-plot"><svg role="img" aria-label="Pilot held-out probe means at steps 0 through 5: 0.438, 0.364, 0.536, 0.306, 0.481, 0.524. Each point has eight episodes." xmlns:xlink="http://www.w3.org/1999/xlink" width="352.224687pt" height="203.647531pt" viewBox="0 0 352.224687 203.647531" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-14T11:46:27.856734</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="pilot-figure_1">
+  <g id="pilot-patch_1">
+   <path d="M -0 203.647531
+L 352.224687 203.647531
+L 352.224687 0
+L -0 0
+L -0 203.647531
+z
+" style="fill: none"/>
+  </g>
+  <g id="pilot-axes_1">
+   <g id="pilot-patch_2">
+    <path d="M 49.284688 161.446594
+L 345.024688 161.446594
+L 345.024688 11.758594
+L 49.284688 11.758594
+L 49.284688 161.446594
+z
+" style="fill: none"/>
+   </g>
+   <g id="pilot-matplotlib.axis_1">
+    <g id="pilot-xtick_1">
+     <g id="pilot-line2d_1">
+      <defs>
+       <path id="pilot-med3480d3a3" d="M 0 0
+L 0 3.5
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#pilot-med3480d3a3" x="67.444161" y="161.446594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_1">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="67.444161" y="177.563781" transform="rotate(-0 67.444161 177.563781)">0</text>
+     </g>
+    </g>
+    <g id="pilot-xtick_2">
+     <g id="pilot-line2d_2">
+      <g>
+       <use xlink:href="#pilot-med3480d3a3" x="119.328372" y="161.446594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_2">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="119.328372" y="177.563781" transform="rotate(-0 119.328372 177.563781)">1</text>
+     </g>
+    </g>
+    <g id="pilot-xtick_3">
+     <g id="pilot-line2d_3">
+      <g>
+       <use xlink:href="#pilot-med3480d3a3" x="171.212582" y="161.446594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_3">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="171.212582" y="177.563781" transform="rotate(-0 171.212582 177.563781)">2</text>
+     </g>
+    </g>
+    <g id="pilot-xtick_4">
+     <g id="pilot-line2d_4">
+      <g>
+       <use xlink:href="#pilot-med3480d3a3" x="223.096793" y="161.446594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_4">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="223.096793" y="177.563781" transform="rotate(-0 223.096793 177.563781)">3</text>
+     </g>
+    </g>
+    <g id="pilot-xtick_5">
+     <g id="pilot-line2d_5">
+      <g>
+       <use xlink:href="#pilot-med3480d3a3" x="274.981003" y="161.446594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_5">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="274.981003" y="177.563781" transform="rotate(-0 274.981003 177.563781)">4</text>
+     </g>
+    </g>
+    <g id="pilot-xtick_6">
+     <g id="pilot-line2d_6">
+      <g>
+       <use xlink:href="#pilot-med3480d3a3" x="326.865214" y="161.446594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_6">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="326.865214" y="177.563781" transform="rotate(-0 326.865214 177.563781)">5</text>
+     </g>
+    </g>
+    <g id="pilot-text_7">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="197.154688" y="193.564719" transform="rotate(-0 197.154688 193.564719)">Pilot checkpoint</text>
+    </g>
+   </g>
+   <g id="pilot-matplotlib.axis_2">
+    <g id="pilot-ytick_1">
+     <g id="pilot-line2d_7">
+      <path d="M 49.284688 161.446594
+L 345.024688 161.446594
+" clip-path="url(#pilot-p3842c12fbe)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="pilot-line2d_8">
+      <defs>
+       <path id="pilot-mef1fc93d2e" d="M 0 0
+L -3.5 0
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#pilot-mef1fc93d2e" x="49.284688" y="161.446594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_8">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.284688" y="166.005188" transform="rotate(-0 42.284688 166.005188)">0.0</text>
+     </g>
+    </g>
+    <g id="pilot-ytick_2">
+     <g id="pilot-line2d_9">
+      <path d="M 49.284688 131.508994
+L 345.024688 131.508994
+" clip-path="url(#pilot-p3842c12fbe)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="pilot-line2d_10">
+      <g>
+       <use xlink:href="#pilot-mef1fc93d2e" x="49.284688" y="131.508994" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_9">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.284688" y="136.067588" transform="rotate(-0 42.284688 136.067588)">0.2</text>
+     </g>
+    </g>
+    <g id="pilot-ytick_3">
+     <g id="pilot-line2d_11">
+      <path d="M 49.284688 101.571394
+L 345.024688 101.571394
+" clip-path="url(#pilot-p3842c12fbe)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="pilot-line2d_12">
+      <g>
+       <use xlink:href="#pilot-mef1fc93d2e" x="49.284688" y="101.571394" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_10">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.284688" y="106.129988" transform="rotate(-0 42.284688 106.129988)">0.4</text>
+     </g>
+    </g>
+    <g id="pilot-ytick_4">
+     <g id="pilot-line2d_13">
+      <path d="M 49.284688 71.633794
+L 345.024688 71.633794
+" clip-path="url(#pilot-p3842c12fbe)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="pilot-line2d_14">
+      <g>
+       <use xlink:href="#pilot-mef1fc93d2e" x="49.284688" y="71.633794" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_11">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.284688" y="76.192388" transform="rotate(-0 42.284688 76.192388)">0.6</text>
+     </g>
+    </g>
+    <g id="pilot-ytick_5">
+     <g id="pilot-line2d_15">
+      <path d="M 49.284688 41.696194
+L 345.024688 41.696194
+" clip-path="url(#pilot-p3842c12fbe)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="pilot-line2d_16">
+      <g>
+       <use xlink:href="#pilot-mef1fc93d2e" x="49.284688" y="41.696194" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_12">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.284688" y="46.254788" transform="rotate(-0 42.284688 46.254788)">0.8</text>
+     </g>
+    </g>
+    <g id="pilot-ytick_6">
+     <g id="pilot-line2d_17">
+      <path d="M 49.284688 11.758594
+L 345.024688 11.758594
+" clip-path="url(#pilot-p3842c12fbe)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="pilot-line2d_18">
+      <g>
+       <use xlink:href="#pilot-mef1fc93d2e" x="49.284688" y="11.758594" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="pilot-text_13">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.284688" y="16.317188" transform="rotate(-0 42.284688 16.317188)">1.0</text>
+     </g>
+    </g>
+    <g id="pilot-text_14">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="16.318125" y="86.602594" transform="rotate(-90 16.318125 86.602594)">Mean native score (0–1)</text>
+    </g>
+   </g>
+   <g id="pilot-line2d_19">
+    <path d="M 67.444161 95.88325
+L 119.328372 106.960162
+L 171.212582 81.213826
+L 223.096793 115.642066
+L 274.981003 89.446666
+L 326.865214 83.010082
+" clip-path="url(#pilot-p3842c12fbe)" style="fill: none; stroke: var(--accent, #3a5f8a); stroke-width: 1.5; stroke-linecap: square"/>
+    <defs>
+     <path id="pilot-m77a88e863f" d="M 0 3
+C 0.795609 3 1.55874 2.683901 2.12132 2.12132
+C 2.683901 1.55874 3 0.795609 3 0
+C 3 -0.795609 2.683901 -1.55874 2.12132 -2.12132
+C 1.55874 -2.683901 0.795609 -3 0 -3
+C -0.795609 -3 -1.55874 -2.683901 -2.12132 -2.12132
+C -2.683901 -1.55874 -3 -0.795609 -3 0
+C -3 0.795609 -2.683901 1.55874 -2.12132 2.12132
+C -1.55874 2.683901 -0.795609 3 0 3
+z
+" style="stroke: var(--accent, #3a5f8a)"/>
+    </defs>
+    <g clip-path="url(#pilot-p3842c12fbe)">
+     <use xlink:href="#pilot-m77a88e863f" x="67.444161" y="95.88325" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#pilot-m77a88e863f" x="119.328372" y="106.960162" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#pilot-m77a88e863f" x="171.212582" y="81.213826" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#pilot-m77a88e863f" x="223.096793" y="115.642066" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#pilot-m77a88e863f" x="274.981003" y="89.446666" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+     <use xlink:href="#pilot-m77a88e863f" x="326.865214" y="83.010082" style="fill: var(--accent, #3a5f8a); stroke: var(--accent, #3a5f8a)"/>
+    </g>
+   </g>
+   <g id="pilot-patch_3">
+    <path d="M 49.284688 161.446594
+L 49.284688 11.758594
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="pilot-patch_4">
+    <path d="M 49.284688 161.446594
+L 345.024688 161.446594
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="pilot-text_15">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="67.444161" y="86.88325" transform="rotate(-0 67.444161 86.88325)">0.438</text>
+   </g>
+   <g id="pilot-text_16">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="119.328372" y="97.960162" transform="rotate(-0 119.328372 97.960162)">0.364</text>
+   </g>
+   <g id="pilot-text_17">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="171.212582" y="72.213826" transform="rotate(-0 171.212582 72.213826)">0.536</text>
+   </g>
+   <g id="pilot-text_18">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="223.096793" y="106.642066" transform="rotate(-0 223.096793 106.642066)">0.306</text>
+   </g>
+   <g id="pilot-text_19">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="274.981003" y="80.446666" transform="rotate(-0 274.981003 80.446666)">0.481</text>
+   </g>
+   <g id="pilot-text_20">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="326.865214" y="74.010082" transform="rotate(-0 326.865214 74.010082)">0.524</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pilot-p3842c12fbe">
+   <rect x="49.284688" y="11.758594" width="295.74" height="149.688"/>
+  </clipPath>
+ </defs>
+</svg>
+</div>
+    <figcaption>Four fixed tasks and two episodes per task at each point. The endpoint rose from 0.438 to 0.524, while intermediate results moved in both directions. Eight episodes per checkpoint leave substantial sampling uncertainty.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>The next phase tried giving more credit to useful participants. We used the selected commit’s lineage and verification as credit signals, then enabled a team penalty for leaving a better eligible candidate unused. A lineage signal can recognize the agent that produced the adopted change. It also makes provenance matter: re-committing somebody else’s work can look like authorship unless you track where the code came from.</p>
+    <p>We called the difference between the best eligible candidate’s score and the submitted score <strong>selection regret</strong>. It has an obvious shortcut: a team can show zero regret by exposing only its final choice. We tracked how many candidates reached grading alongside regret. The count held steady in the measured windows; the gaps between candidates widened.</p>
+  </div>
+  <div class="wide"><figure id="figure-4">
+    <div class="fig-title">Figure 4 · The candidate pool improved while the submission slipped</div>
+    <div class="readout-labels"><div class="readout-values"><span>Early window</span><span>Later window</span></div></div>
+    <div class="readout-row"><strong>Graded candidates per episode</strong><div class="readout-values"><span>1.37</span><span>1.37</span></div></div>
+    <div class="readout-row"><strong>Mean best eligible score</strong><div class="readout-values"><span>0.373</span><span>0.386</span></div></div>
+    <div class="readout-row"><strong>Mean submitted score</strong><div class="readout-values"><span>0.313</span><span>0.304</span></div></div>
+    <div class="readout-row"><strong>Mean selection regret</strong><div class="readout-values"><span>0.060</span><span>0.083</span></div></div>
+    <figcaption>Training windows at updates 0–7 and 13–18, on the native 0–1 scale. The average is rounded separately for each quantity. Task mix, policy and reward changed across windows.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>A team that finds stronger alternatives can incur more regret without changing how it picks. Our comparison with random selection accounted for part of that: the regret ratio went from 0.78 to 0.85 of random-choice regret, with noisy estimates across updates. The penalty did not lower the observed regret. The comparison does not isolate its effect, but it points to a problem that a better candidate pool alone cannot solve.</p>
+    <details><summary>What the selected high-regret episodes showed</summary>
+      <p>We examined 12 deliberately selected training episodes with high regret. Every one had a better commit visible before submission, and 10 of the selected submissions scored zero. Eleven ended early, frequently with peers still testing. Nine submitters knew of the better commit, and only one episode had explicit agreement. Sample-only checks sometimes gave identical results for candidates whose full scores were very different. This is a failure audit. It describes how bad choices occurred and does not estimate their prevalence.</p>
+      <p>We used language-model readers to compare behaviors that a program score cannot label directly: independent directions, same-input tests, use of peer evidence, and the choice to submit. We also wrote a parser for concrete actions. The execution judge supplied verifiable scores. The readers supplied process annotations, with disagreements and missing context checked against traces. We did not treat a reader’s preference as the answer’s correctness or as evidence that a process reward had worked.</p>
+    </details>
+    <p>We next continued the policy with only outcome reward, leaving the credit and regret readouts as diagnostics. At the handoff checkpoint, 56% of episodes ran or compared a peer’s commit before submitting, 47% did a same-input comparison, and 18% used their own tests in a comparison. The last figure had already been declining before we removed the auxiliary rewards. It would be misleading to attribute that decline to the new objective. That outcome-trained branch became our RL continuation control for the next SFT experiment.</p>
+  </div>
+</section>
+
+<section id="protocol">
+  <div class="prose"><h2>We had been counting a retired protocol</h2>
+    <p>Some of our cooperation counters stayed at zero. They came from an earlier version of the harness that recorded structured proposals, acknowledgments, objections and check receipts. The commit-based harness did not expose those tools. Its agents could express the same decisions as ordinary messages and Git commits, outside the event stream those counters read.</p>
+    <p>We went back to the active protocol. It asks agents to post their approach, attach an objective only when measured, name a best commit near the merge, and agree to a specific commit. These markers give a more direct way to find the decision turns in traces. A checker still has to verify that the associated action happened.</p>
+  </div>
+  <div class="wide"><figure id="figure-5">
+    <div class="fig-title">Figure 5 · What appeared in the active protocol</div>
+    <div class="marker-row"><strong>Post an approach</strong>
+<div class="marker-line"><span>9B</span><span class="marker-track" aria-hidden="true"><b style="width:83.784%"></b></span><span>31/37</span></div>
+<div class="marker-line"><span>Flash</span><span class="marker-track teacher" aria-hidden="true"><b style="width:100.000%"></b></span><span>40/40</span></div></div><div class="marker-row"><strong>Commit with a measured objective</strong>
+<div class="marker-line"><span>9B</span><span class="marker-track" aria-hidden="true"><b style="width:5.405%"></b></span><span>2/37</span></div>
+<div class="marker-line"><span>Flash</span><span class="marker-track teacher" aria-hidden="true"><b style="width:85.000%"></b></span><span>34/40</span></div></div><div class="marker-row"><strong>Post the best candidate</strong>
+<div class="marker-line"><span>9B</span><span class="marker-track" aria-hidden="true"><b style="width:2.703%"></b></span><span>1/37</span></div>
+<div class="marker-line"><span>Flash</span><span class="marker-track teacher" aria-hidden="true"><b style="width:87.500%"></b></span><span>35/40</span></div></div><div class="marker-row"><strong>Agree to a specific commit</strong>
+<div class="marker-line"><span>9B</span><span class="marker-track" aria-hidden="true"><b style="width:8.108%"></b></span><span>3/37</span></div>
+<div class="marker-line"><span>Flash</span><span class="marker-track teacher" aria-hidden="true"><b style="width:62.500%"></b></span><span>25/40</span></div></div>
+    <figcaption>Episode-level marker counts in a small audit of the RL-trained 9B and the regenerated Flash teacher. Three of the 40 sampled 9B captures were excluded from the marker count. Values are descriptive, with different sample sizes. A reported objective is not itself independent verification.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>The difference was largest around choosing a program. The 9B usually announced an approach. It rarely posted a best commit or attached a measured objective. Flash produced those markers frequently under the regenerated harness. That makes the comparison useful for finding training targets. Because the audit sampled different policies and episodes, it does not establish a causal effect on score.</p>
+    <p>We also revised the prompt to make seat identity explicit and ask for a number only when the agent had a measurement. The automated count of one kind of unsupported score claim dropped sharply. A small blind reread still found unverified claims in seven of 12 selected messages from the later version, down from 11 of 12 in the earlier one. The detector missed agents relaying peers’ numbers as their own evidence. The prompt and policy changed together, so this was a calibration check on the detector and a reason to keep auditing the messages.</p>
+    <p>Even the audit needed its own check. One reader received an empty prompt extract for the 9B episodes and inferred that the agents never saw the procedure. The underlying episodes carried the procedure. The chart uses the direct marker counts, while the walkthrough uses concrete, observable actions from the selected excerpts. This kind of provenance matters when a trace reader sees only a filtered view of an episode.</p>
+  </div>
+</section>
+
+<section id="traces">
+  <div class="prose"><h2>Follow the evidence to the decision</h2>
+    <p>In the Flash excerpt, a peer extracted the exact candidate commit, rebuilt it in a clean directory and ran the checker before endorsing it. In the 9B excerpt, an agent asked for objections near the merge point and interpreted the absence of an explicit objection as permission to submit. Both episodes contain the vocabulary of teamwork. Their decisions are grounded in different evidence.</p>
+  </div>
+  <div class="wide"><figure id="figure-6">
+    <div class="fig-title">Figure 6 · Two excerpts from the protocol audit</div>
+    <div class="walk" data-walk>
+<div class="controls" role="group" aria-label="Walkthrough steps"><button type="button" data-step="0" aria-controls="ci-0" aria-pressed="true">Flash · recover</button><button type="button" data-step="1" aria-controls="ci-1" aria-pressed="false">Flash · verify</button><button type="button" data-step="2" aria-controls="ci-2" aria-pressed="false">9B · ask</button><button type="button" data-step="3" aria-controls="ci-3" aria-pressed="false">9B · decide</button><button type="button" class="play" data-play aria-pressed="false">Play steps</button></div>
+<div class="walk-content" aria-live="polite"><div class="walk-stage" id="ci-0" data-stage="0"><h3>A teammate names a candidate</h3><p>A Flash peer extracted another agent’s exact commit into an empty directory. That fixed the identity of the program being checked and kept local edits out of the comparison.</p><p class="formula">Peer commit → clean directory</p></div><div class="walk-stage" id="ci-1" data-stage="1" hidden><h3>The endorsement follows an actual run</h3><p>The peer rebuilt the program, ran the judge sandbox and checked the output. It then sent an agreement naming the same commit. The audit excerpt ends at the endorsement.</p><p class="formula">Rebuild → run → check → agree to that commit</p></div><div class="walk-stage" id="ci-2" data-stage="2" hidden><h3>A 9B agent asks whether to finish</h3><p>At the merge point, the agent asked its teammates whether to submit or keep improving. The question created a chance to surface a better candidate or an unfinished test.</p><p class="formula">Merge notice → request for objections</p></div><div class="walk-stage" id="ci-3" data-stage="3" hidden><h3>Silence is treated as permission to submit</h3><p>The agent reasoned that no teammate had specifically said no, so it should submit. The excerpt records a decision based on silence. It contains no independent comparison of candidates at that moment.</p><p class="formula">No explicit objection → decision to submit</p></div></div>
+</div>
+    <figcaption>Selected episodes, paraphrased and stripped of commit identifiers. The Flash excerpt follows an independent check through endorsement. The 9B excerpt follows a merge message through the decision to submit. These excerpts do not constitute a matched score comparison.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>To evaluate a peer’s contribution, I want a chain I can inspect. Which commit did the peer provide? Which inputs were used? Did the submitter consider that result before choosing? The judge can tell us the program’s quality after the episode. The chain tells us which information the team used while there was still time to change the answer.</p>
+    <p>That distinction matters for reward design. Awarding points for an <code>agree:</code> message could teach an agent to agree with itself. Awarding points for a reported <code>obj=</code> could teach it to copy somebody else’s number. Both can look like better coordination in a log. We need to check that the objective came from running the stated program and that the final choice can be traced to evidence available to the submitter.</p>
+  </div>
+</section>
+
+<section id="next">
+  <div class="prose"><h2>We taught the submit call before we taught when to use it</h2>
+    <p>We kept complete, cleaned agent histories as context and applied supervised loss to selected turns. We marked approach posts, measured commit messages, endorsements and best-candidate posts. We also kept actions that support them, such as reading a peer commit or running a measurement. Tool results stayed in context so the model could see the evidence behind the action it was asked to imitate.</p>
+    <p>We piloted language-model annotation for finding those supporting turns. On nine complete pilot episodes it recovered 94 of 99 exact-pattern marker turns and proposed additional matches. The overlap was a cross-check, not a ground-truth accuracy measure. For the first full run we used text-pattern anchors and explicit rules for preceding measurements and peer-commit reads. That version gave us a reproducible training set without depending on a model label for every turn.</p>
+  </div>
+  <div class="wide"><figure id="figure-7">
+    <div class="fig-title">Figure 7 · Episode selection and token selection are different interventions</div>
+    <div class="readout-row"><strong>Regenerated episodes selected</strong><div class="readout-values"><span>539 of 608</span><span>89%</span></div><small>564 survived cleaning; 539 of those contained a marker.</small></div>
+    <div class="readout-row"><strong>Assistant tokens with loss</strong><div class="readout-values"><span>10.85M</span><span>7.4%</span></div><small>Includes marker turns and the selected actions leading up to them.</small></div>
+    <div class="readout-row"><strong>Share of full sequence tokens with loss</strong><div class="readout-values"><span>10.85M of 214.7M</span><span>5.1%</span></div><small>The model still processes the surrounding context.</small></div>
+    <figcaption>First mask-based SFT build on the regenerated traces. The token denominator in the middle row is sampled assistant tokens in the build. The bottom row includes the rest of the sequence.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>In an earlier inventory, 95% of episodes contained a marker, yet the marker turns accounted for only 1.7% of sampled tokens. Filtering whole episodes would have kept most of the original supervision. Adding the supporting actions and masking remaining wall-time turns gave the first build a 7.4% loss share. This is a change in what the student is asked to imitate. It does not make the long context free.</p>
+    <p>After filtering for genuine episodes and masking leaked portions, we trained on 525 episodes. The first checkpoint scored zero on a four-task panel with two episodes per task. Four episodes never submitted and the other four submitted code that failed to compile. One agent wrote a plausible plan, then spent 57K tokens thinking in a single turn. It exhausted its budget without compiling, testing or committing.</p>
+    <p>Most of the loss tokens in those selected turns were still Flash reasoning. We reran the same training recipe and kept loss only on messages and tool calls. In the eight-episode panel, the 90th percentile of thinking length fell from 8,675 to 62 tokens per call. The team submitted explicitly in seven of eight episodes and scored 0.188. The reference team scored 0.461 and submitted all eight. The small panel and residual trainer–serving discrepancy limit how much we can attribute to the mask, but we had enough evidence to hold the planned RL follow-up.</p>
+    <p>One trace posted the literal agreement template with a placeholder for the commit. Another asked a peer to rerun a candidate and proceeded without a reply. We also caught a counting bug that initially reported eight submissions. The harness had graded a fallback worktree in the remaining episode. We switched the count to explicit submit events so we could measure the behavior independently of the grade.</p>
+  </div>
+</section>
+
+<section id="handoff">
+  <div class="prose">
+    <h2>What can the 9B do with a Flash team’s work in progress?</h2>
+    <p>We had seen agents fork, post an approach and submit. To find out which part needed help, we paused Flash teams at successive milestones and let the RL-trained 9B team finish their work. We restored each seat’s tool and message history, its inbox and worktree, and the shared commits. In the main comparison we stripped Flash’s private reasoning and preserved the fraction of each seat’s token budget already spent. The 9B chose its own next actions from there.</p>
+  </div>
+  <div class="wide"><figure id="figure-8">
+    <div class="fig-title">Figure 8 · The biggest difference came after two agents measured candidates</div>
+    <div class="article-plot"><svg role="img" aria-label="Mean team score by handoff stage. 9B from scratch 0.154, initial forks 0.180, first build 0.212, two measured candidates 0.508, first best candidate post 0.625, ready to submit 0.741." xmlns:xlink="http://www.w3.org/1999/xlink" width="424.76375pt" height="224.857469pt" viewBox="0 0 424.76375 224.857469" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-14T11:46:27.878277</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="team-handoff-figure_1">
+  <g id="team-handoff-patch_1">
+   <path d="M 0 224.857469
+L 424.76375 224.857469
+L 424.76375 0
+L 0 0
+L 0 224.857469
+z
+" style="fill: none"/>
+  </g>
+  <g id="team-handoff-axes_1">
+   <g id="team-handoff-patch_2">
+    <path d="M 49.28375 190.152
+L 417.56375 190.152
+L 417.56375 7.2
+L 49.28375 7.2
+L 49.28375 190.152
+z
+" style="fill: none"/>
+   </g>
+   <g id="team-handoff-matplotlib.axis_1">
+    <g id="team-handoff-xtick_1">
+     <g id="team-handoff-line2d_1"/>
+     <g id="team-handoff-text_1">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(64.655428 202.251414)">9B from</text>
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(66.139803 214.254148)">scratch</text>
+     </g>
+    </g>
+    <g id="team-handoff-xtick_2">
+     <g id="team-handoff-line2d_2"/>
+     <g id="team-handoff-text_2">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(130.229163 202.251414)">Initial</text>
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(131.689319 214.254148)">forks</text>
+     </g>
+    </g>
+    <g id="team-handoff-xtick_3">
+     <g id="team-handoff-line2d_3"/>
+     <g id="team-handoff-text_3">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(193.116179 202.251414)">First</text>
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(191.341961 214.254148)">build</text>
+     </g>
+    </g>
+    <g id="team-handoff-xtick_4">
+     <g id="team-handoff-line2d_4"/>
+     <g id="team-handoff-text_4">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(227.265696 202.251414)">Two measured</text>
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(235.785227 214.254148)">candidates</text>
+     </g>
+    </g>
+    <g id="team-handoff-xtick_5">
+     <g id="team-handoff-line2d_5"/>
+     <g id="team-handoff-text_5">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(299.857399 202.251414)">First best</text>
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(285.575368 214.254148)">candidate post</text>
+     </g>
+    </g>
+    <g id="team-handoff-xtick_6">
+     <g id="team-handoff-line2d_6"/>
+     <g id="team-handoff-text_6">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(360.223322 202.251414)">Ready to</text>
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: var(--ink-soft, #27313d)" transform="translate(365.188947 214.254148)">submit</text>
+     </g>
+    </g>
+   </g>
+   <g id="team-handoff-matplotlib.axis_2">
+    <g id="team-handoff-ytick_1">
+     <g id="team-handoff-line2d_7">
+      <path d="M 49.28375 190.152
+L 417.56375 190.152
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="team-handoff-line2d_8">
+      <defs>
+       <path id="team-handoff-m0e88483d97" d="M 0 0
+L -3.5 0
+" style="stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#team-handoff-m0e88483d97" x="49.28375" y="190.152" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="team-handoff-text_7">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.28375" y="194.710594" transform="rotate(-0 42.28375 194.710594)">0.0</text>
+     </g>
+    </g>
+    <g id="team-handoff-ytick_2">
+     <g id="team-handoff-line2d_9">
+      <path d="M 49.28375 147.104471
+L 417.56375 147.104471
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="team-handoff-line2d_10">
+      <g>
+       <use xlink:href="#team-handoff-m0e88483d97" x="49.28375" y="147.104471" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="team-handoff-text_8">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.28375" y="151.663064" transform="rotate(-0 42.28375 151.663064)">0.2</text>
+     </g>
+    </g>
+    <g id="team-handoff-ytick_3">
+     <g id="team-handoff-line2d_11">
+      <path d="M 49.28375 104.056941
+L 417.56375 104.056941
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="team-handoff-line2d_12">
+      <g>
+       <use xlink:href="#team-handoff-m0e88483d97" x="49.28375" y="104.056941" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="team-handoff-text_9">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.28375" y="108.615535" transform="rotate(-0 42.28375 108.615535)">0.4</text>
+     </g>
+    </g>
+    <g id="team-handoff-ytick_4">
+     <g id="team-handoff-line2d_13">
+      <path d="M 49.28375 61.009412
+L 417.56375 61.009412
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="team-handoff-line2d_14">
+      <g>
+       <use xlink:href="#team-handoff-m0e88483d97" x="49.28375" y="61.009412" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="team-handoff-text_10">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.28375" y="65.568006" transform="rotate(-0 42.28375 65.568006)">0.6</text>
+     </g>
+    </g>
+    <g id="team-handoff-ytick_5">
+     <g id="team-handoff-line2d_15">
+      <path d="M 49.28375 17.961882
+L 417.56375 17.961882
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.16; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="team-handoff-line2d_16">
+      <g>
+       <use xlink:href="#team-handoff-m0e88483d97" x="49.28375" y="17.961882" style="fill: var(--ink-soft, #27313d); stroke: var(--ink-soft, #27313d); stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="team-handoff-text_11">
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: var(--ink-soft, #27313d)" x="42.28375" y="22.520476" transform="rotate(-0 42.28375 22.520476)">0.8</text>
+     </g>
+    </g>
+    <g id="team-handoff-text_12">
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="16.317188" y="98.676" transform="rotate(-90 16.317188 98.676)">Mean team score</text>
+    </g>
+   </g>
+   <g id="team-handoff-patch_3">
+    <path d="M 66.02375 190.152
+L 102.958981 190.152
+L 102.958981 157.005402
+L 66.02375 157.005402
+z
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: var(--gold, #8a611c)"/>
+   </g>
+   <g id="team-handoff-patch_4">
+    <path d="M 125.596704 190.152
+L 162.531935 190.152
+L 162.531935 151.409224
+L 125.596704 151.409224
+z
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: var(--gold, #8a611c)"/>
+   </g>
+   <g id="team-handoff-patch_5">
+    <path d="M 185.169657 190.152
+L 222.104889 190.152
+L 222.104889 144.521619
+L 185.169657 144.521619
+z
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: var(--gold, #8a611c)"/>
+   </g>
+   <g id="team-handoff-patch_6">
+    <path d="M 244.742611 190.152
+L 281.677843 190.152
+L 281.677843 80.811275
+L 244.742611 80.811275
+z
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="team-handoff-patch_7">
+    <path d="M 304.315565 190.152
+L 341.250796 190.152
+L 341.250796 55.628471
+L 304.315565 55.628471
+z
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="team-handoff-patch_8">
+    <path d="M 363.888519 190.152
+L 400.82375 190.152
+L 400.82375 30.660904
+L 363.888519 30.660904
+z
+" clip-path="url(#team-handoff-p303f18edc0)" style="fill: var(--accent, #3a5f8a)"/>
+   </g>
+   <g id="team-handoff-patch_9">
+    <path d="M 49.28375 190.152
+L 49.28375 7.2
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="team-handoff-patch_10">
+    <path d="M 49.28375 190.152
+L 417.56375 190.152
+" style="fill: none; stroke: var(--rule, #d5dae0); stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="team-handoff-text_13">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="84.491366" y="150.005402" transform="rotate(-0 84.491366 150.005402)">0.154</text>
+   </g>
+   <g id="team-handoff-text_14">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="144.064319" y="144.409224" transform="rotate(-0 144.064319 144.409224)">0.180</text>
+   </g>
+   <g id="team-handoff-text_15">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="203.637273" y="137.521619" transform="rotate(-0 203.637273 137.521619)">0.212</text>
+   </g>
+   <g id="team-handoff-text_16">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="263.210227" y="73.811275" transform="rotate(-0 263.210227 73.811275)">0.508</text>
+   </g>
+   <g id="team-handoff-text_17">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="322.783181" y="48.628471" transform="rotate(-0 322.783181 48.628471)">0.625</text>
+   </g>
+   <g id="team-handoff-text_18">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: var(--ink-soft, #27313d)" x="382.356134" y="23.660904" transform="rotate(-0 382.356134 23.660904)">0.741</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="team-handoff-p303f18edc0">
+   <rect x="49.28375" y="7.2" width="368.28" height="182.952"/>
+  </clipPath>
+ </defs>
+</svg>
+</div>
+    <figcaption>Mean final scores on the 26-task handoff panel, on its native 0–1 scale. The bars summarize separate continuations. The paired change from first build to two measured candidates was +0.247 across 23 shared tasks, with a reported interval of +0.17 to +0.32. The ready-to-submit handoff matched the selected Flash source episodes at 0.741. Flash averaged 0.600 across all its episodes on those tasks.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>After inheriting the forks and initial approaches, the 9B scored near its start-from-scratch baseline. It still scored near that range after inheriting the first build. At that cut, 88% of episodes built at least two new candidates, yet scores stayed low. The continuation score rose from 0.212 to 0.508 when the handoff included numeric objectives from two Flash agents. That cut gave the student both more implementation work and new measurements. Their individual contributions remain open.</p>
+    <p>Choosing a candidate still mattered. In the later handoffs, the 9B sometimes submitted its own candidate even when a better inherited commit was still in Git. An early detector counted edits to an inherited worktree as destructive overwrites. A trace reread showed that those edits could leave the commit available. We changed the audit to ask which commit was submitted and whether a measured comparison justified the switch.</p>
+    <details><summary>What the budget and environment checks changed</summary>
+      <p>The earliest handoff had 43 wall-clock timeouts in 136 episodes, typically with token budget left. Excluding those episodes raised its mean from 0.180 to 0.214 and left the largest gap between the first build and the two measured candidates. The remaining early-cut estimate still depends on the wall cap.</p>
+      <p>We also checked a portable version of the workspace sandbox on eight selected cells. All 32 episodes ran, and the same commits got the same hidden scores. The paired score was lower under the new setup and more episodes timed out. We kept the main comparison within one environment.</p>
+    </details>
+  </div>
+</section>
+
+<section id="feedback">
+  <div class="prose">
+    <h2>Better feedback changed the edits more than the scores</h2>
+    <p>First we asked whether the 9B could identify promising parts of its own build transcripts when it saw Flash’s progress. We scored the same sampled tokens with a frozen 9B policy, once with the extra context and once without it. The best of six score-ranking checks had an AUC of 0.573, and the highest-scoring spans pointed toward Flash’s approach about as often as random spans in a blinded read. We held the training pilot.</p>
+    <p>Then we gave the 9B direct, no-code feedback on one of its own candidates. Across 24 tasks, we compared a teacher critique with a generic request to improve and a sham critique. The teacher critique prompted more changes of approach. It scored 0.012 below the generic request and 0.001 below the sham, with both paired intervals spanning zero. All three arms finished below their starting candidates on average. Rewrites were especially prone to losing score, so the trace suggests keeping the incumbent program available while testing a proposed revision.</p>
+  </div>
+</section>
+
+<section id="base-sft">
+  <div class="prose">
+    <h2>Starting from the base weights recovered some of the gap</h2>
+    <p>We also tried full supervised fine-tuning from the pretrained 9B base weights. The first mix used 146 regenerated Flash episodes, split into 489 agent histories with 35.4 million supervised tokens per pass. The raw base averaged 0.030 on a ten-task smoke test with one attempt per task. The 26-task, five-attempt panel measures what more SFT epochs changed. Estimating uplift over raw base would require evaluating it on that same panel.</p>
+  </div>
+  <div class="wide"><figure id="figure-9">
+    <div class="fig-title">Figure 9 · The same demonstrations improved with more training</div>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Team SFT after three and eight epochs"><table>
+      <thead><tr><th scope="col">Metric</th><th scope="col">Epoch 3</th><th scope="col">Epoch 8</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Avg@5</th><td>0.029</td><td>0.067</td></tr>
+        <tr><th scope="row">Best@5</th><td>0.105</td><td>0.139</td></tr>
+        <tr><th scope="row">Explicit submissions</th><td>77 / 130</td><td>81 / 130</td></tr>
+        <tr><th scope="row">Malformed calls, share of turns</th><td>0.42%</td><td>0.02%</td></tr>
+        <tr><th scope="row">Episodes that exhausted their token budget</th><td>18 / 130</td><td>25 / 130</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Same 26-task panel for both supervised checkpoints. Avg@5 averages five episode scores for each task. Best@5 takes the best of those five before averaging tasks.</figcaption>
+  </figure></div>
+  <div class="prose">
+    <p>More passes improved score and nearly eliminated malformed tool calls. Explicit submissions barely moved, and more episodes ran out of tokens. At epoch eight, 29 final answers errored at grading and another 15 episodes produced no gradeable submission. The outcome-trained 9B team was still ahead on 21 of the 26 tasks. Even among scored answers, the SFT team averaged 0.103 against 0.159 for the outcome-trained reference. The team needed to get more working programs to grading and improve the programs that already reached it.</p>
+    <p>A separate comparison used 40 fixed FrontierCS tasks with five team attempts each. Flash scored 56.17 Avg@5 and 71.96 Best@5 on a 0–100 scale. The outcome-trained 9B team scored 11.52 and 17.41. It submitted in all 200 episodes, while Flash submitted in 94%. The 9B’s submission rate was already high on that panel, and Flash still produced far stronger programs.</p>
+    <p>We started a second round of base SFT from epoch eight. We added 228 episodes from one Flash regeneration batch and 436 from another, keeping graded, submitted episodes with positive scores. That brought the full mix to 810 episodes and 216.6 million supervised tokens per pass. The next held-out read was still pending on November 14. On the fixed panel we’ll check whether agents reach the merge with working candidates, compare those candidates on shared inputs, and preserve the best measured commit through submission.</p>
+  </div>
+</section>
+</main><footer><div class="prose"><nav class="contents" aria-label="Series navigation"><a href="../">Part 1 · The Harness Is Part of the Model</a><a href="../part-2/">Part 2 · The Wall, the Compile Tax, and the Oracle</a><a href="../part-3/">Part 3 · Climbing From Zero Without a Teacher</a><a href="../part-4/">Part 4 · Borrowing a Foothold</a><a href="../part-5/">Part 5 · When the Reward Misses the Algorithm</a><a href="../part-6/">Part 6 · Fork, Talk, Submit</a><a href="../part-7/">Part 7 · The Distance to a Teacher</a><a href="../part-8/">Part 8 · One Harness, Six Ways to Work</a><a href="../part-9/">Part 9 · What Did Distillation Buy?</a><a href="../part-11/">Part 11 · Can a 9B Model Teach Its Earlier Self?</a><a href="https://github.com/MaCoredroid/collective-intelligence">Repository</a><a href="#top">Back to top ↑</a></nav></div></footer><script>
+const root = document.documentElement;
+const theme = document.querySelector('.theme');
+const dark = matchMedia('(prefers-color-scheme: dark)');
+let savedTheme;
+try { savedTheme = localStorage.getItem('ci-draft-theme'); } catch {}
+if (savedTheme === 'light' || savedTheme === 'dark') root.dataset.theme = savedTheme;
+theme.addEventListener('click', () => {
+  const current = root.dataset.theme || (dark.matches ? 'dark' : 'light');
+  const next = current === 'dark' ? 'light' : 'dark';
+  root.dataset.theme = next;
+  try { localStorage.setItem('ci-draft-theme', next); } catch {}
+});
+const motion = matchMedia('(prefers-reduced-motion: reduce)');
+document.querySelectorAll('[data-walk]').forEach(walk => {
+  const buttons = [...walk.querySelectorAll('[data-step]')];
+  const stages = [...walk.querySelectorAll('[data-stage]')];
+  const play = walk.querySelector('[data-play]');
+  let selected = 0;
+  let timer;
+  function select(index) {
+    selected = index;
+    buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
+    stages.forEach((stage, i) => { stage.hidden = i !== index; });
+  }
+  function stop() {
+    clearInterval(timer);
+    timer = undefined;
+    play.textContent = 'Play steps';
+    play.setAttribute('aria-pressed', 'false');
+  }
+  buttons.forEach((button, i) => button.addEventListener('click', () => { stop(); select(i); }));
+  play.addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (motion.matches) return;
+    select(0);
+    play.textContent = 'Pause steps';
+    play.setAttribute('aria-pressed', 'true');
+    timer = setInterval(() => {
+      if (selected + 1 === stages.length) { stop(); return; }
+      select(selected + 1);
+    }, 5200);
+  });
+  motion.addEventListener('change', stop);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+  window.addEventListener('pagehide', stop);
+});
+</script></body></html>

@@ -25,3 +25,5 @@ The page is a single static file in [`docs/index.html`](docs/index.html), served
 - [Part 7 · The Distance to a Teacher](https://macoredroid.github.io/collective-intelligence/part-7/)
 - [Part 8 · One Harness, Six Ways to Work](https://macoredroid.github.io/collective-intelligence/part-8/)
 - [Part 9 · What Did Distillation Buy?](https://macoredroid.github.io/collective-intelligence/part-9/)
+- [Part 10 · Where Agent Teams Get Stuck](https://macoredroid.github.io/collective-intelligence/part-10/)
+- [Part 11 · Can a 9B Model Teach Its Earlier Self?](https://macoredroid.github.io/collective-intelligence/part-11/)
